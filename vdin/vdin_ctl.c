@@ -26,7 +26,7 @@
 #include "vdin_drv.h"
 #include "vdin_vf.h"
 #include "vdin_canvas.h"
-#include "../../amports/ve_regs.h"
+#include "../../drivers/amlogic/amports/ve_regs.h"
 
 #define VDIN_MEAS_24M_1MS 24000
 

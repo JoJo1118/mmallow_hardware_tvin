@@ -44,6 +44,10 @@
 /* Local include */
 #include "hdmirx_drv.h"
 #include "hdmi_rx_reg.h"
+#if CEC_FUNC_ENABLE
+#include "hdmirx_cec.h"
+#endif
+
 
 #define EDID_AUTO_CHECKSUM_ENABLE   0               // Checksum byte selection: 0=Use data stored in MEM; 1=Use checksum calculated by HW.
 #define EDID_CLK_DIVIDE_M1          2               // EDID I2C clock = sysclk / (1+EDID_CLK_DIVIDE_M1).
@@ -81,6 +85,14 @@ static bool pwr_gpio_pull_down = true;
 MODULE_PARM_DESC(pwr_gpio_pull_down, "\n pwr_gpio_pull_down \n");
 module_param(pwr_gpio_pull_down, bool, 0664);
 
+//skyworth 730 & demoboard m6c & skyworth kk
+#if (defined(CONFIG_MACH_MESON6TV_H21) || defined(CONFIG_MACH_MESON6TV_H12) || defined(CONFIG_MACH_MESON6TV_H24))
+static int edid_clock_divide = 9;
+#else
+static int edid_clock_divide = 9;
+#endif
+MODULE_PARM_DESC(edid_clock_divide, "\n edid_clock_divide \n");
+module_param(edid_clock_divide, int, 0664);
 /**
  * Read data from HDMI RX CTRL
  * @param[in] addr register address
@@ -93,7 +105,7 @@ uint32_t hdmirx_rd_dwc(uint16_t addr)
 	unsigned long data;
 	spin_lock_irqsave(&reg_rw_lock, flags);
 	WRITE_APB_REG((HDMIRX_ADDR_PORT | dev_offset), addr);
-	data = READ_APB_REG((HDMIRX_DATA_PORT | dev_offset)); 
+	data = READ_APB_REG((HDMIRX_DATA_PORT | dev_offset));
 	spin_unlock_irqrestore(&reg_rw_lock, flags);
 	return (data);
 } /* hdmirx_rd_DWC */
@@ -194,7 +206,7 @@ void hdmirx_wr_top (unsigned long addr, unsigned long data)
     spin_unlock_irqrestore(&reg_rw_lock, flags);
 
 	if(hdmirx_log_flag & 0x2){
-	    printk("Write TOP Reg 0x%08x <= 0x%08x\n", addr, data);
+	    printk("Write TOP Reg 0x%08lx <= 0x%08lx\n", addr, data);
 	}
 } /* hdmirx_wr_only_TOP */
 
@@ -218,16 +230,18 @@ unsigned long hdmirx_rd_top (unsigned long addr)
 //#define PHY_GEN3_I2C_SLAVE_ADDR			(0x39UL)
 #define PHY_GEN3_I2C_SLAVE_ADDR			(0x69UL)
 //#define PHY_GEN3_GLUE_I2C_SLAVE_ADDR	(0x48UL)
+#if 0
 static void phy_set_cfgclk_freq(int cfgclk)
 {
 	hdmirx_wr_bits_dwc(RA_SNPS_PHYG3_CTRL, MSK(2,4), cfgclk);
 }
-
+#endif
+#if 0
 static void phy_wrapper_svsretmode(int enable)
 {
 	hdmirx_wr_bits_dwc(RA_SNPS_PHYG3_CTRL, MSK(1,6), enable);
 }
-
+#endif
 void hdmirx_phy_reset(bool enable)
 {
 	hdmirx_wr_bits_dwc(RA_SNPS_PHYG3_CTRL, MSK(1,0), enable);
@@ -237,7 +251,7 @@ void hdmirx_phy_pddq(int enable)
 {
 	hdmirx_wr_bits_dwc(RA_SNPS_PHYG3_CTRL, MSK(1,1), enable);
 }
-
+#if 0
 static void hdmi_rx_phy_fast_switching( int enable)
 {
 	hdmirx_wr_phy(REG_HDMI_PHY_SYSTEM_CONFIG, hdmirx_rd_phy(REG_HDMI_PHY_SYSTEM_CONFIG) | ((enable & 1) << 11));
@@ -257,9 +271,9 @@ static void hdmirx_phy_restart(void)
 #endif
     /* power up */
     hdmirx_phy_pddq(0);
-        
-}
 
+}
+#endif
 /**************************
     hw functions
 ***************************/
@@ -503,7 +517,7 @@ static void control_init_more(void)
     data32 |= 0                         << 10;  // [   10]  scl_stretch_trigger_config
     data32 |= 0                         << 9;   // [    9]  force_scl_stretch_trigger
     data32 |= 1                         << 8;   // [    8]  scl_stretch_enable
-    data32 |= EDID_CLK_DIVIDE_M1 << 0;   // [ 7: 0]  clk_divide_m1
+    data32 |= edid_clock_divide << 0;   // [ 7: 0]  clk_divide_m1
     hdmirx_wr_top(HDMIRX_TOP_EDID_GEN_CNTL,  data32);
 
 #if 0    
@@ -681,7 +695,11 @@ static void control_reset(unsigned char seq)
     
     // Enable functional modules
     data32  = 0;
-    data32 |= 0 << 5;   // [5]      cec_enable
+#if CEC_FUNC_ENABLE
+    data32 |= 1 << 5;   // [5]      cec_enable
+#else
+	data32 |= 0 << 5;   // [5]      cec_enable
+#endif
     data32 |= 1 << 4;   // [4]      aud_enable
     data32 |= 1 << 3;   // [3]      bus_enable
     data32 |= 1 << 2;   // [2]      hdmi_enable
@@ -715,7 +733,11 @@ static void control_reset(unsigned char seq)
     // Bring up RX
     //--------------------------------------------------------------------------
     data32  = 0;
+#if CEC_FUNC_ENABLE
+	data32 |= 1 << 5;   // [5]      cec_enable
+#else
     data32 |= 0 << 5;   // [5]      cec_enable
+#endif
     data32 |= 1 << 4;   // [4]      aud_enable
     data32 |= 1 << 3;   // [3]      bus_enable
     data32 |= 1 << 2;   // [2]      hdmi_enable
@@ -875,7 +897,9 @@ void hdmirx_hw_config(void)
     {
         mdelay(200);
     }
-
+#if CEC_FUNC_ENABLE
+	cec_init();
+#endif
 }
 
 void hdmirx_hw_reset(void)
@@ -983,8 +1007,9 @@ int hdmirx_get_video_info(struct hdmi_rx_ctrl *ctx, struct hdmi_rx_ctrl_video *p
 	/* pixel clock */
 	params->pixel_clk = ctx->tmds_clk;
 	/* refresh rate */
-	tmp = hdmirx_rd_bits_dwc( RA_MD_VTC, VTOT_CLK);
-	params->refresh_rate = (tmp == 0)? 0: (ctx->md_clk * 100000) / tmp;
+	//tmp = hdmirx_rd_bits_dwc( RA_MD_VTC, VTOT_CLK);
+	//params->refresh_rate = (tmp == 0)? 0: (ctx->md_clk * 100000) / tmp;
+
 	/* image parameters */
 	params->interlaced = hdmirx_rd_bits_dwc( RA_MD_STS, ILACE) != 0;
 	params->voffset = hdmirx_rd_bits_dwc( RA_MD_VOL, VOFS_LIN);
@@ -998,6 +1023,17 @@ int hdmirx_get_video_info(struct hdmi_rx_ctrl *ctx, struct hdmi_rx_ctrl_video *p
 	params->hoffset = hdmirx_rd_bits_dwc( RA_MD_HT1, HOFS_PIX);
 	params->hactive = hdmirx_rd_bits_dwc( RA_MD_HACT_PX, HACT_PIX);
 	params->htotal = hdmirx_rd_bits_dwc( RA_MD_HT1, HTOT_PIX);
+
+		/* refresh rate */
+	tmp = hdmirx_rd_bits_dwc( RA_MD_VTC, VTOT_CLK);
+	tmp = (tmp == 0)? 0: (ctx->md_clk * 100000) / tmp;
+	if((params->vtotal == 0) || (params->htotal == 0))
+		params->refresh_rate = (tmp == 0)? 0: (ctx->md_clk * 100000) / tmp;
+	else {
+		params->refresh_rate = (hdmirx_get_pixel_clock() * 10 / (params->vtotal * params->htotal / 10));
+		//if(abs(tmp - params->refresh_rate) > 50)
+			//printk("\n\n refresh_rate -%ld -- tmp-%d\n\n",params->refresh_rate,tmp);
+	}
 	/* deep color mode */
 	tmp = hdmirx_rd_bits_dwc( RA_HDMI_STS, DCM_CURRENT_MODE);
 #if 0
@@ -1008,7 +1044,7 @@ int hdmirx_get_video_info(struct hdmi_rx_ctrl *ctx, struct hdmi_rx_ctrl_video *p
 		error = -EAGAIN;
 		goto exit;
 	}
-#endif	
+#endif
 	switch (tmp) {
 	case DCM_CURRENT_MODE_48b:
 		params->deep_color_mode = 48;
@@ -1153,9 +1189,9 @@ static unsigned long clk_util_clk_msr2( unsigned long   clk_mux, unsigned long  
     dummy_rd = READ_MPEG_REG(MSR_CLK_REG0);
     // Wait for the measurement to be done
     while( (READ_MPEG_REG(MSR_CLK_REG0) & (1 << 31)) ) {
-        mdelay(10);
+        mdelay(1);
         timeout++;
-        if(timeout>10){
+        if(timeout>100){
             return 0;
         }
     }
@@ -1209,6 +1245,10 @@ void hdmirx_read_audio_info(struct aud_info_s* audio_info)
   }
 }    
 
+int hdmirx_get_pdec_aud_sts(void)
+{
+    return (hdmirx_rd_dwc(RA_PDEC_AUD_STS));
+}
 
 void hdmirx_read_vendor_specific_info_frame(struct vendor_specific_info_s* vs)
 {

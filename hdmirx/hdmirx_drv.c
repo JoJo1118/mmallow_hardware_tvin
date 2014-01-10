@@ -39,6 +39,9 @@
 #include "../tvin_frontend.h"
 #include "hdmirx_drv.h"           /* For user used */
 #include "hdmi_rx_reg.h"
+#if CEC_FUNC_ENABLE
+#include "hdmirx_cec.h"
+#endif
 
 
 #define TVHDMI_NAME               "hdmirx"
@@ -61,10 +64,17 @@ struct hdmirx_dev_s *devp_hdmirx_suspend;
 extern void clk_off(void);
 extern void hdmirx_wr_top (unsigned long addr, unsigned long data);
 int resume_flag = 0;
+static int force_colorspace = 0;
+static int cur_colorspace = 0;
+
 MODULE_PARM_DESC(resume_flag, "\n resume_flag \n");
 module_param(resume_flag, int, 0664);
 
+MODULE_PARM_DESC(force_colorspace, "\n force_colorspace \n");
+module_param(force_colorspace, int, 0664);
 
+MODULE_PARM_DESC(cur_colorspace, "\n cur_colorspace \n");
+module_param(cur_colorspace, int, 0664);
 
 typedef struct hdmirx_dev_s {
 	int                         index;
@@ -81,6 +91,10 @@ void hdmirx_timer_handler(unsigned long arg)
 	struct hdmirx_dev_s *devp = (struct hdmirx_dev_s *)arg;
 
 	hdmirx_hw_monitor();
+#if CEC_FUNC_ENABLE
+	hdmirx_cec_rx_monitor();
+	hdmirx_cec_tx_monitor();
+#endif
 	devp->timer.expires = jiffies + TIMER_STATE_CHECK;
 	add_timer(&devp->timer);
 }
@@ -283,32 +297,18 @@ enum tvin_sig_fmt_e hdmirx_get_fmt(struct tvin_frontend_s *fe)
 	fmt = hdmirx_hw_get_fmt();
 	return fmt;
 }
+#define FORCE_YUV	1
+#define FORCE_RGB	2
 
-enum tvin_color_fmt_e hdmirx_get_color_fmt(struct tvin_frontend_s *fe)
-{
-	enum tvin_color_fmt_e color_fmt = TVIN_RGB444;
-
-	switch (hdmirx_hw_get_color_fmt()) {
-	case 1:
-		color_fmt = TVIN_YUV444;
-		break;
-	case 3:
-		color_fmt = TVIN_YUYV422;
-		break;
-	case 0:
-	default:
-		color_fmt = TVIN_RGB444;
-		break;
-	}
-	return color_fmt;
-}
+extern unsigned char is_frame_packing(void);
+extern unsigned char is_alternative(void);
 
 void hdmirx_get_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_property_s *prop)
 {
 	unsigned char _3d_structure, _3d_ext_data;
 
 	prop->dvi_info = hdmirx_hw_get_dvi_info();
-	
+
 	switch (hdmirx_hw_get_color_fmt()) {
 	case 1:
 		prop->color_format = TVIN_YUV444;
@@ -321,6 +321,14 @@ void hdmirx_get_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_property
 		prop->color_format = TVIN_RGB444;
 		break;
 	}
+	if(force_colorspace == FORCE_YUV)
+		if(prop->color_format == TVIN_RGB444)
+			prop->color_format = TVIN_YUV444;
+	if(force_colorspace == FORCE_RGB)
+		prop->color_format = TVIN_RGB444;
+
+
+	cur_colorspace = prop->color_format;
 	prop->trans_fmt = TVIN_TFMT_2D;
 	if (hdmirx_hw_get_3d_structure(&_3d_structure, &_3d_ext_data) >= 0) {
 		if (_3d_structure == 0x0) {        /* frame packing */
@@ -354,6 +362,11 @@ void hdmirx_get_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_property
 				break;
 			}
 		}
+	}
+	if( is_frame_packing()) {
+		prop->trans_fmt = TVIN_TFMT_3D_FP;
+	} else if( is_alternative()) {
+		prop->trans_fmt = TVIN_TFMT_3D_LA;
 	}
 	/* 1: no repeat; 2: repeat 1 times; 3: repeat two; ... */
 	prop->pixel_repeat = hdmirx_hw_get_pixel_repeat();
@@ -648,13 +661,15 @@ static void hdmirx_delete_device(int minor)
 	device_destroy(hdmirx_clsp, devno);
 }
 
+unsigned char *pEdid_buffer;
+
 static int hdmirx_probe(struct platform_device *pdev)
 {
 	int ret = 0;
 	struct hdmirx_dev_s *hdevp;
 
-
 	log_init(DEF_LOG_BUF_SIZE);
+	pEdid_buffer = (unsigned char*) pdev->dev.platform_data;
 
 	/* allocate memory for the per-device structure */
 	hdevp = kmalloc(sizeof(struct hdmirx_dev_s), GFP_KERNEL);
@@ -852,6 +867,17 @@ static int hdmirx_resume(struct platform_device *pdev)
 }
 #endif
 
+#ifdef CONFIG_OF
+static const struct of_device_id hdmirx_dt_match[]={
+    {
+        .compatible     = "amlogic,hdmirx",
+    },
+    {},
+};
+#else
+#define hdmirx_dt_match NULL
+#endif
+
 static struct platform_driver hdmirx_driver = {
 	.probe      = hdmirx_probe,
 	.remove     = hdmirx_remove,
@@ -860,7 +886,9 @@ static struct platform_driver hdmirx_driver = {
 	.resume     = hdmirx_resume,
 #endif
 	.driver     = {
-	.name   = TVHDMI_DRIVER_NAME,
+		.name   = TVHDMI_DRIVER_NAME,
+		.owner	= THIS_MODULE,
+		.of_match_table = hdmirx_dt_match,
 	}
 };
 

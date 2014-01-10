@@ -2074,6 +2074,84 @@ void tvafe_adjust_cal_value(struct tvafe_adc_cal_s *para,bool iscomponent)
 
 }
 
+void tvafe_set_regmap(struct am_regs_s *p)
+{
+    unsigned short i;
+    unsigned int temp = 0;
+
+    for (i=0; i<p->length; i++) {
+        switch (p->am_reg[i].type)
+        {
+            case REG_TYPE_PHY:
+                #ifdef PQ_DEBUG_EN
+                    pr_info("%s: bus type: phy..............\n", __func__);
+                #endif
+            break;
+            case REG_TYPE_CBUS:
+                if (p->am_reg[i].mask == 0xffffffff)
+                    WRITE_CBUS_REG(p->am_reg[i].addr, p->am_reg[i].val);
+                else
+                    WRITE_CBUS_REG(p->am_reg[i].addr, (READ_CBUS_REG(p->am_reg[i].addr) & (~(p->am_reg[i].mask))) | (p->am_reg[i].val & p->am_reg[i].mask));
+                #ifdef PQ_DEBUG_EN
+					pr_info("%s: cbus: Reg0x%x(%u)=0x%x(%u)val=%x(%u)mask=%x(%u)\n", __func__, p->am_reg[i].addr,p->am_reg[i].addr,
+					(p->am_reg[i].val & p->am_reg[i].mask),(p->am_reg[i].val & p->am_reg[i].mask),
+					p->am_reg[i].val,p->am_reg[i].val,p->am_reg[i].mask,p->am_reg[i].mask);
+                #endif
+            break;
+            case REG_TYPE_APB:
+                if (p->am_reg[i].mask == 0xffffffff)
+                    WRITE_APB_REG(p->am_reg[i].addr<<2, p->am_reg[i].val);
+                else
+                    WRITE_APB_REG(p->am_reg[i].addr<<2, (READ_APB_REG(p->am_reg[i].addr<<2) & (~(p->am_reg[i].mask))) | (p->am_reg[i].val & p->am_reg[i].mask));
+                #ifdef PQ_DEBUG_EN
+					pr_info("%s: apb: Reg0x%x(%u)=0x%x(%u)val=%x(%u)mask=%x(%u)\n", __func__, p->am_reg[i].addr,p->am_reg[i].addr,
+					(p->am_reg[i].val & p->am_reg[i].mask),(p->am_reg[i].val & p->am_reg[i].mask),
+					p->am_reg[i].val,p->am_reg[i].val,p->am_reg[i].mask,p->am_reg[i].mask);
+                #endif
+            break;
+            case REG_TYPE_MPEG:
+                if (p->am_reg[i].mask == 0xffffffff)
+                    WRITE_MPEG_REG(p->am_reg[i].addr, p->am_reg[i].val);
+                else
+                    WRITE_MPEG_REG(p->am_reg[i].addr, (READ_MPEG_REG(p->am_reg[i].addr) & (~(p->am_reg[i].mask))) | (p->am_reg[i].val & p->am_reg[i].mask));
+                #ifdef PQ_DEBUG_EN
+					pr_info("%s: mpeg: Reg0x%x(%u)=0x%x(%u)val=%x(%u)mask=%x(%u)\n", __func__, p->am_reg[i].addr,p->am_reg[i].addr,
+					(p->am_reg[i].val & p->am_reg[i].mask),(p->am_reg[i].val & p->am_reg[i].mask),
+					p->am_reg[i].val,p->am_reg[i].val,p->am_reg[i].mask,p->am_reg[i].mask);
+                #endif
+            break;
+            case REG_TYPE_AXI:
+                if (p->am_reg[i].mask == 0xffffffff)
+                    WRITE_AXI_REG(p->am_reg[i].addr, p->am_reg[i].val);
+                else
+                    WRITE_AXI_REG(p->am_reg[i].addr, (READ_AXI_REG(p->am_reg[i].addr) & (~(p->am_reg[i].mask))) | (p->am_reg[i].val & p->am_reg[i].mask));
+                #ifdef PQ_DEBUG_EN
+					pr_info("%s: axi: Reg0x%x(%u)=0x%x(%u)val=%x(%u)mask=%x(%u)\n", __func__, p->am_reg[i].addr,p->am_reg[i].addr,
+					(p->am_reg[i].val & p->am_reg[i].mask),(p->am_reg[i].val & p->am_reg[i].mask),
+					p->am_reg[i].val,p->am_reg[i].val,p->am_reg[i].mask,p->am_reg[i].mask);
+                #endif
+            break;
+            case REG_TYPE_AHB:
+                if (p->am_reg[i].mask == 0xffffffff)
+                    WRITE_AHB_REG(p->am_reg[i].addr, p->am_reg[i].val);
+                else
+                    WRITE_AHB_REG(p->am_reg[i].addr, (READ_AHB_REG(p->am_reg[i].addr) & (~(p->am_reg[i].mask))) | (p->am_reg[i].val & p->am_reg[i].mask));
+                #ifdef PQ_DEBUG_EN
+					pr_info("%s: ahb: Reg0x%x(%u)=0x%x(%u)val=%x(%u)mask=%x(%u)\n", __func__, p->am_reg[i].addr,p->am_reg[i].addr,
+					(p->am_reg[i].val & p->am_reg[i].mask),(p->am_reg[i].val & p->am_reg[i].mask),
+					p->am_reg[i].val,p->am_reg[i].val,p->am_reg[i].mask,p->am_reg[i].mask);
+                #endif
+            break;
+            default:
+            #ifdef PQ_DEBUG_EN
+                pr_info("%s: bus type error!!!bustype = 0x%x................\n", __func__, p->am_reg[i].type);
+            #endif
+            break;
+        }
+    }
+
+    return;
+}
 /*
  * tvafe set the calibartion value
  */
@@ -2440,11 +2518,11 @@ bool tvafe_adc_cal(struct tvin_parm_s *parm, struct tvafe_cal_s *cal)
 				}else{
 					WRITE_CBUS_REG(HHI_VAFE_CLKIN_CNTL , 0x00000100); //480,576
 				}
-			}	
+			}
 			// set vfe mux
 			WRITE_APB_REG_BITS(ADC_REG_39, 1, INSYNCMUXCTRL_BIT, INSYNCMUXCTRL_WID);
 			WRITE_APB_REG_BITS(TVFE_VAFE_CTRL, 1,
-					VAFE_HS_VS_MUX_BIT, VAFE_HS_VS_MUX_WID);			
+					VAFE_HS_VS_MUX_BIT, VAFE_HS_VS_MUX_WID);
 			// load adc cal values
             adc_cal[operand->cal_fmt_cnt].reserved |= TVAFE_ADC_CAL_VALID;
             tvafe_set_cal_value2(&adc_cal[operand->cal_fmt_cnt]);
@@ -3046,7 +3124,6 @@ static void tvafe_set_cvbs_default(struct tvafe_cvd2_s *cvd2, struct tvafe_cvd2_
 
 	/** write 7740 register **/
 	tvafe_adc_configure(TVIN_SIG_FMT_CVBS_PAL_I);
-
 
 	/** write top register **/
 	i = 0;

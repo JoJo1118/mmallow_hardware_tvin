@@ -382,6 +382,8 @@
 #define RA_PDEC_ASP_ERR         (0x344UL)
 /** Register address: packet decoder status, see packet interrupts */
 #define RA_PDEC_STS             (0x360UL)
+/** Register address: Packet Decoder Audio Status*/
+#define RA_PDEC_AUD_STS         (0x364UL)
 /** Register address: general control packet AV mute */
 #define RA_PDEC_GCP_AVMUTE      (0x380UL)
 /** Register address: audio clock regeneration */

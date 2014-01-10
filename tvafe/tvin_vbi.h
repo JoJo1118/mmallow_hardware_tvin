@@ -126,6 +126,15 @@
 #define VBI_TYPE_WSS625         0x04000  //
 #define VBI_TYPE_WSSJ           0x08000  //
 
+#define VBI_DEFAULT_BUFFER_SIZE 8192 //default buffer size
+#define VBI_IRQ_EN //kuka add
+#define VBI_TIMER_INTERVAL     (HZ/100)   //10ms, #define HZ 100 kuka add
+#define VBI_BUF_DIV_EN //kuka add
+#define VBI_ON_M6TV //VBI in M6TV IC only support CC format
+#ifdef VBI_ON_M6TV
+#undef VBI_IRQ_EN
+#endif
+
 // ***************************************************************************
 // *** enum definitions *********************************************
 // ***************************************************************************
@@ -149,11 +158,15 @@ enum vbi_state_e {
 // ***************************************************************************
 
 typedef struct cc_data_s {
-    unsigned int vbi_type :  8; // vbi data type: us_cc, teletext,wss_625,wssj,vps....
-    unsigned int field_id :  8; // field type: 0:even; 1:odd;
-    unsigned int nbytes   : 16; // data byte count: cc:two bytes; tt: depends on tt spec
-    unsigned int line_num : 16; // vbi data line number
-    unsigned char b[2];         //       : 8;  // cc data1
+#ifdef VBI_ON_M6TV
+	unsigned char b[2];         //       : 8;  // cc data1
+#else
+	unsigned int vbi_type :  8; // vbi data type: us_cc, teletext,wss_625,wssj,vps....
+	unsigned int field_id :  8; // field type: 0:even; 1:odd;
+	unsigned int nbytes   : 16; // data byte count: cc:two bytes; tt: depends on tt spec
+	unsigned int line_num : 16; // vbi data line number
+	unsigned char b[2];         //       : 8;  // cc data1
+#endif
 } cc_data_t;
 
 struct vbi_ringbuffer_s {

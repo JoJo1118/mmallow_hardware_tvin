@@ -25,6 +25,8 @@
 #include <asm/uaccess.h>
 #include <linux/mutex.h>
 #include <linux/mm.h>
+#include <linux/of.h>
+#include <linux/of_fdt.h>
 
 /* Amlogic headers */
 #include <linux/amlogic/amports/canvas.h>
@@ -53,6 +55,23 @@ static struct class              *tvafe_clsp;
 static bool                      disableapi = 0;
 static bool                      force_stable = false;
 #define TVAFE_TIMER_INTERVAL    (HZ/100)   //10ms, #define HZ 100
+static struct am_regs_s tvaferegs;
+static tvafe_pin_mux_t tvafe_pinmux;
+
+static bool enable_db_reg = true;
+module_param(enable_db_reg, bool, 0644);
+MODULE_PARM_DESC(enable_db_reg, "enable/disable tvafe load reg");
+
+/*****************************the  version of changing log************************/
+static char last_version_s[]="2013-11-4||10-13";
+static char version_s[] = "2013-11-29||11-28";
+/***************************************************************************/
+void get_afe_version(char **ver, char **last_ver)
+{
+	*ver=version_s;
+	*last_ver=last_version_s;
+	return ;
+}
 
 
 /*default only one tvafe ,echo cvdfmt pali/palm/ntsc/secam >dir*/
@@ -109,6 +128,52 @@ static ssize_t tvafe_store(struct device *dev, struct device_attribute *attr,con
 				edid.value[(i<<3)+5], edid.value[(i<<3)+6], edid.value[(i<<3)+7] );
 		}
 	}
+	else if(!strncmp(buff,"set_edid",strlen("set_edid"))){
+		int i=0;
+		struct tvafe_vga_edid_s edid={ 	
+										0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00,
+									 	0x30, 0xa4, 0x21, 0x00, 0x01, 0x01, 0x01, 0x01,
+									 	0x0e, 0x17, 0x01, 0x03, 0x80, 0x24, 0x1d, 0x78,
+									 	0xee, 0x00, 0x0c, 0x0a, 0x05, 0x04, 0x09, 0x02,
+									 	0x00, 0x20, 0x80, 0xa1, 0x08, 0x70, 0x01, 0x01,
+									 	0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
+									 	0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x02, 0x3a,
+									 	0x80, 0x18, 0x71, 0x38, 0x2d, 0x40, 0x58, 0x2c,
+									 	0x45, 0x00, 0xa0, 0x5a, 0x00, 0x00, 0x00, 0x1e,
+									 	0x00, 0x00, 0x00, 0xfd, 0x00, 0x3b, 0x3c, 0x1f,
+ 										0x2d, 0x08, 0x00, 0x0a, 0x20, 0x20, 0x20, 0x20,
+ 										0x20, 0x20, 0x00, 0x00, 0x00, 0xfc, 0x00, 0x44,
+ 										0x35, 0x30, 0x4c, 0x57, 0x37, 0x31, 0x30, 0x30,
+										0x0a, 0x20, 0x20, 0x20, 0x21, 0x39, 0x90, 0x30,
+									 	0x62, 0x1a, 0x27, 0x40, 0x68, 0xb0, 0x36, 0x00,
+										0xa0, 0x64, 0x00, 0x00, 0x00, 0x1c, 0x00, 0x88,
+										0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00,
+										0x30, 0xa4, 0x21, 0x00, 0x01, 0x01, 0x01, 0x01,
+										0x0e, 0x17, 0x01, 0x03, 0x80, 0x24, 0x1d, 0x78,
+										0xee, 0x00, 0x0c, 0x0a, 0x05, 0x04, 0x09, 0x02,
+										0x00, 0x20, 0x80, 0xa1, 0x08, 0x70, 0x01, 0x01,
+										0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
+										0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x02, 0x3a,
+										0x80, 0x18, 0x71, 0x38, 0x2d, 0x40, 0x58, 0x2c,
+										0x45, 0x00, 0xa0, 0x5a, 0x00, 0x00, 0x00, 0x1e,
+										0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+										0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+										0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+										0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+										0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+										0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+										0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+										};
+		
+		for(i=0; i<32; i++)
+		{
+		pr_info("0x%2x 0x%2x 0x%2x 0x%2x 0x%2x 0x%2x 0x%2x 0x%2x.\n", edid.value[(i<<3)+0],
+				edid.value[(i<<3)+1], edid.value[(i<<3)+2], edid.value[(i<<3)+3], edid.value[(i<<3)+4],
+				edid.value[(i<<3)+5], edid.value[(i<<3)+6], edid.value[(i<<3)+7] );
+		}
+
+		tvafe_vga_set_edid(&edid);
+	}
 	else if(!strncmp(buff, "tvafe_enable",strlen("tvafe_enable")))
 		{
 			tvafe_enable_module(true);
@@ -119,10 +184,89 @@ static ssize_t tvafe_store(struct device *dev, struct device_attribute *attr,con
 			tvafe_enable_module(false);
 			pr_info("[tvafe..]%s:tvafe down\n",__func__);
 	}
+	else if(!strncmp(buff,"afe_ver",strlen("afe_ver")))
+	{
+		char *afe_version=NULL,*last_afe_version=NULL;
+		char *adc_version=NULL,*last_adc_version=NULL;
+		char *cvd_version=NULL,*last_cvd_version=NULL;
+		get_afe_version(&afe_version,&last_afe_version);
+		get_adc_version(&adc_version,&last_adc_version);
+		get_cvd_version(&cvd_version,&last_cvd_version);
+
+		pr_info("NEW VERSION :[tvafe version]:%s\t[cvd2 version]:%s\t[adc version]:%s\t[format table version]:NUll\n",
+		afe_version,cvd_version,adc_version);
+		pr_info("LAST VERSION:[tvafe version]:%s\t[cvd2 version]:%s\t[adc version]:%s\t[format table version]:NUll\n",
+		last_afe_version,last_cvd_version,last_adc_version);
+	}
 	else
 		pr_info("[%s]:invaild command.\n",__func__);
 	return count;
 }
+
+/*************************************************
+before to excute the func of dumpmem_store ,it must be setting the steps below:
+echo wa 0x30b2 4c > /sys/class/register/reg
+echo wa 0x3122 3000000 > /sys/class/register/reg
+echo wa 0x3096 0 > /sys/class/register/reg
+echo wa 0x3150 2 > /sys/class/register/reg
+
+echo wa 0x3151 11b40000 > /sys/class/register/reg   //start mem adr
+echo wa 0x3152 11bf61f0 > /sys/class/register/reg	//end mem adr
+echo wa 0x3150 3 > /sys/class/register/reg
+echo wa 0x3150 1 > /sys/class/register/reg
+
+the steps above set  the cvd that  will  write the signal data to mem
+*************************************************/
+static ssize_t dumpmem_store(struct device *dev, struct device_attribute *attr,const char *buff,size_t len)
+{
+	unsigned int n=0, fps=0;
+    	unsigned char ret=0;
+	char *buf_orig, *ps, *token;
+    	char *parm[6] = {NULL};
+    	struct tvafe_dev_s *devp;
+    	if(!buff)
+	    return len;
+    	buf_orig = kstrdup(buff, GFP_KERNEL);
+	//printk(KERN_INFO "input cmd : %s",buf_orig);
+	devp = dev_get_drvdata(dev);
+	ps = buf_orig;
+    	while (1) {
+    		token = strsep(&ps, " \n");
+    		if (token == NULL)
+    			break;
+    		if (*token == '\0')
+    			continue;
+    		parm[n++] = token;
+	    	}
+	if(!strncmp(parm[0], "dumpmem", strlen("dumpmem"))){
+	 	 if(parm[1] != NULL){
+
+		    struct file *filp = NULL;
+		    loff_t pos = 0;
+		    void * buf = NULL;
+		    int i = 0;
+   // unsigned int canvas_real_size = devp->canvas_h * devp->canvas_w;
+		    mm_segment_t old_fs = get_fs();
+		    set_fs(KERNEL_DS);
+		    filp = filp_open(parm[1],O_RDWR|O_CREAT,0666);
+		    if(IS_ERR(filp)){
+			printk(KERN_ERR"create %s error.\n",parm[1]);
+			return;
+			}
+
+		    buf = phys_to_virt(devp->mem.start);
+		    vfs_write(filp,buf,devp->mem.size,&pos);
+		    pr_info("write buffer %2d of %2u  .\n",i,devp->mem.size,parm[1]);
+		    pr_info("devp->mem.start   %x  .\n",devp->mem.start);
+		    vfs_fsync(filp,0);
+		    filp_close(filp,NULL);
+		    set_fs(old_fs);
+		}
+	}
+
+}
+
+
 static ssize_t tvafe_show(struct device *dev,struct device_attribute *attr,char *buff)
 {
 	ssize_t len = 0;
@@ -164,6 +308,10 @@ static ssize_t tvafe_show(struct device *dev,struct device_attribute *attr,char 
 	return len;
 }
 static DEVICE_ATTR(debug,0644,tvafe_show,tvafe_store);
+static DEVICE_ATTR(dumpmem,0644,NULL,dumpmem_store);
+
+
+
 /*
 * echo n >/sys/class/tvafe/tvafe0/cvd_reg8a set register of cvd2
 */
@@ -836,6 +984,7 @@ static long tvafe_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 	enum tvin_sig_fmt_e fmt = tvafe->parm.info.fmt;
 	struct tvafe_vga_edid_s edid;
 	enum tvafe_cvbs_video_e cvbs_lock_status = TVAFE_CVBS_VIDEO_HV_UNLOCKED;
+	struct tvafe_adc_cal_clamp_s clamp_diff;
 
 	if (_IOC_TYPE(cmd) != TVIN_IOC_MAGIC) {
 		pr_err("%s invalid command: %u\n", __func__, cmd);
@@ -859,6 +1008,35 @@ static long tvafe_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 
 	switch (cmd)
 	{
+		case TVIN_IOC_LOAD_REG:
+			{
+		    if (copy_from_user(&tvaferegs, argp, sizeof(struct am_regs_s))) {
+				pr_info(KERN_ERR "[tvafe..]load reg errors: can't get buffer lenght\n");
+				ret = -EINVAL;
+				break;
+			}
+
+			if (!tvaferegs.length || (tvaferegs.length > 512)) {
+				pr_info(KERN_ERR "[tvafe..]load regs error: buffer length overflow!!!, length=0x%x \n",
+					tvaferegs.length);
+				ret = -EINVAL;
+				break;
+			}
+			if(enable_db_reg) {
+				tvafe_set_regmap(&tvaferegs);
+			}
+			break;
+		    }
+
+		case TVIN_IOC_S_AFE_ADC_DIFF:
+			if (copy_from_user(&clamp_diff, argp, sizeof(struct tvafe_adc_cal_clamp_s)))
+			{
+				ret = -EFAULT;
+				break;
+			}
+			pr_info(" clamp_diff=%d,%d,%d\n",clamp_diff.a_analog_clamp_diff,clamp_diff.b_analog_clamp_diff,clamp_diff.c_analog_clamp_diff);
+			break;
+
 		case TVIN_IOC_S_AFE_ADC_CAL:
 			if (copy_from_user(&tvafe->cal.cal_val, argp, sizeof(struct tvafe_adc_cal_s)))
 			{
@@ -1234,7 +1412,7 @@ static int tvafe_mmap(struct file *file, struct vm_area_struct * vma)
 	vma->vm_pgoff = off >> PAGE_SHIFT;
 
 	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
-	vma->vm_flags |= VM_IO | VM_DONTEXPAND | VM_DONTDUMP;
+	vma->vm_flags |= VM_IO | VM_RESERVED;
 
 	size = vma->vm_end - vma->vm_start;
 	pfn  = off >> PAGE_SHIFT;
@@ -1282,6 +1460,9 @@ static void tvafe_delete_device(int minor)
 	device_destroy(tvafe_clsp, devno);
 }
 
+typedef int (*hook_func_t)(void);
+extern void aml_fe_hook_cvd(hook_func_t atv_mode,hook_func_t cvd_hv_lock);
+
 static int tvafe_drv_probe(struct platform_device *pdev)
 {
 	int ret = 0;
@@ -1296,6 +1477,15 @@ static int tvafe_drv_probe(struct platform_device *pdev)
 		goto fail_kmalloc_tdev;
 	}
 	memset(tdevp, 0, sizeof(struct tvafe_dev_s));
+#ifdef CONFIG_USE_OF
+	if (pdev->dev.of_node) {
+	        ret = of_property_read_u32(pdev->dev.of_node,"tvafe_id",&(tdevp->index));
+		if(ret) {
+			pr_err("Can't find  tvafe id.\n");
+			goto fail_get_id;
+		}
+	}
+#else
 
 	/*@to get from bsp*/
 	if(pdev->id == -1){
@@ -1305,6 +1495,8 @@ static int tvafe_drv_probe(struct platform_device *pdev)
 		pr_err("%s: failed to get device id\n", __func__);
 		goto fail_get_id;
 	}
+#endif
+
 	tdevp->flags = 0;
 
 	/* create cdev and reigser with sysfs */
@@ -1325,25 +1517,44 @@ static int tvafe_drv_probe(struct platform_device *pdev)
 	/*create sysfs attribute files*/
 	ret = device_create_file(tdevp->dev,&dev_attr_debug);
 	ret = device_create_file(tdevp->dev,&dev_attr_cvd_reg8a);
+	ret = device_create_file(tdevp->dev,&dev_attr_dumpmem);
+
 	if(ret < 0) {
 		pr_err("tvafe: fail to create dbg attribute file\n");
 		goto fail_create_dbg_file;
 	}
 
 	/* get device memory */
+#ifdef CONFIG_USE_OF
+	ret = find_reserve_block(pdev->dev.of_node->name,0);
+	if(ret < 0){
+	    pr_err("\ntvafe memory resource undefined.\n");
+	    goto fail_get_resource_mem;
+	}
+	tdevp->mem.start = (phys_addr_t)get_reserve_block_addr(ret);
+	tdevp->mem.size = (phys_addr_t)get_reserve_block_size(ret);
+#else
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!res) {
 		pr_err("tvafe: can't get memory resource\n");
 		ret = -EFAULT;
 		goto fail_get_resource_mem;
 	}
-
 	tdevp->mem.start = res->start;
 	tdevp->mem.size = res->end - res->start + 1;
+#endif
 	pr_info(" tvafe cvd memory addr is:0x%x, cvd mem_size is:0x%x . \n",
 			tdevp->mem.start,
 			tdevp->mem.size);
+#ifdef CONFIG_USE_OF
+	if(of_property_read_u32_array(pdev->dev.of_node, "tvafe_pin_mux", 
+				(u32*)tvafe_pinmux.pin, TVAFE_SRC_SIG_MAX_NUM)){
+		pr_err("Can't get pinmux data.\n");
+	}
+	tdevp->pinmux = &tvafe_pinmux;
+#else
 	tdevp->pinmux = pdev->dev.platform_data;
+#endif
 	if (!tdevp->pinmux) {
 		pr_err("tvafe: no platform data!\n");
 		ret = -ENODEV;
@@ -1360,7 +1571,10 @@ static int tvafe_drv_probe(struct platform_device *pdev)
 	tvafe_set_apb_bus_err_ctrl();
 	dev_set_drvdata(tdevp->dev, tdevp);
         platform_set_drvdata(pdev,tdevp);
-
+#ifdef CONFIG_AM_DVB
+	/* register aml_fe hook for atv search */
+	aml_fe_hook_cvd(tvafe_cvd2_get_atv_format,tvafe_cvd2_get_hv_lock);
+#endif
     /**disable tvafe clock**/
     tvafe_enable_module(false);
 
@@ -1388,6 +1602,7 @@ static int tvafe_drv_remove(struct platform_device *pdev)
 	mutex_destroy(&tdevp->afe_mutex);
 	tvin_unreg_frontend(&tdevp->frontend);
 	device_remove_file(tdevp->dev, &dev_attr_debug);
+	device_remove_file(tdevp->dev, &dev_attr_dumpmem);
 	tvafe_delete_device(tdevp->index);
 	cdev_del(&tdevp->cdev);
 	kfree(tdevp);
@@ -1434,6 +1649,18 @@ static int tvafe_drv_resume(struct platform_device *pdev)
 }
 #endif
 
+#ifdef CONFIG_OF
+static const struct of_device_id tvafe_dt_match[]={
+    {
+        .compatible     = "amlogic,tvafe",
+    },
+    {},
+};
+
+#else
+#define tvafe_dt_match NULL
+#endif
+
 static struct platform_driver tvafe_driver = {
 	.probe      = tvafe_drv_probe,
 	.remove     = tvafe_drv_remove,
@@ -1443,6 +1670,7 @@ static struct platform_driver tvafe_driver = {
 #endif
 	.driver     = {
 		.name   = TVAFE_DRIVER_NAME,
+		.of_match_table = tvafe_dt_match,
 	}
 };
 

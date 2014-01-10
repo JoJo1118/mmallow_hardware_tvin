@@ -73,6 +73,7 @@ extern void tvafe_vga_get_edid(struct tvafe_vga_edid_s *edid);
 extern void tvafe_set_cal_value(struct tvafe_cal_s *cal);
 extern int tvafe_get_cal_value(struct tvafe_cal_s *cal);
 extern void tvafe_set_cal_value2(struct tvafe_adc_cal_s *cal);
+extern void tvafe_set_regmap(struct am_regs_s *p);
 extern int tvafe_get_cal_value2(struct tvafe_adc_cal_s *cal);
 extern bool tvafe_adc_cal(struct tvin_parm_s *parm, struct tvafe_cal_s *cal);
 extern void tvafe_adc_clamp_adjust(struct tvin_parm_s *parm, struct tvafe_cal_s *cal);

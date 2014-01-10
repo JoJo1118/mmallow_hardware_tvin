@@ -19,9 +19,10 @@
 #include "../tvin_global.h"
 #include "../tvin_format_table.h"
 
-#define HDMIRX_VER "Ref.2013/07/04-2"
+#define HDMIRX_VER "Ref.2013/11/26"
 #define HDMI_STATE_CHECK_FREQ     (20*5)
 #define ABS(x) ((x)<0 ? -(x) : (x))
+#define CEC_FUNC_ENABLE		0
 
 /*
  * enum definitions
@@ -413,6 +414,7 @@ void hdmirx_config_video(struct hdmi_rx_ctrl_video *video_params);
 int hdmirx_get_tmds_clock(void);
 int hdmirx_get_pixel_clock(void);
 void hdmirx_read_audio_info(struct aud_info_s* audio_info);
+int hdmirx_get_pdec_aud_sts(void);
 void hdmirx_read_vendor_specific_info_frame(struct vendor_specific_info_s* vs);
 void hdmirx_set_pinmux(void);
 int hdmirx_get_clock(int index);

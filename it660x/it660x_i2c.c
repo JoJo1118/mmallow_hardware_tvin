@@ -17,7 +17,7 @@
 #include <linux/i2c.h>
 
 /* Amlogic Headers */
-#include <linux/tvin/tvin.h>
+#include <linux/amlogic/tvin/tvin.h>
 
 /* Local Headers */
 #include "typedef.h"

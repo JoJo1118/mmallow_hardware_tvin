@@ -590,6 +590,7 @@ static void viuin_stop(struct tvin_frontend_s *fe, enum tvin_port_e port)
 static int viuin_isr(struct tvin_frontend_s *fe, unsigned int hcnt64)
 {	
 	viuin_t *devp = container_of(fe,viuin_t,frontend);
+#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
 	vsync_enter_line_curr = (READ_VCBUS_REG(devp->enc_info_addr)>>16)&0x1fff;
 	if(vsync_enter_line_curr > vsync_enter_line_max)
                 vsync_enter_line_max = vsync_enter_line_curr;
@@ -597,6 +598,7 @@ static int viuin_isr(struct tvin_frontend_s *fe, unsigned int hcnt64)
 		vsync_enter_line_threshold_overflow_count++;
 		return TVIN_BUF_SKIP;
 	}
+#endif
 #ifdef CONFIG_GAMMA_AUTO_TUNE
 	if (gamma_tune_en) {	
 		devp->prop = fe->private_data;

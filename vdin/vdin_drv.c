@@ -47,7 +47,9 @@
 #include <linux/amlogic/aml_common.h>
 #include <mach/irqs.h>
 #include <mach/mod_gate.h>
+#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
 #include <mach/vpu.h>
+#endif
 /* Local Headers */
 #include "../tvin_global.h"
 #include "../tvin_format_table.h"
@@ -627,10 +629,12 @@ static void vdin_start_dec(struct vdin_dev_s *devp)
 		/*enable irq */
 		enable_irq(devp->irq);
 	}
+	#ifdef CONFIG_AM_TIMESYNC
 	/*disable audio&video sync used for libplayer*/
 	tsync_set_enable(0);
 	/* enable system_time */
 	timestamp_pcrscr_enable(1);
+	#endif
 }
 
 /*
@@ -766,7 +770,7 @@ int stop_tvin_service(int no)
 		pr_err("%s:decode hasn't started.\n",__func__);
 		return -EBUSY;
 	}
-#if MESON_CPU_TYPE < MESON_CPU_TYPE_MESON8
+#if MESON_CPU_TYPE < CONFIG_ARCH_MESON6
 	devp->flags |= VDIN_FLAG_DEC_STOP_ISR;
 #endif
 	vdin_stop_dec(devp);
@@ -841,7 +845,9 @@ static int vdin_func(int no, vdin_arg_t *arg)
 			vdin_set_matrixs(devp,parm->matrix_id,parm->color_convert);
 			break;
 		case VDIN_CMD_SET_CM2:
+#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
 			vdin_set_cm2(devp->addr_offset,devp->h_active,devp->v_active,parm->cm2);
+#endif
 			break;
 		case VDIN_CMD_ISR:
 			vdin_rdma_isr(devp);
@@ -1371,7 +1377,7 @@ static irqreturn_t vdin_v4l2_isr(int irq, void *dev_id)
 	/*check vs is valid base on the time during continuous vs*/
         vdin_check_cycle(devp);
         
-#if MESON_CPU_TYPE < MESON_CPU_TYPE_MESON8
+#if MESON_CPU_TYPE < CONFIG_ARCH_MESON6
 	if (devp->flags & VDIN_FLAG_DEC_STOP_ISR){
 		vdin_hw_disable(devp->addr_offset);
 		devp->flags &= ~VDIN_FLAG_DEC_STOP_ISR;
@@ -2040,9 +2046,12 @@ static ssize_t vdin_attr_store(struct device *dev,struct device_attribute *attr,
         devp = dev_get_drvdata(dev);
         parse_param(buf_orig,&parm);
 
+#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
         if(!strcmp(parm[0],"cm2")){
 		set_chroma_regs(devp->addr_offset,devp->h_active,devp->v_active);
-	}else if(!strncmp(parm[0], "fps", 3)){
+	}else 
+#endif
+	    if(!strncmp(parm[0], "fps", 3)){
 		if(devp->cycle)
 			fps = (VDIN_CRYSTAL + (devp->cycle>>3))/devp->cycle;
                 pr_info("%u f/s\n",fps);
@@ -2282,7 +2291,9 @@ static ssize_t vdin_debug_for_isp_store(struct device * dev,
         parse_param(buf_orig,&parm);
 
 	if(!strcmp(parm[0], "bypass_isp")){
+#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
                 vdin_bypass_isp(devp->addr_offset);
+#endif
 		tmp_isp.cam_command = CMD_ISP_BYPASS;
 		if(devp->frontend->dec_ops->ioctl)
 			devp->frontend->dec_ops->ioctl(devp->frontend,(void *)&tmp_isp);
@@ -2532,7 +2543,7 @@ static ssize_t memp_store(struct class *class,
 }
 
 static CLASS_ATTR(memp, 0644, memp_show, memp_store);
-
+#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
 static ssize_t vdin_cm2_show(struct device *dev, 
              struct device_attribute *attr,
 			                     char *buf)
@@ -2658,7 +2669,7 @@ static ssize_t vdin_cm2_store(struct device *dev,
 }
 
 static DEVICE_ATTR(cm2, S_IWUSR | S_IRUGO, vdin_cm2_show, vdin_cm2_store);
-
+#endif
 
 static int vdin_add_cdev(struct cdev *cdevp, struct file_operations *fops,
 		int minor)
@@ -2732,7 +2743,9 @@ static int vdin_drv_probe(struct platform_device *pdev)
         ret = device_create_file(vdevp->dev,&dev_attr_isr_log);
         #endif
         ret = device_create_file(vdevp->dev,&dev_attr_attr);
+    #if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
         ret = device_create_file(vdevp->dev,&dev_attr_cm2);
+    #endif
 	ret = device_create_file(vdevp->dev,&dev_attr_crop);
 	ret = device_create_file(vdevp->dev,&dev_attr_debug_for_isp);
 	if(ret < 0) {
@@ -2847,7 +2860,9 @@ static int vdin_drv_remove(struct platform_device *pdev)
         device_remove_file(vdevp->dev,&dev_attr_isr_log);
         #endif
         device_remove_file(vdevp->dev,&dev_attr_attr);
+    #if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
 		device_remove_file(vdevp->dev,&dev_attr_cm2);
+	#endif
 	device_remove_file(vdevp->dev,&dev_attr_sig_det);
 
 	vdin_delete_device(vdevp->index);

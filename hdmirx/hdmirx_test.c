@@ -170,7 +170,7 @@ void hdmirx_rd_check_reg (unsigned char dev_id, unsigned long addr, unsigned lon
     }
     if ((rd_data | mask) != (exp_data | mask)) 
     {
-        printk("Error: %s(%d) addr=0x%x, rd_data=0x%x, exp_data=0x%x, mask=0x%x\n", 
+        printk("Error: %s(%d) addr=0x%lx, rd_data=0x%lx, exp_data=0x%lx, mask=0x%lx\n",
             __func__, dev_id, addr, rd_data, exp_data, mask);
     }
     

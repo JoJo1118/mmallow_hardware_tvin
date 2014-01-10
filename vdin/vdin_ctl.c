@@ -26,7 +26,7 @@
 #include "vdin_drv.h"
 #include "vdin_vf.h"
 #include "vdin_canvas.h"
-#include "../../drivers/amlogic/amports/ve_regs.h"
+#include "../../../../common/drivers/amlogic/amports/ve_regs.h"
 
 #define VDIN_MEAS_24M_1MS 24000
 
@@ -1609,8 +1609,10 @@ inline void vdin_hw_enable(unsigned int offset)
 
 inline void vdin_hw_disable(unsigned int offset)
 {
+#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
 	/* disable cm2 */
 	WR_BITS(VDIN_CM_BRI_CON_CTRL,0,CM_TOP_EN_BIT,CM_TOP_EN_WID);
+#endif
 	/* disable video data input */
 	// [    4]  top.datapath_en  = 0
 	WR_BITS(VDIN_COM_CTRL0, 0, 4, 1);
@@ -1974,6 +1976,7 @@ inline void vdin_wr_reverse(unsigned int offset, bool hreverse, bool vreverse)
 #endif
 }
 
+#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
 void vdin_bypass_isp(unsigned int offset)
 {
 	WR_BITS(VDIN_CM_BRI_CON_CTRL, 0,CM_TOP_EN_BIT, CM_TOP_EN_WID);
@@ -1982,7 +1985,6 @@ void vdin_bypass_isp(unsigned int offset)
 }
 void set_chroma_regs(unsigned int offset, unsigned int h_active,unsigned int v_active)
 {
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
 
         int i,j,k;
         int cm2_cfg_reg[640];
@@ -2067,7 +2069,7 @@ void set_chroma_regs(unsigned int offset, unsigned int h_active,unsigned int v_a
 	//enable cm2
 	WR_BITS(VDIN_CM_BRI_CON_CTRL,1,CM_TOP_EN_BIT,CM_TOP_EN_WID);
 	pr_info("%s cm2 init ok.\n",__func__);
-#endif
+
 }
 void vdin_set_cm2(unsigned int offset,unsigned int w,unsigned int h,unsigned int *cm2)
 {
@@ -2091,3 +2093,4 @@ void vdin_set_cm2(unsigned int offset,unsigned int w,unsigned int h,unsigned int
 	
     WR_BITS(VDIN_CM_BRI_CON_CTRL, 1, CM_TOP_EN_BIT,CM_TOP_EN_WID);
 }
+#endif

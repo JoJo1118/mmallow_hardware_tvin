@@ -156,7 +156,11 @@ extern void tvafe_cvd2_reset_pga(void);
 extern enum tvin_cvbs_pos_ctl_e tvafe_cvd2_set_pos(struct tvafe_cvd2_s *cvd2);
 #endif
 extern enum tvafe_cvbs_video_e tvafe_cvd2_get_lock_status(struct tvafe_cvd2_s *cvd2);
+extern int tvafe_cvd2_get_atv_format(void);
+extern int tvafe_cvd2_get_hv_lock(void);
 extern void tvafe_cvd2_hold_rst(struct tvafe_cvd2_s *cvd2);
 extern void tvafe_cvd2_set_reg8a(unsigned int v);
+extern void get_cvd_version(char **ver,char **last_ver);
+
 #endif // _TVAFE_CVD_H
 

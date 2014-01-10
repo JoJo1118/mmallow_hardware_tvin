@@ -27,9 +27,9 @@
 #include <asm/delay.h>
 #include <asm/atomic.h>
 
-#include <linux/amports/amstream.h>
-#include <linux/amports/ptsserv.h>
-#include <linux/tvin/tvin_v4l2.h>
+#include <linux/amlogic/amports/amstream.h>
+#include <linux/amlogic/amports/ptsserv.h>
+#include <linux/amlogic/tvin/tvin_v4l2.h>
 #include <mach/am_regs.h>
 
 #include "../tvin_frontend.h"

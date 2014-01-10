@@ -1500,7 +1500,7 @@ static int vdin_open(struct inode *inode, struct file *file)
         disable_irq_nosync(devp->irq);
 
 	/* remove the hardware limit to vertical [0-max]*/
-	WR(VPP_PREBLEND_VD1_V_START_END, 0x00000fff);
+    WRITE_VCBUS_REG(VPP_PREBLEND_VD1_V_START_END, 0x00000fff);
 	pr_info("open device %s ok\n", dev_name(devp->dev));
 	return ret;
 }
@@ -1522,7 +1522,7 @@ static int vdin_release(struct inode *inode, struct file *file)
 	file->private_data = NULL;
 
 	/* reset the hardware limit to vertical [0-1079]  */
-        WR(VPP_PREBLEND_VD1_V_START_END, 0x00000437);
+        WRITE_VCBUS_REG(VPP_PREBLEND_VD1_V_START_END, 0x00000437);
 	pr_info("close device %s ok\n", dev_name(devp->dev));
 	return 0;
 }
@@ -2118,7 +2118,7 @@ static ssize_t vdin_attr_store(struct device *dev,struct device_attribute *attr,
                 /*disable irq untill vdin is configured completely*/
                 disable_irq_nosync(devp->irq);
 	        /* remove the hardware limit to vertical [0-max]*/
-	        WR(VPP_PREBLEND_VD1_V_START_END, 0x00000fff);
+	        WRITE_VCBUS_REG(VPP_PREBLEND_VD1_V_START_END, 0x00000fff);
 	        pr_info("open device %s ok\n", dev_name(devp->dev));
                 vdin_open_fe(port,0,devp);
                 devp->parm.port = port;
@@ -2135,7 +2135,7 @@ static ssize_t vdin_attr_store(struct device *dev,struct device_attribute *attr,
 	        /* free irq */
 	        free_irq(devp->irq,(void *)devp);
 	        /* reset the hardware limit to vertical [0-1079]  */
-	        WR(VPP_PREBLEND_VD1_V_START_END, 0x00000437);
+	        WRITE_VCBUS_REG(VPP_PREBLEND_VD1_V_START_END, 0x00000437);
         }
         else if(!strcmp(parm[0],"v4l2stop")){
                 stop_tvin_service(devp->index);

@@ -770,7 +770,7 @@ int stop_tvin_service(int no)
 		pr_err("%s:decode hasn't started.\n",__func__);
 		return -EBUSY;
 	}
-#if MESON_CPU_TYPE < MESON_CPU_TYPE_MESON6
+#if MESON_CPU_TYPE < CONFIG_ARCH_MESON6
 	devp->flags |= VDIN_FLAG_DEC_STOP_ISR;
 #endif
 	vdin_stop_dec(devp);
@@ -1377,7 +1377,7 @@ static irqreturn_t vdin_v4l2_isr(int irq, void *dev_id)
 	/*check vs is valid base on the time during continuous vs*/
         vdin_check_cycle(devp);
         
-#if MESON_CPU_TYPE < MESON_CPU_TYPE_MESON6
+#if MESON_CPU_TYPE < CONFIG_ARCH_MESON6
 	if (devp->flags & VDIN_FLAG_DEC_STOP_ISR){
 		vdin_hw_disable(devp->addr_offset);
 		devp->flags &= ~VDIN_FLAG_DEC_STOP_ISR;

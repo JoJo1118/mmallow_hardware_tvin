@@ -26,7 +26,7 @@
 #include "vdin_drv.h"
 #include "vdin_vf.h"
 #include "vdin_canvas.h"
-#include "../../../../common/drivers/amlogic/amports/ve_regs.h"
+//#include "../../../../common/drivers/amlogic/amports/ve_regs.h"
 
 #define VDIN_MEAS_24M_1MS 24000
 
@@ -413,18 +413,18 @@ void vdin_set_meas_mux(unsigned int offset, enum tvin_port_e port_)
 	// set VDIN_MEAS in accumulation mode
 	WR_BITS(VDIN_MEAS_CTRL0, 1, MEAS_VS_TOTAL_CNT_EN_BIT, MEAS_VS_TOTAL_CNT_EN_WID);
 	// set VPP_VDO_MEAS in accumulation mode
-	WRITE_VCBUS_REG_BITS(VPP_VDO_MEAS_CTRL,
-			1, VDO_MEAS_ACCUM_CNT_BIT, VDO_MEAS_ACCUM_CNT_WID);
+	WR_BITS(VPP_VDO_MEAS_CTRL,
+			1, 8, 1);
 	// set VPP_MEAS in latch-on-falling-edge mode
-	WRITE_VCBUS_REG_BITS(VPP_VDO_MEAS_CTRL,
-			1, VDO_MEAS_EDGE_BIT, VDO_MEAS_EDGE_WID);
+	WR_BITS(VPP_VDO_MEAS_CTRL,
+			1, 9, 1);
 	// set VDIN_MEAS mux
 	WR_BITS(VDIN_MEAS_CTRL0,meas_mux, MEAS_HS_VS_SEL_BIT, MEAS_HS_VS_SEL_WID);
 	// manual reset VDIN_MEAS & VPP_VDO_MEAS at the same time, rst = 1 & 0
 	WR_BITS(VDIN_MEAS_CTRL0, 1, MEAS_RST_BIT, MEAS_RST_WID);
-	WRITE_VCBUS_REG_BITS(VPP_VDO_MEAS_CTRL, 1, VDO_MEAS_RST_BIT, VDO_MEAS_RST_WID);
+	WR_BITS(VPP_VDO_MEAS_CTRL, 1, 10, 1);
 	WR_BITS(VDIN_MEAS_CTRL0,0, MEAS_RST_BIT, MEAS_RST_WID);
-	WRITE_VCBUS_REG_BITS(VPP_VDO_MEAS_CTRL,0, VDO_MEAS_RST_BIT, VDO_MEAS_RST_WID);
+	WR_BITS(VPP_VDO_MEAS_CTRL,0, 10, 1);
 }
 
 

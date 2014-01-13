@@ -770,9 +770,10 @@ int stop_tvin_service(int no)
 		pr_err("%s:decode hasn't started.\n",__func__);
 		return -EBUSY;
 	}
-#if MESON_CPU_TYPE < MESON_CPU_TYPE_MESON8
-	devp->flags |= VDIN_FLAG_DEC_STOP_ISR;
-#endif
+/* remove for m6&m8 camera function, may cause hardware disable bug on kernel 3.10 */
+//#if MESON_CPU_TYPE < MESON_CPU_TYPE_MESON8
+//	devp->flags |= VDIN_FLAG_DEC_STOP_ISR;
+//#endif
 	vdin_stop_dec(devp);
         /*close fe*/
         if(devp->frontend->dec_ops->close)
@@ -1377,13 +1378,14 @@ static irqreturn_t vdin_v4l2_isr(int irq, void *dev_id)
 	/*check vs is valid base on the time during continuous vs*/
         vdin_check_cycle(devp);
         
-#if MESON_CPU_TYPE < MESON_CPU_TYPE_MESON8
-	if (devp->flags & VDIN_FLAG_DEC_STOP_ISR){
-		vdin_hw_disable(devp->addr_offset);
-		devp->flags &= ~VDIN_FLAG_DEC_STOP_ISR;
-		goto irq_handled;
-	}
-#endif
+/* remove for m6&m8 camera function, may cause hardware disable bug on kernel 3.10 */        
+//#if MESON_CPU_TYPE < MESON_CPU_TYPE_MESON8
+//	if (devp->flags & VDIN_FLAG_DEC_STOP_ISR){
+//		vdin_hw_disable(devp->addr_offset);
+//		devp->flags &= ~VDIN_FLAG_DEC_STOP_ISR;
+//		goto irq_handled;
+//	}
+//#endif
 	/* ignore invalid vs base on the continuous fields different cnt to void screen flicker */
 
 	last_field_type = devp->curr_field_type;

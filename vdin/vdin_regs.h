@@ -486,26 +486,26 @@
 
 //#define VDIN_MATRIX_PROBE_COLOR           0x1228
 //Read only 
-#define COMPONENT0_PROBE_COLOR_BIT                     20
-#define COMPONENT0_PROBE_COLOR_WID                    10
-#define COMPONENT1_PROBE_COLOR_BIT                     10
-#define COMPONENT1_PROBE_COLOR_WID                    10
-#define COMPONENT2_PROBE_COLOR_BIT                     0
-#define COMPONENT2_PROBE_COLOR_WID                    10
+#define COMPONENT0_PROBE_COLOR_BIT                20
+#define COMPONENT0_PROBE_COLOR_WID                10
+#define COMPONENT1_PROBE_COLOR_BIT                10
+#define COMPONENT1_PROBE_COLOR_WID                10
+#define COMPONENT2_PROBE_COLOR_BIT                0
+#define COMPONENT2_PROBE_COLOR_WID                10
 
-//#define VDIN_MATRIX_HL_COLOR                  0x1229 
-#define COMPONENT0_HL_COLOR_BIT                     16
-#define COMPONENT0_HL_COLOR_WID                    8
-#define COMPONENT1_HL_COLOR_BIT                     8
-#define COMPONENT1_HL_COLOR_WID                    8
-#define COMPONENT2_HL_COLOR_BIT                     0
-#define COMPONENT2_HL_COLOR_WID                    8
+//#define VDIN_MATRIX_HL_COLOR                0x1229 
+#define COMPONENT0_HL_COLOR_BIT                   16
+#define COMPONENT0_HL_COLOR_WID                   8
+#define COMPONENT1_HL_COLOR_BIT                   8
+#define COMPONENT1_HL_COLOR_WID                   8
+#define COMPONENT2_HL_COLOR_BIT                   0
+#define COMPONENT2_HL_COLOR_WID                   8
 
 //#define VDIN_MATRIX_PROBE_POS               0x122a
-#define PROBE_POS_X_BIT                             16
-#define PROBE_POS_X_WID                            13
-#define PROBE_POX_Y_BIT                             0
-#define PROBE_POX_Y_WID                            13
+#define PROBE_POS_X_BIT                           16
+#define PROBE_POS_X_WID                           13
+#define PROBE_POX_Y_BIT                           0
+#define PROBE_POX_Y_WID                           13
 #if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
 
 //#define VDIN_CHROMA_ADDR_PORT 	      0x122b
@@ -520,7 +520,7 @@
 #define SED_YUVINVEN_BIT			  24
 #define SED_YUVINVEN_WID			  3
 #define REG_ADJ_BRI_BIT				  12
-#define REGADJ_BRI_WID				  11
+#define REG_ADJ_BRI_WID				  11
 #define REG_ADJ_CON_BIT				  0
 #define REG_ADJ_CON_WID				  12
 
@@ -537,13 +537,13 @@
 #endif
 //#define VDIN_HIST_CTRL                             0x1230
 //Bit 10:9  ldim_stts_din_sel, 00: from matrix0 dout,  01: from vsc_dout, 10: from matrix1 dout, 11: form matrix1 din 
-#define LDIM_STTS_DIN_SEL_BIT        9
-#define LDIM_STTS_DIN_SEL_WID       2
-#define LDIM_STTS_EN_BIT                  8
-#define LDIM_STTS_EN_WID                 1
+#define LDIM_STTS_DIN_SEL_BIT                     9
+#define LDIM_STTS_DIN_SEL_WID                     2
+#define LDIM_STTS_EN_BIT                          8
+#define LDIM_STTS_EN_WID                          1
 //00: from matrix0 dout,  01: from vsc_dout, 10: from matrix1 dout, 11: form matrix1 din
-#define HIST_DIN_SEL_BIT                    2
-#define HIST_DIN_SEL_WID                   2
+#define HIST_DIN_SEL_BIT                          2
+#define HIST_DIN_SEL_WID                          2
 #endif
 
 //#define VDIN_HIST_CTRL                             0x1230

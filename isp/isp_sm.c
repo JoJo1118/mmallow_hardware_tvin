@@ -60,6 +60,8 @@ MODULE_PARM_DESC(exposure_extra,"\n debug exposure for ae.\n");
 #define N1DB  913
 #define P2DB 1289
 #define N2DB  813
+#define P1DB5 1217
+#define N1DB5 862
 
 #define AF_DETECT			0x00000001
 #define AF_FINE_TUNE			0x00000002
@@ -170,32 +172,27 @@ void isp_set_manual_exposure(isp_dev_t *devp)
 	struct isp_ae_sm_s *aepa = &sm_state.isp_ae_parm;
 	int i;
 	int manual_target;
-	if((aepa->targ > aep->targethigh)||(aepa->targ < aep->targetlow))
-	{
+	if((aepa->targ > aep->targethigh)||(aepa->targ < aep->targetlow)){
 		return;
 	}
-	printk("devp->ae_info.manul_level=%d\n",devp->ae_info.manul_level);
 	i = devp->ae_info.manul_level;
 	manual_target = aep->targetmid;
-	if(i > 0)
-	{
-		for(;i>0;i--)
-		{
-			manual_target = (manual_target*P1DB+512) >> 10;
+	if(i > 0){
+		for(;i>0;i--){
+			manual_target = (manual_target*P2DB+512) >> 10;
 		}
 	}
-	else if(i < 0)
-	{
-		for(;i<0;i++)
-		{
-			manual_target = (manual_target*N1DB+512) >> 10;
+	else if(i < 0){
+		for(;i<0;i++){
+			manual_target = (manual_target*N2DB+512) >> 10;
 		}
 	}
 	aepa->targ = manual_target;
     if(aepa->targ > aep->targethigh)
 		aepa->targ = aep->targethigh;
     if(aepa->targ < aep->targetlow)
-		aepa->targ = aep->targetlow;
+		aepa->targ = aep->targetlow;	
+	pr_info("devp->ae_info.manul_level=%d,targ=%d\n",devp->ae_info.manul_level,aepa->targ);
 }
 
 void af_sm_init(isp_dev_t *devp)

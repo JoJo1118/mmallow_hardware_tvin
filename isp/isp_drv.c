@@ -969,6 +969,7 @@ static void isp_fe_stop(struct tvin_frontend_s *fe, enum tvin_port_e port)
 static int isp_fe_ioctl(struct tvin_frontend_s *fe, void *arg)
 {
 	unsigned int x0,y0,x1,y1;
+	xml_wb_manual_t *wb;
 	isp_dev_t *devp = container_of(fe,isp_dev_t,frontend);
 	cam_parameter_t *param = (cam_parameter_t *)arg;
 	enum cam_command_e cmd;
@@ -1000,6 +1001,8 @@ static int isp_fe_ioctl(struct tvin_frontend_s *fe, void *arg)
 		        break;
                 case CAM_COMMAND_AWB:
 			if(!(devp->flag & ISP_FLAG_CAPTURE)){
+				wb = devp->cam_param->xml_wb_manual;
+				isp_set_manual_wb(wb);
 	               	        devp->flag |= ISP_FLAG_AWB;
 			}
 		        break;

@@ -112,7 +112,7 @@ static ssize_t tvafe_store(struct device *dev, struct device_attribute *attr,con
 	        tvafe_adc_comphase_pr();
         else if(!strncmp(buff,"vdin_bbld",strlen("vdin_bbld"))){
                 tvin_vdin_bbar_init(devp->tvafe.parm.info.fmt);
-                devp->tvafe.adc.vga_auto.phase_state == VGA_VDIN_BORDER_DET;
+                devp->tvafe.adc.vga_auto.phase_state = VGA_VDIN_BORDER_DET;
         }
         else if(!strncmp(buff,"pdown",strlen("pdown"))){
                 tvafe_enable_module(false);
@@ -219,8 +219,7 @@ the steps above set  the cvd that  will  write the signal data to mem
 *************************************************/
 static ssize_t dumpmem_store(struct device *dev, struct device_attribute *attr,const char *buff,size_t len)
 {
-	unsigned int n=0, fps=0;
-    	unsigned char ret=0;
+	unsigned int n=0;
 	char *buf_orig, *ps, *token;
     	char *parm[6] = {NULL};
     	struct tvafe_dev_s *devp;
@@ -240,29 +239,28 @@ static ssize_t dumpmem_store(struct device *dev, struct device_attribute *attr,c
 	    	}
 	if(!strncmp(parm[0], "dumpmem", strlen("dumpmem"))){
 	 	 if(parm[1] != NULL){
-
 		    struct file *filp = NULL;
 		    loff_t pos = 0;
 		    void * buf = NULL;
-		    int i = 0;
    // unsigned int canvas_real_size = devp->canvas_h * devp->canvas_w;
 		    mm_segment_t old_fs = get_fs();
 		    set_fs(KERNEL_DS);
 		    filp = filp_open(parm[1],O_RDWR|O_CREAT,0666);
 		    if(IS_ERR(filp)){
 			printk(KERN_ERR"create %s error.\n",parm[1]);
-			return;
+			return len;
 			}
 
 		    buf = phys_to_virt(devp->mem.start);
 		    vfs_write(filp,buf,devp->mem.size,&pos);
-		    pr_info("write buffer %2d of %2u  .\n",i,devp->mem.size,parm[1]);
-		    pr_info("devp->mem.start   %x  .\n",devp->mem.start);
+		    pr_info("write buffer %2d of %s.\n",devp->mem.size,parm[1]);
+		    pr_info("devp->mem.start   %x .\n",devp->mem.start);
 		    vfs_fsync(filp,0);
 		    filp_close(filp,NULL);
 		    set_fs(old_fs);
 		}
 	}
+	return len;
 
 }
 
@@ -348,12 +346,13 @@ param:void
  static int tvafe_callmaster_det(enum tvin_port_e port,struct tvin_frontend_s *fe)
 {
 	int ret = 0;
+	struct tvafe_pin_mux_s *pinmux = NULL;
 	struct tvafe_dev_s *devp = container_of(fe,struct tvafe_dev_s,frontend);
 	if(!devp || !(devp->pinmux)){
 		pr_err("[tvafe]%s:devp/pinmux is NULL\n",__func__);
 		return -1;
 	}
-	struct tvafe_pin_mux_s *pinmux = devp->pinmux;
+	pinmux = devp->pinmux;
 	switch(port)
 	{
 		case TVIN_PORT_VGA0:
@@ -976,7 +975,7 @@ static int tvafe_release(struct inode *inode, struct file *file)
 static long tvafe_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	long ret = 0;
-	unsigned char i,j;
+	unsigned char i;
 	void __user *argp = (void __user *)arg;
 	struct tvafe_dev_s *devp = file->private_data;
 	struct tvafe_info_s *tvafe = &devp->tvafe;
@@ -1467,7 +1466,7 @@ static int tvafe_drv_probe(struct platform_device *pdev)
 {
 	int ret = 0;
 	struct tvafe_dev_s *tdevp;
-	struct resource *res;
+	//struct resource *res;
 	//struct tvin_frontend_s * frontend;
 
 	/* allocate memory for the per-device structure */

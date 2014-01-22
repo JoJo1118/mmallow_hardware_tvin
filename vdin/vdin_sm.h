@@ -35,6 +35,7 @@ typedef struct tvin_sm_s {
     int atv_unstable_in_cnt ;
     int atv_unstable_out_cnt;
     int atv_stable_out_cnt;
+    int hdmi_unstable_out_cnt;
 }tvin_sm_t;
 void tvin_smr(struct vdin_dev_s *pdev);
 void tvin_smr_init(int index);

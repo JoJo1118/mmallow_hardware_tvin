@@ -589,7 +589,7 @@ static void viuin_stop(struct tvin_frontend_s *fe, enum tvin_port_e port)
 
 static int viuin_isr(struct tvin_frontend_s *fe, unsigned int hcnt64)
 {	
-	viuin_t *devp = container_of(fe,viuin_t,frontend);
+//	viuin_t *devp = container_of(fe,viuin_t,frontend);
 #if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
 	vsync_enter_line_curr = (READ_VCBUS_REG(devp->enc_info_addr)>>16)&0x1fff;
 	if(vsync_enter_line_curr > vsync_enter_line_max)
@@ -644,7 +644,7 @@ static struct class* gamma_proc_clsp;
 
 static int viuin_probe(struct platform_device *pdev)
 {
-	int ret = 0, i = 0;
+	int ret = 0;
 	struct viuin_s *viuin_devp;
         viuin_devp = kmalloc(sizeof(viuin_t),GFP_KERNEL);
         memset(viuin_devp,0,sizeof(viuin_t));
@@ -658,6 +658,7 @@ static int viuin_probe(struct platform_device *pdev)
 		return ret;
 	}
 #ifdef CONFIG_GAMMA_AUTO_TUNE
+	int i = 0;
 	for(i = 0; gamma_proc_class_attrs[i].attr.name; i++){
 		if(class_create_file(gamma_proc_clsp,&gamma_proc_class_attrs[i]) < 0)
 			goto err;
@@ -675,8 +676,8 @@ static int viuin_probe(struct platform_device *pdev)
         platform_set_drvdata(pdev,viuin_devp);
         printk("[viuin..]%s probe ok.\n",__func__);
 	return 0;
-err:
 #ifdef CONFIG_GAMMA_AUTO_TUNE
+err:
 	for(i=0; gamma_proc_class_attrs[i].attr.name; i++){
 		class_remove_file(gamma_proc_clsp,&gamma_proc_class_attrs[i]);
 	}
@@ -687,10 +688,10 @@ err:
 }
 
 static int viuin_remove(struct platform_device *pdev)
-{
-        int i=0;
+{        
         struct viuin_s *devp = platform_get_drvdata(pdev);
-  #ifdef CONFIG_GAMMA_AUTO_TUNE              
+  #ifdef CONFIG_GAMMA_AUTO_TUNE
+  		int i=0;
         for(i=0; gamma_proc_class_attrs[i].attr.name; i++) {
 		class_remove_file(gamma_proc_clsp,&gamma_proc_class_attrs[i]);
 	}

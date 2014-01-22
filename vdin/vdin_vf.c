@@ -30,9 +30,9 @@
 /* Local Headers */
 #include "vdin_vf.h"
 
-static int vf_log_enable = 1;
-static int vf_log_fe = 1;
-static int vf_log_be = 1;
+static bool vf_log_enable = true;
+static bool vf_log_fe = true;
+static bool vf_log_be = true;
 
 module_param(vf_log_enable, bool, 0664);
 MODULE_PARM_DESC(vf_log_enable, "enable/disable vframe manager log");
@@ -470,7 +470,7 @@ void tmp_to_rd(struct vf_pool *p)
 	spin_lock_irqsave(&p->tmp_lock, flags);
 	list_for_each_entry_safe(pos, tmp, &p->tmp_list, list) {
 		list_del(&pos->list);
-		provider_vf_put(&pos->vf,p);
+		provider_vf_put(pos,p);
 		p->tmp_list_size--;
 	}
 	spin_unlock_irqrestore(&p->tmp_lock, flags);

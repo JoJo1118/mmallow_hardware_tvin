@@ -65,7 +65,7 @@ extern void clk_off(void);
 extern void hdmirx_wr_top (unsigned long addr, unsigned long data);
 int resume_flag = 0;
 static int force_colorspace = 0;
-static int cur_colorspace = 0;
+int cur_colorspace = 0xff;
 
 MODULE_PARM_DESC(resume_flag, "\n resume_flag \n");
 module_param(resume_flag, int, 0664);

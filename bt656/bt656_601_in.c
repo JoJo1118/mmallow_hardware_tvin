@@ -28,13 +28,7 @@
 #include <asm/atomic.h>
 #include <linux/module.h>
 #include <linux/fs.h>
-#include <linux/platform_device.h>
 
-#include <linux/amlogic/amports/amstream.h>
-#include <linux/amlogic/amports/ptsserv.h>
-#include <linux/amlogic/amports/canvas.h>
-#include <linux/amlogic/amports/vframe.h>
-#include <linux/amlogic/amports/vframe_provider.h>
 #include <mach/am_regs.h>
 #include <mach/mod_gate.h>
 

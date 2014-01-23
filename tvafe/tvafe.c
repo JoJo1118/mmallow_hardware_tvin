@@ -61,6 +61,10 @@ static tvafe_pin_mux_t tvafe_pinmux;
 static bool enable_db_reg = true;
 module_param(enable_db_reg, bool, 0644);
 MODULE_PARM_DESC(enable_db_reg, "enable/disable tvafe load reg");
+static int vga_yuv422_enable = 0;
+module_param(vga_yuv422_enable, int, 0664);
+MODULE_PARM_DESC(vga_yuv422_enable, "vga_yuv422_enable");
+
 
 /*****************************the  version of changing log************************/
 static char last_version_s[]="2013-11-4||10-13";
@@ -790,7 +794,11 @@ void tvafe_get_sig_property(struct tvin_frontend_s *fe, struct tvin_sig_property
 	if ((port >= TVIN_PORT_VGA0) &&
 			(port <= TVIN_PORT_VGA7)) {
 		prop->color_format = TVIN_RGB444;
+		if(vga_yuv422_enable){
+			prop->dest_cfmt = TVIN_YUV422;
+		}else{
 		prop->dest_cfmt = TVIN_YUV444;
+		}
 	}else {
 		prop->color_format = TVIN_YUV444;
 		prop->dest_cfmt = TVIN_YUV422;

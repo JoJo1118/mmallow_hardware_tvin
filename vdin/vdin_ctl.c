@@ -61,10 +61,6 @@ static int color_convert = 0;
 module_param(color_convert, int, 0664);
 MODULE_PARM_DESC(color_convert, "color_convert");
 
-static int vga_yuv422_enable = 0;
-module_param(vga_yuv422_enable, int, 0664);
-MODULE_PARM_DESC(vga_yuv422_enable, "vga_yuv422_enable");
-
 static int hdmi_yuv444_enable = 1;
 module_param(hdmi_yuv444_enable, int, 0664);
 MODULE_PARM_DESC(hdmi_yuv444_enable, "hdmi_yuv444_enable");

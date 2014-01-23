@@ -788,10 +788,13 @@ void tvafe_get_sig_property(struct tvin_frontend_s *fe, struct tvin_sig_property
 
 	prop->trans_fmt = TVIN_TFMT_2D;
 	if ((port >= TVIN_PORT_VGA0) &&
-			(port <= TVIN_PORT_VGA7))
+			(port <= TVIN_PORT_VGA7)) {
 		prop->color_format = TVIN_RGB444;
-	else
+		prop->dest_cfmt = TVIN_YUV444;
+	}else {
 		prop->color_format = TVIN_YUV444;
+		prop->dest_cfmt = TVIN_YUV422;
+	}
 	prop->aspect_ratio = TVIN_ASPECT_NULL;
 	prop->pixel_repeat = 0;
 	prop->dvi_info = 0;

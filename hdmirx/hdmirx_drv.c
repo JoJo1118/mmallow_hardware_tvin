@@ -321,6 +321,7 @@ void hdmirx_get_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_property
 		prop->color_format = TVIN_RGB444;
 		break;
 	}
+	prop->dest_cfmt = TVIN_YUV422;
 	if(force_colorspace == FORCE_YUV)
 		if(prop->color_format == TVIN_RGB444)
 			prop->color_format = TVIN_YUV444;

@@ -2773,7 +2773,7 @@ static int vdin_drv_probe(struct platform_device *pdev)
         #endif
 	vdin_devp[vdevp->index] = vdevp;
 	/* create cdev and reigser with sysfs */
-	ret = vdin_add_cdev(&vdevp->cdev, &vdin_fops, pdev->id);
+	ret = vdin_add_cdev(&vdevp->cdev, &vdin_fops, vdevp->index);
 	if (ret) {
 		pr_err("%s: failed to add cdev.\n", __func__);
 		goto fail_add_cdev;

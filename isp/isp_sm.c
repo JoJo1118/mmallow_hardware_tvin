@@ -1360,7 +1360,7 @@ void capture_sm_init(isp_dev_t *devp)
 	} else {
 		cap_sm->capture_state = CAPTURE_TUNE_3A;
 		if(parm->af_mode){
-			devp->flag |= ISP_FLAG_AF;
+			devp->flag |= ISP_FLAG_AF;
 		}else{
 			devp->flag &= (~ISP_FLAG_AF);
 		}

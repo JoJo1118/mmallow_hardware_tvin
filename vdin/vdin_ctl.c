@@ -869,7 +869,6 @@ void vdin_set_matrix(struct vdin_dev_s *devp)
 {
 
 	//vdin_set_color_matrix1(devp->addr_offset, devp->fmt_info_p, devp->format_convert);
-
 	vdin_set_color_matrix0(devp->addr_offset, devp->fmt_info_p, devp->format_convert);
 }
 
@@ -1075,8 +1074,6 @@ inline unsigned int vdin_get_meas_vstamp(unsigned int offset)
 {
 	return (RD(VDIN_MEAS_VS_COUNT_LO ));
 }
-
-
 
 inline unsigned int vdin_get_active_h(unsigned int offset)
 {

@@ -34,7 +34,6 @@
 //#include <linux/amports/canvas.h>
 #include <asm/uaccess.h>
 #include <asm/delay.h>
-#include <mach/regs.h>
 #include <mach/clock.h>
 #include <mach/register.h>
 #include <mach/power_gate.h>

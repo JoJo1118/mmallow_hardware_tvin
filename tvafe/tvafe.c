@@ -1569,6 +1569,14 @@ static int tvafe_drv_probe(struct platform_device *pdev)
 		pr_err("tvafe: no platform data!\n");
 		ret = -ENODEV;
 	}
+#ifdef CONFIG_USE_OF
+	if(of_get_property(pdev->dev.of_node, "pinctrl-names", NULL)){
+		struct pinctrl *p=devm_pinctrl_get_select_default(&pdev->dev);
+		if (IS_ERR(p)){
+			printk(KERN_ERR"tvafe request pinmux error!\n");
+		}
+	}
+#endif
 
 	/* frontend */
 	tvin_frontend_init(&tdevp->frontend, &tvafe_dec_ops, &tvafe_sm_ops, tdevp ->index);

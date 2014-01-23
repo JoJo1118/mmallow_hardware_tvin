@@ -357,7 +357,6 @@ void hdmirx_get_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_property
 	if(force_colorspace == FORCE_RGB)
 		prop->color_format = TVIN_RGB444;
 
-	prop->dest_cfmt = TVIN_YUYV422;
 	sig_fmt = hdmirx_hw_get_fmt();
 	if(((sig_fmt == TVIN_SIG_FMT_HDMI_1920X1080P_60HZ) ||
 		(sig_fmt == TVIN_SIG_FMT_HDMI_1920X1080P_50HZ)) &&

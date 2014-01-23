@@ -2411,7 +2411,7 @@ void dump_hdcp_data(void)
 	printk("\n hdcp-ksv = %x---%x",rx.hdcp.bksv[0],rx.hdcp.bksv[1]);
 	printk("\n hdcp-key:");
 	for(i=0; i<HDCP_KEYS_SIZE; i+=4){
-		printk("\n%x    %x    %x    %x",rx.hdcp.bksv[i],rx.hdcp.bksv[i+1],rx.hdcp.bksv[i+2],rx.hdcp.bksv[i+3]);
+		printk("\n%x    %x    %x    %x",rx.hdcp.keys[i],rx.hdcp.keys[i+1],rx.hdcp.keys[i+2],rx.hdcp.keys[i+3]);
 	}
 }
 void dump_edid_reg(void)

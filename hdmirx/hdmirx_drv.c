@@ -66,6 +66,7 @@ extern void hdmirx_wr_top (unsigned long addr, unsigned long data);
 int resume_flag = 0;
 static int force_colorspace = 0;
 int cur_colorspace = 0xff;
+static int hdmi_yuv444_enable = 1;
 
 MODULE_PARM_DESC(resume_flag, "\n resume_flag \n");
 module_param(resume_flag, int, 0664);
@@ -76,6 +77,9 @@ module_param(force_colorspace, int, 0664);
 MODULE_PARM_DESC(cur_colorspace, "\n cur_colorspace \n");
 module_param(cur_colorspace, int, 0664);
 
+module_param(hdmi_yuv444_enable, int, 0664);
+MODULE_PARM_DESC(hdmi_yuv444_enable, "hdmi_yuv444_enable");
+
 typedef struct hdmirx_dev_s {
 	int                         index;
 	dev_t                       devt;
@@ -85,6 +89,31 @@ typedef struct hdmirx_dev_s {
 	struct timer_list           timer;
 	tvin_frontend_t             frontend;
 } hdmirx_dev_t;
+
+static unsigned first_bit_set(uint32_t data)
+{
+	unsigned n = 32;
+
+	if (data != 0)
+	{
+		for (n = 0; (data & 1) == 0; n++)
+		{
+			data >>= 1;
+		}
+	}
+	return n;
+}
+
+uint32_t get(uint32_t data, uint32_t mask)
+{
+	return (data & mask) >> first_bit_set(mask);
+}
+
+uint32_t set(uint32_t data, uint32_t mask, uint32_t value)
+{
+	return ((value << first_bit_set(mask)) & mask) | (data & ~mask);
+}
+
 
 void hdmirx_timer_handler(unsigned long arg)
 {
@@ -113,7 +142,7 @@ int hdmirx_dec_support(struct tvin_frontend_s *fe, enum tvin_port_e port)
 int hdmirx_dec_open(struct tvin_frontend_s *fe, enum tvin_port_e port)
 {
 	struct hdmirx_dev_s *devp;
-	
+
 	open_flage = 1;
 	devp = container_of(fe, struct hdmirx_dev_s, frontend);
 	devp_hdmirx_suspend = container_of(fe, struct hdmirx_dev_s, frontend);
@@ -134,7 +163,7 @@ void hdmirx_dec_start(struct tvin_frontend_s *fe, enum tvin_sig_fmt_e fmt)
 {
 	struct hdmirx_dev_s *devp;
 	struct tvin_parm_s *parm;
-	
+
 	open_flage = 1;
 	devp = container_of(fe, struct hdmirx_dev_s, frontend);
 	devp_hdmirx_suspend = container_of(fe, struct hdmirx_dev_s, frontend);
@@ -211,7 +240,7 @@ static int  hdmi_dec_callmaster(enum tvin_port_e port,struct tvin_frontend_s *fe
 			status = 1;
 	}
 	return status;
-	
+
 }
 static struct tvin_decoder_ops_s hdmirx_dec_ops = {
 	.support    = hdmirx_dec_support,
@@ -226,7 +255,7 @@ static struct tvin_decoder_ops_s hdmirx_dec_ops = {
 bool hdmirx_is_nosig(struct tvin_frontend_s *fe)
 {
 	bool ret = 0;
-	
+
 	ret = hdmirx_hw_is_nosig();
 	return ret;
 }
@@ -306,7 +335,7 @@ extern unsigned char is_alternative(void);
 void hdmirx_get_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_property_s *prop)
 {
 	unsigned char _3d_structure, _3d_ext_data;
-
+	enum tvin_sig_fmt_e sig_fmt;
 	prop->dvi_info = hdmirx_hw_get_dvi_info();
 
 	switch (hdmirx_hw_get_color_fmt()) {
@@ -328,7 +357,13 @@ void hdmirx_get_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_property
 	if(force_colorspace == FORCE_RGB)
 		prop->color_format = TVIN_RGB444;
 
-
+	prop->dest_cfmt = TVIN_YUYV422;
+	sig_fmt = hdmirx_hw_get_fmt();
+	if(((sig_fmt == TVIN_SIG_FMT_HDMI_1920X1080P_60HZ) ||
+		(sig_fmt == TVIN_SIG_FMT_HDMI_1920X1080P_50HZ)) &&
+		hdmi_yuv444_enable &&
+		(prop->color_format == TVIN_RGB444))
+		prop->dest_cfmt = TVIN_YUV444;
 	cur_colorspace = prop->color_format;
 	prop->trans_fmt = TVIN_TFMT_2D;
 	if (hdmirx_hw_get_3d_structure(&_3d_structure, &_3d_ext_data) >= 0) {
@@ -421,7 +456,7 @@ static long hdmirx_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 	return ret;
 }
 
-/* 
+/*
  * File operations structure
  * Defined in linux/fs.h
  */
@@ -465,7 +500,7 @@ int hdmirx_print_buf(char* buf, int len)
 	unsigned long flags;
 	int pos;
 	int hdmirx_log_rd_pos_;
-	
+
 	if (hdmirx_log_buf_size == 0)
 		return 0;
 	spin_lock_irqsave(&hdmirx_print_lock, flags);
@@ -564,7 +599,7 @@ static ssize_t store_log(struct device *dev, struct device_attribute *attr, cons
 {
 	int tmp;
 	unsigned long flags;
-	
+
 	if (strncmp(buf, "bufsize", 7) == 0) {
 		tmp = simple_strtoul(buf + 7, NULL, 10);
 		spin_lock_irqsave(&hdmirx_print_lock, flags);
@@ -618,7 +653,7 @@ static ssize_t show_reg(struct device *dev, struct device_attribute *attr, char 
 }
 
 static ssize_t cec_get_state(struct device *dev, struct device_attribute *attr, char *buf)
-{    
+{
 	return 0;
 }
 
@@ -639,7 +674,7 @@ static int hdmirx_add_cdev(struct cdev *cdevp, struct file_operations *fops,
 {
 	int ret;
 	dev_t devno = MKDEV(MAJOR(hdmirx_devno), minor);
-	
+
 	cdev_init(cdevp, fops);
 	cdevp->owner = THIS_MODULE;
 	ret = cdev_add(cdevp, devno, 1);
@@ -705,17 +740,17 @@ static int hdmirx_probe(struct platform_device *pdev)
 	if(ret < 0) {
 		pr_info("hdmirx: fail to create debug attribute file\n");
 		goto fail_create_debug_file;
-	}		
+	}
 	ret = device_create_file(hdevp->dev, &dev_attr_edid);
 	if(ret < 0) {
 		pr_info("hdmirx: fail to create edid attribute file\n");
 		goto fail_create_edid_file;
-	}		
+	}
 	ret = device_create_file(hdevp->dev, &dev_attr_key);
 	if(ret < 0) {
 		pr_info("hdmirx: fail to create key attribute file\n");
 		goto fail_create_key_file;
-	}	
+	}
 	ret = device_create_file(hdevp->dev, &dev_attr_log);
 	if(ret < 0) {
 		pr_info("hdmirx: fail to create log attribute file\n");
@@ -790,7 +825,7 @@ static int hdmirx_remove(struct platform_device *pdev)
 static int hdmirx_suspend(struct platform_device *pdev, pm_message_t state)
 {
 	int i = 0;
-	
+
 	pr_info("[hdmirx]: hdmirx_suspend\n");
 	if (open_flage == 1) {
 		pr_info("[hdmirx]: suspend--step1111\n");
@@ -912,7 +947,7 @@ static int __init hdmirx_init(void)
 		ret = PTR_ERR(hdmirx_clsp);
 		goto fail_class_create;
 	}
-	
+
 	ret = platform_driver_register(&hdmirx_driver);
 	if (ret != 0) {
 		pr_info("failed to register hdmirx module, error %d\n", ret);
@@ -920,7 +955,7 @@ static int __init hdmirx_init(void)
 		goto fail_pdrv_register;
 	}
 	pr_info("hdmirx: hdmirx_init.\n");
-	
+
 	hdmirx_irq_init();
 	return 0;
 
@@ -943,12 +978,12 @@ static void __exit hdmirx_exit(void)
 
 #if 0
 /**
-* besides characters defined in seperator, 
-* '\"' are used as seperator; 
-* and any characters in '\"' will not act as seperator 
+* besides characters defined in seperator,
+* '\"' are used as seperator;
+* and any characters in '\"' will not act as seperator
 */
 static char* next_token_ex(char* seperator, char *buf, unsigned size, unsigned offset, unsigned *token_len, unsigned *token_offset)
-{ 
+{
 	char *pToken = NULL;
 	char last_seperator = 0;
 	char trans_char_flag = 0;

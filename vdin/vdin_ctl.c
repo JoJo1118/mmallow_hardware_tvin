@@ -33,16 +33,16 @@
 #define TVIN_MAX_PIXCLK 20000
 
 #if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
-#define TVIN_MAX_HACTIVE     4096								
+#define TVIN_MAX_HACTIVE     4096
 #define TVIN_MAX_VACTIVE     4096
 #else
-#define TVIN_MAX_HACTIVE     1920								
+#define TVIN_MAX_HACTIVE     1920
 #define TVIN_MAX_VACTIVE     1080
 #endif
 
 /*
 *protection for vga vertical de adjustment,if vertical blanking too short
-*mybe too short to process one field data 
+*mybe too short to process one field data
 */
 static short vbp_offset = 15;
 module_param(vbp_offset, short, 0664);
@@ -61,9 +61,6 @@ static int color_convert = 0;
 module_param(color_convert, int, 0664);
 MODULE_PARM_DESC(color_convert, "color_convert");
 
-static int hdmi_yuv444_enable = 1;
-module_param(hdmi_yuv444_enable, int, 0664);
-MODULE_PARM_DESC(hdmi_yuv444_enable, "hdmi_yuv444_enable");
 static unsigned int max_undone_cnt = 60;
 module_param(max_undone_cnt,uint,0644);
 MODULE_PARM_DESC(max_undone_cnt,"the max vdin undone cnt to reset vpp");
@@ -458,7 +455,7 @@ static inline void vdin_set_top(unsigned int offset, enum tvin_port_e port, enum
 			break;
 		case 0x02: // bt656
 			vdin_mux = VDIN_MUX_656;
-			WR_BITS(VDIN_ASFIFO_CTRL0, 0xe4, VDI1_ASFIFO_CTRL_BIT, VDI1_ASFIFO_CTRL_WID);			
+			WR_BITS(VDIN_ASFIFO_CTRL0, 0xe4, VDI1_ASFIFO_CTRL_BIT, VDI1_ASFIFO_CTRL_WID);
 			break;
 		case 0x04: // VGA
 			vdin_mux = VDIN_MUX_TVFE;
@@ -558,7 +555,7 @@ void vdin_set_decimation(struct vdin_dev_s *devp)
 
 	/* disable decimation function for hdmi input */
 	if ((devp->parm.port >= TVIN_PORT_HDMI0) &&
-	    (devp->parm.port <= TVIN_PORT_HDMI7) 
+	    (devp->parm.port <= TVIN_PORT_HDMI7)
 	    //&& (devp->fmt_info_p->pixel_clk <= TVIN_MAX_PIXCLK)
        )
 	    decimation_ratio = 0;
@@ -1955,16 +1952,16 @@ inline void vdin_set_vscale(unsigned int offset, unsigned int src_h,  unsigned i
 inline void vdin_set_hvscale(struct vdin_dev_s *devp)
 {
         unsigned int offset = devp->addr_offset;
-    
+
         if((devp->scaler4w < devp->h_active) && (devp->scaler4w > 0)) {
 	        vdin_set_hscale(offset,devp->h_active,devp->scaler4w);
                 devp->h_active = devp->scaler4w;
         } else if (devp->h_active > TVIN_MAX_HACTIVE) {
                 vdin_set_hscale(offset,devp->h_active,TVIN_MAX_HACTIVE);
                 devp->h_active = TVIN_MAX_HACTIVE;
-        } 
+        }
 	pr_info("[vdin.%d] dst hactive:%u,",devp->index,devp->h_active);
-        
+
 #if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON6TV
         if((devp->scaler4h < devp->v_active) && (devp->scaler4h > 0)) {
 		vdin_set_vscale(offset, devp->v_active, devp->scaler4h);
@@ -2010,7 +2007,7 @@ void set_chroma_regs(unsigned int offset, unsigned int h_active,unsigned int v_a
 
         //tmp_cfg = -8;
         for ( i=0; i<640 ; i=i+1 ) {
-                //tmp_cfg = tmp_cfg>5 ? -5 : (tmp_cfg+1); 
+                //tmp_cfg = tmp_cfg>5 ? -5 : (tmp_cfg+1);
                 //cm2_cfg_reg[i] = tmp_cfg;
                 cm2_cfg_reg[i] = (i&15)-8;
         }
@@ -2107,7 +2104,7 @@ void vdin_set_cm2(unsigned int offset,unsigned int w,unsigned int h,unsigned int
 	/*config cm2 frame size*/
 	WR(VDIN_CHROMA_ADDR_PORT,FRM_SIZE_REG);
 	WR(VDIN_CHROMA_DATA_PORT,h<<16|w);
-	
+
     WR_BITS(VDIN_CM_BRI_CON_CTRL, 1, CM_TOP_EN_BIT,CM_TOP_EN_WID);
 }
 #endif

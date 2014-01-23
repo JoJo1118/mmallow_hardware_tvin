@@ -466,7 +466,7 @@ static inline void vdin_set_top(unsigned int offset, enum tvin_port_e port, enum
 			break;
 		case 0x04: // VGA
 			vdin_mux = VDIN_MUX_TVFE;
-			WR_BITS(VDIN_ASFIFO_CTRL1, 0xe4, VDI3_ASFIFO_CTRL_BIT,VDI3_ASFIFO_CTRL_WID);
+			WR_BITS(VDIN_ASFIFO_CTRL0, 0xe4, VDI2_ASFIFO_CTRL_BIT,VDI2_ASFIFO_CTRL_WID);
 			// In the order of RGB for further RGB->YUV601 or RGB->YUV709 convertion
 			vdin_data_bus_0 = VDIN_MAP_RCR;
 			vdin_data_bus_1 = VDIN_MAP_Y_G;
@@ -474,7 +474,7 @@ static inline void vdin_set_top(unsigned int offset, enum tvin_port_e port, enum
 			break;
 		case 0x08: // COMPONENT
 			vdin_mux = VDIN_MUX_TVFE;
-			WR_BITS(VDIN_ASFIFO_CTRL1, 0xe4, VDI3_ASFIFO_CTRL_BIT,VDI3_ASFIFO_CTRL_WID);
+			WR_BITS(VDIN_ASFIFO_CTRL0, 0xe4, VDI2_ASFIFO_CTRL_BIT,VDI2_ASFIFO_CTRL_WID);
 			break;
 		case 0x10: // CVBS
 			vdin_mux = VDIN_MUX_CVD2;

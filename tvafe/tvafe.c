@@ -14,7 +14,7 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
-#include <linux/slab.h>
+#include <linux/slab.h> 
 #include <linux/interrupt.h>
 #include <linux/fs.h>
 #include <linux/device.h>
@@ -134,8 +134,7 @@ static ssize_t tvafe_store(struct device *dev, struct device_attribute *attr,con
 	}
 	else if(!strncmp(buff,"set_edid",strlen("set_edid"))){
 		int i=0;
-		struct tvafe_vga_edid_s edid={ 	
-										0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00,
+		struct tvafe_vga_edid_s edid={ {0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00,
 									 	0x30, 0xa4, 0x21, 0x00, 0x01, 0x01, 0x01, 0x01,
 									 	0x0e, 0x17, 0x01, 0x03, 0x80, 0x24, 0x1d, 0x78,
 									 	0xee, 0x00, 0x0c, 0x0a, 0x05, 0x04, 0x09, 0x02,
@@ -167,6 +166,7 @@ static ssize_t tvafe_store(struct device *dev, struct device_attribute *attr,con
 										0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 										0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 										0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+										}
 										};
 		
 		for(i=0; i<32; i++)
@@ -361,7 +361,7 @@ param:void
 	{
 		case TVIN_PORT_VGA0:
 			if (pinmux->pin[VGA0_SOG] >= TVAFE_ADC_PIN_SOG_0){
-			    if(ret=(int)READ_APB_REG_BITS(ADC_REG_34,4,1))
+			    if(ret==(int)READ_APB_REG_BITS(ADC_REG_34,4,1))
 				     ret=(int)READ_APB_REG_BITS(ADC_REG_34,7,1);
 			    else
 				ret=0;

@@ -146,11 +146,11 @@ static int cdto_adj_step = TVAFE_CVD2_CDTO_ADJ_STEP;
 module_param(cdto_adj_step, int, 0664);
 MODULE_PARM_DESC(cdto_adj_step, "cvd2_adj_step");
 
-static int cvd_dbg_en = 0;
+static bool cvd_dbg_en = 0;
 module_param(cvd_dbg_en, bool, 0664);
 MODULE_PARM_DESC(cvd_dbg_en, "cvd2 debug enable");
 
-static int cvd_nonstd_dbg_en = 0;
+static bool cvd_nonstd_dbg_en = 0;
 module_param(cvd_nonstd_dbg_en, bool, 0664);
 MODULE_PARM_DESC(cvd_nonstd_dbg_en, "cvd2 nonstd debug enable");
 
@@ -581,7 +581,7 @@ inline void tvafe_cvd2_reset_pga(void)
 /*
  * tvafe cvd2 read cdto setting from Reg
  */
-static unsigned int tvafe_cvd2_get_cdto()
+static unsigned int tvafe_cvd2_get_cdto(void)
 {
 	unsigned int cdto = 0;
 
@@ -952,6 +952,7 @@ EXPORT_SYMBOL(tvafe_cvd2_get_hv_lock);
 /*
  * tvafe cvd2 check current cordic match status
  */
+/*
 static bool tvafe_cvd2_cordic_match(struct tvafe_cvd2_s *cvd2)
 {
 	int in_min = 0;
@@ -986,7 +987,7 @@ static bool tvafe_cvd2_cordic_match(struct tvafe_cvd2_s *cvd2)
 	}
 
 }
-
+*/
 /*
  * tvafe cvd2 non-standard signal detection
  */
@@ -1096,7 +1097,6 @@ static bool tvafe_cvd2_sig_unstable(struct tvafe_cvd2_s *cvd2)
 static bool tvafe_cvd2_condition_shift(struct tvafe_cvd2_s *cvd2)
 {
 	bool ret = false;
-	int out_min, out_max;
 
 	if (tvafe_cvd2_sig_unstable(cvd2))
 	{
@@ -1903,7 +1903,7 @@ inline void tvafe_cvd2_adj_pga(struct tvafe_cvd2_s *cvd2)
 	}
 
 	return;
-}
+} 
 #endif
 
 #ifdef TVAFE_SET_CVBS_CDTO_EN

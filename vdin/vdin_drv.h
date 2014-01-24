@@ -23,6 +23,7 @@
 #include <linux/mutex.h>
 #include <linux/interrupt.h>
 #include <linux/time.h>
+#include <linux/device.h>
 
 /* Amlogic Headers */
 #include <linux/amlogic/amports/vframe.h>
@@ -34,7 +35,7 @@
 #include "../tvin_frontend.h"
 #include "vdin_vf.h"
 
-#define VDIN_VER "Ref.2013/12/19a"
+#define VDIN_VER "Ref.2014/1/24a"
 
 /*the counter of vdin*/
 #define VDIN_MAX_DEVS			2
@@ -108,7 +109,6 @@ static inline const char *vdin_fmt_convert_str(enum vdin_format_convert_e fmt_cv
 	}
 }
 
-extern int vdin_reg_v4l2(vdin_v4l2_ops_t *ops);
 
 typedef struct vdin_dev_s {
 	unsigned int		        index;
@@ -186,6 +186,18 @@ typedef struct vdin_dev_s {
         unsigned short                  scaler4w;//for hscaler
         unsigned short                  dest_cfmt;//for color fmt convertion
 } vdin_dev_t;
+
+extern int vdin_create_class_files(struct class *vdin_clsp);
+extern void vdin_remove_class_files(struct class *vdin_clsp);
+extern int vdin_create_device_files(struct device *dev);
+extern void vdin_remove_device_files(struct device *dev);
+extern int vdin_open_fe(enum tvin_port_e port, int index,  struct vdin_dev_s *devp);
+extern void vdin_close_fe(struct vdin_dev_s *devp);
+extern void vdin_start_dec(struct vdin_dev_s *devp);
+extern void vdin_stop_dec(struct vdin_dev_s *devp);
+extern irqreturn_t vdin_isr_simple(int irq, void *dev_id);
+extern irqreturn_t vdin_isr(int irq, void *dev_id);
+extern irqreturn_t vdin_v4l2_isr(int irq, void *dev_id);
 
 #endif /* __TVIN_VDIN_DRV_H */
 

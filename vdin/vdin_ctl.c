@@ -471,11 +471,11 @@ static inline void vdin_set_top(unsigned int offset, enum tvin_port_e port, enum
 			break;
 		case 0x10: // CVBS
 			vdin_mux = VDIN_MUX_CVD2;
-			WR_BITS(VDIN_ASFIFO_CTRL1, 0xe4, VDI4_ASFIFO_CTRL_BIT, VDI4_ASFIFO_CTRL_WID);
+			WR_BITS(VDIN_ASFIFO_CTRL1, 0xe4, VDI3_ASFIFO_CTRL_BIT, VDI3_ASFIFO_CTRL_WID);
 			break;
 		case 0x20: // SVIDEO
 			vdin_mux = VDIN_MUX_CVD2;
-			WR_BITS(VDIN_ASFIFO_CTRL1, 0xe4, VDI4_ASFIFO_CTRL_BIT, VDI4_ASFIFO_CTRL_WID);
+			WR_BITS(VDIN_ASFIFO_CTRL1, 0xe4, VDI3_ASFIFO_CTRL_BIT, VDI3_ASFIFO_CTRL_WID);
 			break;
 		case 0x40: // hdmi
 			vdin_mux = VDIN_MUX_HDMI;

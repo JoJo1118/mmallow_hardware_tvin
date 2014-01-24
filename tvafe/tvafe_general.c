@@ -547,7 +547,7 @@ const static unsigned int cvbs_top_reg_default[][2] = {
 	{TVFE_OGO_OFFSET3                       ,0x00000000,}, // TVFE_OGO_OFFSET3
 	{TVFE_VAFE_CTRL                         ,0x00000000,}, // TVFE_VAFE_CTRL
 	{TVFE_VAFE_STATUS                       ,0x00000000,}, // TVFE_VAFE_STATUS
-	{TVFE_TOP_CTRL                          ,0xc4f64 /*0x00004B60*/,}, // TVFE_TOP_CTRL
+	{TVFE_TOP_CTRL                          ,0x30c4f64/*0xc4f64 0x00004B60*/,}, // TVFE_TOP_CTRL
 	{TVFE_CLAMP_INTF                        ,0x00008666,}, // TVFE_CLAMP_INTF
 	{TVFE_RST_CTRL                          ,0x00000000,}, // TVFE_RST_CTRL
 	{TVFE_EXT_VIDEO_AFE_CTRL_MUX1           ,0x00000000,}, // TVFE_EXT_VIDEO_AFE_CTRL_MUX1

@@ -395,34 +395,8 @@ void tvin_smr(struct vdin_dev_s *devp)
                         {
                                 bool nosig = false, fmt_changed = false;//, pll_lock = false;
                                 unsigned int stable_out_cnt = 0;
-#ifdef TVAFE_SET_CVBS_MANUAL_FMT_POS
-                                enum tvin_cvbs_pos_ctl_e pos_ctl = TVIN_CVBS_POS_NULL;
-#endif
 
                                 devp->unstable_flag = true;
-#ifdef TVAFE_SET_CVBS_MANUAL_FMT_POS
-                                /* cvbs manual fmt video size checking */
-                                if ((port >= TVIN_PORT_CVBS0) && (port <= TVIN_PORT_SVIDEO7) && (sm_ops->set_cvbs_fmt_pos))
-                                {
-                                        pos_ctl = sm_ops->set_cvbs_fmt_pos(devp->frontend);
-                                        if (devp->cvbs_pos_chg != pos_ctl)
-                                        {
-                                                if (pos_ctl != TVIN_CVBS_POS_NULL)
-                                                {
-                                                        /* avoid black screen for auto<-->fmt switch */
-                                                        if (devp->cvbs_pos_chg != TVIN_CVBS_POS_NULL)
-                                                        {
-                                                                fmt_changed = true;
-                                                                info->status = TVIN_SIG_STATUS_UNSTABLE;
-                                                                if (sm_debug_enable)
-                                                                        pr_info("[smr.%d] warning: cvbs manual fmt change:%d \n", 
-                                                                                        devp->index,devp->cvbs_pos_chg);
-                                                        }
-                                                }
-                                                devp->cvbs_pos_chg = pos_ctl;
-                                        }
-                                }
-#endif
                                 if (sm_ops->nosig(devp->frontend)) {
                                         nosig = true;
                                         if (sm_debug_enable && !sm_print_fmt_nosig)
@@ -719,37 +693,11 @@ void tvin_smr(struct vdin_dev_s *devp)
                         {
                                 bool nosig = false, fmt_changed = false;//, pll_lock = false;
                                 unsigned int stable_out_cnt = 0;
-#ifdef TVAFE_SET_CVBS_MANUAL_FMT_POS
-                                enum tvin_cvbs_pos_ctl_e pos_ctl = TVIN_CVBS_POS_NULL;
-#endif
 
                                 devp->unstable_flag = true;
 
                                 if (devp->parm.flag & TVIN_PARM_FLAG_CAL)
                                         devp->parm.flag &= ~TVIN_PARM_FLAG_CAL;
-#ifdef TVAFE_SET_CVBS_MANUAL_FMT_POS
-                                /* cvbs manual fmt video size checking */
-                                if ((port >= TVIN_PORT_CVBS0) && (port <= TVIN_PORT_SVIDEO7) && (sm_ops->set_cvbs_fmt_pos))
-                                {
-                                        pos_ctl = sm_ops->set_cvbs_fmt_pos(devp->frontend);
-                                        if (devp->cvbs_pos_chg != pos_ctl)
-                                        {
-                                                if (pos_ctl != TVIN_CVBS_POS_NULL)
-                                                {
-                                                        /* avoid black screen for auto<-->fmt switch */
-                                                        if (devp->cvbs_pos_chg != TVIN_CVBS_POS_NULL)
-                                                        {
-                                                                fmt_changed = true;
-                                                                info->status = TVIN_SIG_STATUS_UNSTABLE;
-                                                                if (sm_debug_enable)
-                                                                        pr_info("[smr.%d] warning: cvbs manual fmt change:%d \n", 
-                                                                                        devp->index,devp->cvbs_pos_chg);
-                                                        }
-                                                }
-                                                devp->cvbs_pos_chg = pos_ctl;
-                                        }
-                                }
-#endif
                                 if (sm_ops->nosig(devp->frontend)) {
                                         nosig = true;
                                         if (sm_debug_enable && !sm_print_fmt_nosig)

@@ -604,27 +604,7 @@ void vdin_set_cutwin(struct vdin_dev_s *devp)
 		devp->v_active -= (devp->parm.cutwin.ve + devp->parm.cutwin.vs);
 		he = devp->parm.cutwin.hs + devp->h_active - 1;
 		ve = devp->parm.cutwin.vs + devp->v_active - 1;
-#ifdef TVAFE_SET_CVBS_MANUAL_FMT_POS
-		/* set new video size, change size only if manual fmt is wrong */
-		if ((devp->parm.port >= TVIN_PORT_CVBS0) &&
-				(devp->parm.port <= TVIN_PORT_SVIDEO7))
-		{
-			if ((devp->cvbs_pos_chg == TVIN_CVBS_POS_P_TO_N) ||
-					(devp->cvbs_pos_chg == TVIN_CVBS_POS_N_TO_P))
-			{
-				if (devp->parm.info.fmt == TVIN_SIG_FMT_CVBS_PAL_I)  //288-240
-				{
-					devp->v_active -= 48;
-					devp->parm.cutwin.ve -= 48;
-				}
-				else
-				{
-					devp->v_active += 48;
-					devp->parm.cutwin.ve += 48;
-				}
-			}
-		}
-#endif
+
 		WR(VDIN_WIN_H_START_END, (devp->parm.cutwin.hs << INPUT_WIN_H_START_BIT) | (he << INPUT_WIN_H_END_BIT));
 		WR(VDIN_WIN_V_START_END, (devp->parm.cutwin.vs << INPUT_WIN_V_START_BIT) | (ve << INPUT_WIN_V_END_BIT));
 		WR_BITS(VDIN_COM_CTRL0, 1, INPUT_WIN_SEL_EN_BIT, INPUT_WIN_SEL_EN_WID);

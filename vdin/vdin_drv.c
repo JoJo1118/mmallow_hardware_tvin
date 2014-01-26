@@ -229,9 +229,6 @@ int vdin_open_fe(enum tvin_port_e port, int index,  struct vdin_dev_s *devp)
 	devp->parm.port        = port;
 	devp->parm.info.fmt    = TVIN_SIG_FMT_NULL;
 	devp->parm.info.status = TVIN_SIG_STATUS_NULL;
-#ifdef TVAFE_SET_CVBS_MANUAL_FMT_POS
-	devp->cvbs_pos_chg = TVIN_CVBS_POS_NULL;  //init position value
-#endif
 	devp->dec_enable = 1;  //enable decoder
 
 	vdin_set_default_regmap(devp->addr_offset);

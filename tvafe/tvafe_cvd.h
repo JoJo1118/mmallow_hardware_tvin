@@ -152,9 +152,6 @@ extern void tvafe_cvd2_set_default_cdto(struct tvafe_cvd2_s *cvd2);
 extern void tvafe_cvd2_set_default_de(struct tvafe_cvd2_s *cvd2);
 extern void tvafe_cvd2_check_3d_comb(struct tvafe_cvd2_s *cvd2);
 extern void tvafe_cvd2_reset_pga(void);
-#ifdef TVAFE_SET_CVBS_MANUAL_FMT_POS
-extern enum tvin_cvbs_pos_ctl_e tvafe_cvd2_set_pos(struct tvafe_cvd2_s *cvd2);
-#endif
 extern enum tvafe_cvbs_video_e tvafe_cvd2_get_lock_status(struct tvafe_cvd2_s *cvd2);
 extern int tvafe_cvd2_get_atv_format(void);
 extern int tvafe_cvd2_get_hv_lock(void);

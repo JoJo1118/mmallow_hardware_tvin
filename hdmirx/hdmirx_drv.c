@@ -420,9 +420,6 @@ static struct tvin_state_machine_ops_s hdmirx_sm_ops = {
 	.adc_cal          = NULL,
 	.pll_lock         = hdmirx_pll_lock,
 	.get_sig_propery  = hdmirx_get_sig_propery,
-#ifdef TVAFE_SET_CVBS_MANUAL_FMT_POS
-	.set_cvbs_fmt_pos = NULL,
-#endif
 	.vga_set_param    = NULL,
 	.vga_get_param    = NULL,
 	.check_frame_skip = hdmirx_check_frame_skip,

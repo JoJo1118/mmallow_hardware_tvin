@@ -105,8 +105,6 @@
 #define HS_CNT_STANDARD             0x17a00
 #endif
 
-//#define TVAFE_SET_CVBS_MANUAL_FMT_POS  //enable manual format video position setting
-
 typedef enum tvin_sync_pol_e {
         TVIN_SYNC_POL_NULL = 0,
         TVIN_SYNC_POL_NEGATIVE,
@@ -128,16 +126,6 @@ typedef enum tvin_buffer_ctl_e {
 	TVIN_BUF_RECYCLE_TMP,
 } tvin_buffer_ctl_t;
 
-#ifdef TVAFE_SET_CVBS_MANUAL_FMT_POS
-/* cvbs manual format video postion setting */
-typedef enum tvin_cvbs_pos_ctl_e {
-        TVIN_CVBS_POS_NULL = 1,  //do not need change position
-        TVIN_CVBS_POS_P_TO_N,    //input is N, manual format is P, set N postion
-        TVIN_CVBS_POS_P_TO_P,    //input is P, manual format is P, reload P postion
-        TVIN_CVBS_POS_N_TO_P,    //input is P, manual format is N, set P postion
-        TVIN_CVBS_POS_N_TO_N,    //input is N, manual format is N, reload N postion
-} tvin_cvbs_pos_ctl_t;
-#endif
 
 // ***************************************************************************
 // *** structure definitions *********************************************

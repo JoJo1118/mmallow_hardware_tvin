@@ -143,7 +143,7 @@ typedef struct vdin_dev_s {
 	unsigned int			canvas_max_size;
 	unsigned int			canvas_max_num;
 	struct vf_entry			*curr_wr_vfe;
-	struct vf_entry         *last_wr_vfe;
+	struct vf_entry                 *last_wr_vfe;
 	unsigned int			curr_field_type;
 
 	unsigned int			irq;
@@ -152,11 +152,8 @@ typedef struct vdin_dev_s {
 	unsigned int			vga_clr_cnt;
 	unsigned int			vs_cnt_valid;
 	unsigned int			vs_cnt_ignore;
-#ifdef TVAFE_SET_CVBS_MANUAL_FMT_POS
-	enum tvin_cvbs_pos_ctl_e	cvbs_pos_chg;
-#endif
 	struct tvin_parm_s		parm;
-                struct tvin_format_s                 *fmt_info_p;
+        struct tvin_format_s            *fmt_info_p;
 	struct vf_pool			*vfp;
 
 	struct tvin_frontend_s		*frontend;

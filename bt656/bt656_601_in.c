@@ -622,9 +622,6 @@ static struct tvin_state_machine_ops_s am656_machine_ops = {
 	.adc_cal             = NULL,
 	.pll_lock            = NULL,
 	.get_sig_propery     = am656in_get_sig_propery,
-#ifdef TVAFE_SET_CVBS_MANUAL_FMT_POS
-	.set_cvbs_fmt_pos    = NULL,
-#endif
 	.vga_set_param       = NULL,
 	.vga_get_param       = NULL,
 	.check_frame_skip    = am656_check_skip_frame,

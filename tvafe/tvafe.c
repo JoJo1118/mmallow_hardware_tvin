@@ -764,23 +764,6 @@ enum tvin_sig_fmt_e tvafe_get_fmt(struct tvin_frontend_s *fe)
 	return fmt;
 }
 
-#ifdef TVAFE_SET_CVBS_MANUAL_FMT_POS
-/*
- * tvafe cvbs video position setting by mode detection
- */
-enum tvin_cvbs_pos_ctl_e tvafe_set_cvbs_fmt_pos(struct tvin_frontend_s *fe)
-{
-	/* Get the per-device structure that contains this frontend */
-	struct tvafe_dev_s *devp = container_of(fe, struct tvafe_dev_s, frontend);
-	struct tvafe_info_s *tvafe = &devp->tvafe;
-	enum tvin_cvbs_pos_ctl_e cvbs_pos_ctl = TVIN_CVBS_POS_NULL;
-
-	cvbs_pos_ctl = tvafe_cvd2_set_pos(&tvafe->cvd2);
-
-	return (cvbs_pos_ctl);
-}
-#endif
-
 /*
  * tvafe signal property: 2D/3D, color format, aspect ratio, pixel repeat
  */
@@ -944,9 +927,6 @@ static struct tvin_state_machine_ops_s tvafe_sm_ops = {
 	.adc_cal          = tvafe_cal,
 	.pll_lock         = tvafe_pll_lock,
 	.get_sig_propery  = tvafe_get_sig_property,
-#ifdef TVAFE_SET_CVBS_MANUAL_FMT_POS
-	.set_cvbs_fmt_pos = tvafe_set_cvbs_fmt_pos,
-#endif
 	.vga_set_param    = tvafe_vga_set_parm,
 	.vga_get_param    = tvafe_vga_get_parm,
 	.check_frame_skip = tvafe_check_frame_skip,

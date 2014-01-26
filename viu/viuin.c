@@ -86,6 +86,10 @@ static unsigned int vsync_enter_line_threshold_overflow_count = 0;
 module_param(vsync_enter_line_threshold_overflow_count,uint,0664);
 MODULE_PARM_DESC(vsync_enter_line_threshold_overflow_count,"\n count of overflow encoder process line num over threshold drop the frame.\n");
 
+static unsigned short v_cut_offset = 0;
+module_param(v_cut_offset,ushort,0664);
+MODULE_PARM_DESC(v_cut_offset,"the cut window vertical offset for viuin");
+
 typedef struct viuin_s{
         unsigned int flag;
         struct vframe_prop_s *prop;
@@ -633,6 +637,14 @@ static void viuin_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_proper
     prop->color_format = TVIN_RGB444;
 #endif
     prop->dest_cfmt = devp->parm.dfmt;
+
+	prop->scaling4w = devp->parm.dest_hactive;
+	prop->scaling4h = devp->parm.dest_vactive;
+	
+	prop->vs = v_cut_offset;
+	prop->ve = 0;
+	prop->hs = 0;
+	prop->he = 0;
     prop->pixel_repeat = 0;
 }
 

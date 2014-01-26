@@ -123,10 +123,6 @@ static bool invert_top_bot = false;
 module_param(invert_top_bot,bool,0644);
 MODULE_PARM_DESC(invert_top_bot,"invert field type top or bottom");
 
-static unsigned short v_cut_offset = 0;
-module_param(v_cut_offset,ushort,0664);
-MODULE_PARM_DESC(v_cut_offset,"the cut window vertical offset for isp");
-
 /*
 *the check flag in vdin_isr
 *bit0:bypass stop check,bit1:bypass cyc check
@@ -538,6 +534,8 @@ void vdin_start_dec(struct vdin_dev_s *devp)
 	        sm_ops->get_sig_propery(devp->frontend, &devp->prop);
 		if(devp->flags & VDIN_FLAG_MANUAL_CONVERTION)
 			devp->prop.dest_cfmt = devp->dest_cfmt;
+			devp->prop.scaling4w = devp->scaler4w;
+			devp->prop.scaling4h = devp->scaler4h;
         }
 	
 	vdin_get_format_convert(devp);
@@ -714,15 +712,6 @@ int start_tvin_service(int no ,vdin_parm_t *para)
         }else{
 		pr_err("%s(%d): not supported port 0x%x \n", __func__, no, para->port);
 		return -1;
-	}
-	//disable cut window?
-	if(para->port == TVIN_PORT_VIU) {
-		devp->parm.cutwin.vs = v_cut_offset;
-	} 
-        /*add for scaler down*/
-	if(!(devp->flags & VDIN_FLAG_MANUAL_CONVERTION)) {
-		devp->scaler4w = para->dest_hactive;
-		devp->scaler4h = para->dest_vactive;
 	}
         #ifdef CONFIG_ARCH_MESON6
         switch_mod_gate_by_name("vdin", 1);

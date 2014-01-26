@@ -1953,9 +1953,9 @@ inline void vdin_set_hvscale(struct vdin_dev_s *devp)
 {
         unsigned int offset = devp->addr_offset;
 
-        if((devp->scaler4w < devp->h_active) && (devp->scaler4w > 0)) {
-	        vdin_set_hscale(offset,devp->h_active,devp->scaler4w);
-                devp->h_active = devp->scaler4w;
+        if((devp->prop.scaling4w < devp->h_active) && (devp->prop.scaling4w > 0)) {
+	        vdin_set_hscale(offset,devp->h_active,devp->prop.scaling4w);
+                devp->h_active = devp->prop.scaling4w;
         } else if (devp->h_active > TVIN_MAX_HACTIVE) {
                 vdin_set_hscale(offset,devp->h_active,TVIN_MAX_HACTIVE);
                 devp->h_active = TVIN_MAX_HACTIVE;
@@ -1963,9 +1963,9 @@ inline void vdin_set_hvscale(struct vdin_dev_s *devp)
 	pr_info("[vdin.%d] dst hactive:%u,",devp->index,devp->h_active);
 
 #if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON6TV
-        if((devp->scaler4h < devp->v_active) && (devp->scaler4h > 0)) {
-		vdin_set_vscale(offset, devp->v_active, devp->scaler4h);
-                devp->v_active = devp->scaler4h;
+        if((devp->prop.scaling4h < devp->v_active) && (devp->prop.scaling4h > 0)) {
+		vdin_set_vscale(offset, devp->v_active, devp->prop.scaling4h);
+                devp->v_active = devp->prop.scaling4h;
 	}
         pr_info(" dst vactive:%u.\n",devp->v_active);
 #endif

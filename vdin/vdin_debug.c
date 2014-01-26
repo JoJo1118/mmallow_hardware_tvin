@@ -34,9 +34,7 @@
 #include "../tvin_format_table.h"
 #include "vdin_drv.h"
 #include "vdin_ctl.h"
-#include "vdin_sm.h"
-#include "vdin_vf.h"
-#include "vdin_canvas.h"
+#include "vdin_regs.h"
 
 static void parse_param(char *buf_orig,char **parm)
 {

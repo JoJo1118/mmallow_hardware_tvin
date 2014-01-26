@@ -848,6 +848,8 @@ static int isp_fe_open(struct tvin_frontend_s *fe, enum tvin_port_e port)
 	info->dfmt = parm->dfmt;
 	info->h_active = parm->h_active;
 	info->v_active = parm->v_active;
+	info->dest_hactive = parm->dest_hactive;
+	info->dest_vactive = parm->dest_vactive;
 	info->frame_rate = parm->frame_rate;
 	info->skip_cnt = 0;
 	devp->isp_fe = tvin_get_frontend(info->fe_port, 0);
@@ -1252,8 +1254,17 @@ static struct tvin_decoder_ops_s isp_dec_ops ={
 static void isp_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_property_s *prop)
 {
 	isp_dev_t *devp = container_of(fe,isp_dev_t,frontend);
+        
         prop->color_format = devp->info.cfmt;
 	prop->dest_cfmt = devp->info.dfmt;
+	
+        prop->scaling4w = devp->info.dest_hactive;
+	prop->scaling4h = devp->info.dest_vactive;
+	
+	prop->vs = 0;
+	prop->ve = 0;
+	prop->hs = 0;
+	prop->he = 0;
         prop->pixel_repeat = 0;
 }
 static bool isp_frame_skip(struct tvin_frontend_s *fe)

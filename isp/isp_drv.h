@@ -68,6 +68,8 @@ typedef struct isp_info_s {
 	tvin_color_fmt_t dfmt;
 	unsigned int h_active;
 	unsigned int v_active;
+	unsigned short dest_hactive;
+	unsigned short dest_vactive;
 	unsigned int frame_rate;
 	unsigned int skip_cnt;
 } isp_info_t;
@@ -110,9 +112,9 @@ typedef struct af_debug_s {
 typedef struct af_debug_test_s {
 	unsigned int cnt;
 	unsigned int max;
-	struct isp_af_stat_s *af_win;
+	struct isp_af_stat_s   *af_win;
 	struct isp_blnr_stat_s *af_bl;
-	struct isp_ae_stat_s  *ae_win;
+	struct isp_ae_stat_s   *ae_win;
 	struct isp_awb_stat_s  *awb_stat;
 } af_debug_test_t;
 /*for af fine tune*/

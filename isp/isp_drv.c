@@ -58,7 +58,7 @@ static unsigned int ae_flag = 0;
 static bool rgb_mode = false;
 
 extern struct isp_ae_to_sensor_s ae_sens;
-static unsigned int def_config = 0;
+
 static void parse_param(char *buf_orig,char **parm)
 {
 	char *ps, *token;
@@ -82,13 +82,13 @@ static ssize_t debug_store(struct device *dev,struct device_attribute *attr, con
 {
 	isp_dev_t *devp;
 	unsigned int addr,data;
-	char *parm[3]={NULL},*buf_orig;
-	int n=0;
+	char *parm[5]={NULL},*buf_orig;
+
 	if(!buf)
 		return len;
 	buf_orig = kstrdup(buf, GFP_KERNEL);
 	devp = dev_get_drvdata(dev);
-	parse_param(buf_orig,&parm);
+	parse_param(buf_orig,(char **)&parm);
 	if(!strcmp(parm[0],"r")){
 		addr = simple_strtol(parm[1],NULL,16);
 		data = isp_rd(addr);
@@ -180,7 +180,7 @@ static DEVICE_ATTR(debug, 0664, debug_show, debug_store);
 static ssize_t af_debug_store(struct device *dev,struct device_attribute *attr, const char* buf, size_t len)
 {
 	isp_dev_t *devp;
-	int data[10];
+	int data[10]={0};
 	char *parm[11]={NULL};
 	char *buf_orig = kstrdup(buf, GFP_KERNEL);
 	af_debug_t *af = NULL;
@@ -291,7 +291,6 @@ static ssize_t af_debug_store(struct device *dev,struct device_attribute *attr, 
 		devp->flag |= ISP_TEST_FOR_AF_WIN;
 	}else if(!strcmp(parm[0],"af_print")){
 		int i = 0;
-		unsigned long long sum_ac,sum_dc;
 		pr_info("af:f0_win0 f1_win0 f0_win1 f1_win1 f0_win2 f1_win2 f0_win3 f1_win3 f0_win4 f1_win4 f0_win5 f1_win5 f0_win6 f1_win6 f0_win7 f1_win7\n");
 		for(i=0;i<devp->af_test.cnt;i++){
 			pr_info("%u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u\n",
@@ -329,7 +328,6 @@ static ssize_t af_debug_show(struct device *dev,struct device_attribute *attr, c
 	size_t len = 0;
 
 	isp_dev_t *devp = dev_get_drvdata(dev);
-	unsigned int pix_sum = ((devp->info.h_active)*(devp->info.v_active))>>2;
 	len += sprintf(buf+len,"0x%x 0x%x 0x%x 0x%x\n",devp->blnr_stat.dc[0],devp->blnr_stat.dc[1],devp->blnr_stat.dc[2],devp->blnr_stat.dc[3]);
 
         return len;
@@ -564,7 +562,7 @@ static ssize_t gamma_debug_store(struct device *dev,struct device_attribute *att
 	}
 	return len;
 }
-static ssize_t gamma_debug_show(struct class *cls,struct class_attribute *attr,char *buf)
+static ssize_t gamma_debug_show(struct device *dev,struct device_attribute *attr,char *buf)
 {
 	unsigned short *gammaR, *gammaG, *gammaB, i;
 	gammaR = kmalloc(257 * sizeof(unsigned short), GFP_KERNEL);
@@ -587,7 +585,7 @@ static ssize_t gamma_debug_show(struct class *cls,struct class_attribute *attr,c
 
 static DEVICE_ATTR(gamma_debug, 0664, gamma_debug_show, gamma_debug_store);
 
-static ssize_t gamma_show(struct class *cls,struct class_attribute *attr,char *buf)
+static ssize_t gamma_show(struct device *dev,struct device_attribute *attr,char *buf)
 {
 	pr_info("Usage:");
 	pr_info("	echo sgr|sgg|sgb xxx...xx > /sys/class/register/gamma\n");
@@ -599,8 +597,8 @@ static ssize_t gamma_show(struct class *cls,struct class_attribute *attr,char *b
 	return 0;
 }
 
-static ssize_t gamma_store(struct class *cls,
-			 struct class_attribute *attr,
+static ssize_t gamma_store(struct device *dev,
+			 struct device_attribute *attr,
 			 const char *buffer, size_t count)
 {
 
@@ -679,12 +677,13 @@ static ssize_t ls_show(struct device *dev, struct device_attribute *attr, char *
 static ssize_t ls_store(struct device *dev,struct device_attribute *attr,const char *buf, size_t len)
 {
 	char *buf_orig, *parm[10]={NULL};
+	unsigned int psize_v2h=0,hactive=0,vactive=0,ocenter_c2l=0,ocenter_c2t=0,gain_0db=0,curvature_gr=0,curvature_r=0;
+        unsigned int curvature_b=0,curvature_gb=0;
         isp_dev_t *devp;
 	devp = dev_get_drvdata(dev);
 	isp_info_t *info = &devp->info;
-        unsigned int psize_v2h,hactive,vactive,ocenter_c2l,ocenter_c2t,gain_0db, curvature_gr,curvature_r;
-        unsigned int curvature_b,curvature_gb;
-        bool force_enable;
+       
+        bool force_enable=false;
 
 	/* to avoid the bellow warning message while compiling:
 	 * warning: the frame size of 1576 bytes is larger than 1024 bytes
@@ -867,9 +866,9 @@ static int isp_fe_open(struct tvin_frontend_s *fe, enum tvin_port_e port)
 		pr_err("[%s..] camera parameter error use default config.\n",__func__);
 		isp_load_def_setting(info->h_active,info->v_active,0);
 	}  else {
+		unsigned int i = 0;
 		devp->isp_ae_parm = &devp->cam_param->xml_scenes->ae;
 		devp->isp_awb_parm = &devp->cam_param->xml_scenes->awb;
-		unsigned int i;
 		devp->isp_af_parm = &devp->cam_param->xml_scenes->af;
 		devp->isp_af_parm->valid_step_cnt = 0;
 		for(i = 0;devp->isp_af_parm->step[i] != 0;i++){
@@ -1364,7 +1363,7 @@ static int isp_probe(struct platform_device *pdev)
 			pr_err("[%s..]%s register isp frontend error.\n",DEVICE_NAME,__func__);
 	}
 #ifdef USE_WORK_QUEUE
-    INIT_WORK(&devp->isp_wq,(void (*)(void *))isp_do_work);
+    INIT_WORK(&devp->isp_wq,(void (*)(struct work_struct *))isp_do_work);
 #else
     tasklet_init(&devp->isp_task,isp_tasklet,(unsigned long)devp);
     tasklet_disable(&devp->isp_task);

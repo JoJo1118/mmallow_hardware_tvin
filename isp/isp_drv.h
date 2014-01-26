@@ -53,7 +53,7 @@
 #define ISP_FLAG_TEST_WB			0x00008000
 #define ISP_FLAG_RECONFIG                       0x00010000
 
-#define ISP_AF_SM_MASK				ISP_FLAG_AF|ISP_FLAG_TOUCH_AF
+#define ISP_AF_SM_MASK				(ISP_FLAG_AF|ISP_FLAG_TOUCH_AF)
 
 typedef enum bayer_fmt_e {
 	RAW_BGGR = 0,

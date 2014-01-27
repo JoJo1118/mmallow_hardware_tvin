@@ -629,31 +629,42 @@ static struct tvin_decoder_ops_s viu_dec_ops ={
 
 static void viuin_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_property_s *prop)
 {
-    viuin_t *devp = container_of(fe,viuin_t,frontend);
+        viuin_t *devp = container_of(fe,viuin_t,frontend);
 
-#if ((MESON_CPU_TYPE == MESON_CPU_TYPE_MESON6) || (MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8))
-    prop->color_format = TVIN_YUV422;
-#else
-    prop->color_format = TVIN_RGB444;
-#endif
-    prop->dest_cfmt = devp->parm.dfmt;
+        #if ((MESON_CPU_TYPE == MESON_CPU_TYPE_MESON6) || (MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8))
+        prop->color_format = TVIN_YUV422;
+        #else
+        prop->color_format = TVIN_RGB444;
+        #endif
+        prop->dest_cfmt = devp->parm.dfmt;
 
-	prop->scaling4w = devp->parm.dest_hactive;
+        prop->scaling4w = devp->parm.dest_hactive;
 	prop->scaling4h = devp->parm.dest_vactive;
 	
 	prop->vs = v_cut_offset;
 	prop->ve = 0;
 	prop->hs = 0;
 	prop->he = 0;
-    prop->pixel_repeat = 0;
+        prop->pixel_repeat = 0;
+}
+
+static bool viu_check_frame_skip(struct tvin_frontend_s *fe)
+{
+	viuin_t *devp = container_of(fe,viuin_t,frontend);
+	if(devp->parm.skip_count > 0){
+		devp->parm.skip_count--;
+		return true;
+	}
+	return false;
+		
 }
 
 static struct tvin_state_machine_ops_s viu_sm_ops ={
        .get_sig_propery = viuin_sig_propery,
+       .check_frame_skip = viu_check_frame_skip,
 };
 
 static struct class* gamma_proc_clsp;
-
 static int viuin_probe(struct platform_device *pdev)
 {
 	int ret = 0;

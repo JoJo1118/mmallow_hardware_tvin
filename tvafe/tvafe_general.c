@@ -17,7 +17,7 @@
 // #define TVAFE_ADC_CAL_VALIDATION
 
 /* edid config reg value */
-#define TVAFE_EDID_CONFIG           0x03800050
+#define TVAFE_EDID_CONFIG           0x03804050//0x03800050
 
 /* calibration defines */
 #define TVAFE_ADC_CAL_STEP_GAIN     1

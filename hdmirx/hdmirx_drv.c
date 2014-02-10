@@ -405,6 +405,15 @@ void hdmirx_get_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_property
 	}
 	/* 1: no repeat; 2: repeat 1 times; 3: repeat two; ... */
 	prop->pixel_repeat = hdmirx_hw_get_pixel_repeat();
+
+	//patch for 4096*2160 fmt buffer limit
+	if(TVIN_SIG_FMT_HDMI_4096_2160_00HZ == sig_fmt) {
+		prop->scaling4w = 1920;
+		prop->hs = 64;
+		prop->he = 64 + 1920 - 1;
+		prop->vs = 0;
+		prop->ve = 1079;
+	}
 }
 
 bool hdmirx_check_frame_skip(struct tvin_frontend_s *fe)

@@ -618,13 +618,13 @@ void vdin_set_cutwin(struct vdin_dev_s *devp)
 #endif
     if ((devp->parm.port >= TVIN_PORT_HDMI0) &&
 	    (devp->parm.port <= TVIN_PORT_HDMI7) &&
-	    (devp->parm.info.fmt == TVIN_SIG_FMT_HDMI_4096_2160_00HZ)){
-		devp->h_active = 1920;
-        devp->parm.cutwin.hs += 64;
-		he = devp->parm.cutwin.hs + devp->h_active - 1;
-		ve = devp->parm.cutwin.vs + devp->v_active - 1;
-		WR(VDIN_WIN_H_START_END, (devp->parm.cutwin.hs << INPUT_WIN_H_START_BIT) | (he << INPUT_WIN_H_END_BIT));
-		WR(VDIN_WIN_V_START_END, (devp->parm.cutwin.vs << INPUT_WIN_V_START_BIT) | (ve << INPUT_WIN_V_END_BIT));
+	    ((devp->prop.scaling4h != 0) || (devp->prop.scaling4w!= 0))){
+		//devp->h_active = 1920;
+        //devp->parm.cutwin.hs += 64;
+		//he = devp->parm.cutwin.hs + devp->h_active - 1;
+		//ve = devp->parm.cutwin.vs + devp->v_active - 1;
+		WR(VDIN_WIN_H_START_END, (devp->prop.hs << INPUT_WIN_H_START_BIT) | (devp->prop.he << INPUT_WIN_H_END_BIT));
+		WR(VDIN_WIN_V_START_END, (devp->prop.vs << INPUT_WIN_V_START_BIT) | (devp->prop.ve << INPUT_WIN_V_END_BIT));
 		WR_BITS(VDIN_COM_CTRL0, 1, INPUT_WIN_SEL_EN_BIT, INPUT_WIN_SEL_EN_WID);
 	}
 }

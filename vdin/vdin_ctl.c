@@ -589,44 +589,27 @@ void vdin_set_cutwin(struct vdin_dev_s *devp)
 	unsigned int offset = devp->addr_offset;
 	unsigned int he = 0,ve = 0;
 
-#if 1
-	if (((devp->parm.cutwin.hs) ||
-				(devp->parm.cutwin.he) ||
-				(devp->parm.cutwin.vs) ||
-				(devp->parm.cutwin.ve)
-	    )                                                                     &&
-			(devp->h_active > (devp->parm.cutwin.hs + devp->parm.cutwin.he)) &&
-			(devp->v_active > (devp->parm.cutwin.vs + devp->parm.cutwin.ve)) &&
-			(devp->parm.port == TVIN_PORT_ISP)
+	if (((devp->prop.hs)||(devp->prop.he)||(devp->prop.vs)||(devp->prop.ve)) &&
+		(devp->h_active > (devp->prop.hs + devp->prop.he)) &&
+		(devp->v_active > (devp->prop.vs + devp->prop.ve))
 	   )
 	{
-		devp->h_active -= (devp->parm.cutwin.he + devp->parm.cutwin.hs);
-		devp->v_active -= (devp->parm.cutwin.ve + devp->parm.cutwin.vs);
-		he = devp->parm.cutwin.hs + devp->h_active - 1;
-		ve = devp->parm.cutwin.vs + devp->v_active - 1;
+		devp->h_active -= (devp->prop.he + devp->prop.hs);
+		devp->v_active -= (devp->prop.ve + devp->prop.vs);
+		he = devp->prop.hs + devp->h_active - 1;
+		ve = devp->prop.vs + devp->v_active - 1;
 
-		WR(VDIN_WIN_H_START_END, (devp->parm.cutwin.hs << INPUT_WIN_H_START_BIT) | (he << INPUT_WIN_H_END_BIT));
-		WR(VDIN_WIN_V_START_END, (devp->parm.cutwin.vs << INPUT_WIN_V_START_BIT) | (ve << INPUT_WIN_V_END_BIT));
+		WR(VDIN_WIN_H_START_END, (devp->prop.hs << INPUT_WIN_H_START_BIT) | (he << INPUT_WIN_H_END_BIT));
+		WR(VDIN_WIN_V_START_END, (devp->prop.vs << INPUT_WIN_V_START_BIT) | (ve << INPUT_WIN_V_END_BIT));
 		WR_BITS(VDIN_COM_CTRL0, 1, INPUT_WIN_SEL_EN_BIT, INPUT_WIN_SEL_EN_WID);
 		pr_info("%s enable cutwin hs = %d, he = %d,  vs = %d, ve = %d\n", __func__,
-				devp->parm.cutwin.hs, devp->parm.cutwin.he, devp->parm.cutwin.vs, devp->parm.cutwin.ve);
+			devp->prop.hs, devp->prop.he, devp->prop.vs, devp->prop.ve);
 	}
 	else{
 		pr_info("%s disable cutwin!!! hs = %d, he = %d,  vs = %d, ve = %d\n", __func__,
-				devp->parm.cutwin.hs, devp->parm.cutwin.he, devp->parm.cutwin.vs, devp->parm.cutwin.ve);
+			devp->prop.hs, devp->prop.he, devp->prop.vs, devp->prop.ve);
 	}
-#endif
-    if ((devp->parm.port >= TVIN_PORT_HDMI0) &&
-	    (devp->parm.port <= TVIN_PORT_HDMI7) &&
-	    ((devp->prop.scaling4h != 0) || (devp->prop.scaling4w!= 0))){
-		//devp->h_active = 1920;
-        //devp->parm.cutwin.hs += 64;
-		//he = devp->parm.cutwin.hs + devp->h_active - 1;
-		//ve = devp->parm.cutwin.vs + devp->v_active - 1;
-		WR(VDIN_WIN_H_START_END, (devp->prop.hs << INPUT_WIN_H_START_BIT) | (devp->prop.he << INPUT_WIN_H_END_BIT));
-		WR(VDIN_WIN_V_START_END, (devp->prop.vs << INPUT_WIN_V_START_BIT) | (devp->prop.ve << INPUT_WIN_V_END_BIT));
-		WR_BITS(VDIN_COM_CTRL0, 1, INPUT_WIN_SEL_EN_BIT, INPUT_WIN_SEL_EN_WID);
-	}
+
 }
 
 

@@ -408,11 +408,10 @@ void hdmirx_get_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_property
 
 	//patch for 4096*2160 fmt buffer limit
 	if(TVIN_SIG_FMT_HDMI_4096_2160_00HZ == sig_fmt) {
-		prop->scaling4w = 1920;
 		prop->hs = 64;
-		prop->he = 64 + 1920 - 1;
+		prop->he = 64;
 		prop->vs = 0;
-		prop->ve = 1079;
+		prop->ve = 0;
 	}
 }
 

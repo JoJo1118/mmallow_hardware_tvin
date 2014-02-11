@@ -43,7 +43,7 @@
 //#define ACD_REG_NUM2            0x39  //the sum of the part2 acd register 
 #define ACD_REG_NUM            0xff//the sum all of the acd register
 
-#define CRYSTAL_24M
+//#define CRYSTAL_24M
 
 #ifndef CRYSTAL_24M
 #define CRYSTAL_25M

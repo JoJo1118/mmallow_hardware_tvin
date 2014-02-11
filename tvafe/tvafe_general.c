@@ -547,7 +547,11 @@ const static unsigned int cvbs_top_reg_default[][2] = {
 	{TVFE_OGO_OFFSET3                       ,0x00000000,}, // TVFE_OGO_OFFSET3
 	{TVFE_VAFE_CTRL                         ,0x00000000,}, // TVFE_VAFE_CTRL
 	{TVFE_VAFE_STATUS                       ,0x00000000,}, // TVFE_VAFE_STATUS
+#ifdef CRYSTAL_25M
+	{TVFE_TOP_CTRL                          ,0x30c4e6c/*0xc4f64 0x00004B60*/,}, // TVFE_TOP_CTRL
+#else
 	{TVFE_TOP_CTRL                          ,0x30c4f64/*0xc4f64 0x00004B60*/,}, // TVFE_TOP_CTRL
+#endif
 	{TVFE_CLAMP_INTF                        ,0x00008666,}, // TVFE_CLAMP_INTF
 	{TVFE_RST_CTRL                          ,0x00000000,}, // TVFE_RST_CTRL
 	{TVFE_EXT_VIDEO_AFE_CTRL_MUX1           ,0x00000000,}, // TVFE_EXT_VIDEO_AFE_CTRL_MUX1
@@ -580,11 +584,19 @@ const static unsigned int cvbs_top_reg_default[][2] = {
 	{TVFE_SOG_MON_CTRL1            ,   0x00000000,},//TVFE_SOG_MON_CTRL1
 	{TVFE_ADC_READBACK_CTRL1,   0x00000000,},//TVFE_ADC_READBACK_CTRL1
 	{TVFE_ADC_READBACK_CTRL2,   0x00000000,},//TVFE_ADC_READBACK_CTRL2
+#ifdef CRYSTAL_25M
+	{TVFE_AFC_CTRL1 		     ,	 0x85730459,},//TVFE_AFC_CTRL1
+	{TVFE_AFC_CTRL2 		     ,	 0x342fa9ed,},//TVFE_AFC_CTRL2
+	{TVFE_AFC_CTRL3 		     ,	 0x2a02396,},//TVFE_AFC_CTRL3
+	{TVFE_AFC_CTRL4 		     ,	 0xfefbff14,},//TVFE_AFC_CTRL4
+	{TVFE_AFC_CTRL5 		     ,		0x0,},//TVFE_AFC_CTRL5
+#else
 	{TVFE_AFC_CTRL1                      ,   0x893904d2,},//TVFE_AFC_CTRL1
 	{TVFE_AFC_CTRL2                      ,   0xf4b9ac9,},//TVFE_AFC_CTRL2
 	{TVFE_AFC_CTRL3                      ,   0x1fd8c36,},//TVFE_AFC_CTRL3
 	{TVFE_AFC_CTRL4                      ,   0x2de6d04f,},//TVFE_AFC_CTRL4
 	{TVFE_AFC_CTRL5                      ,          0x4,},//TVFE_AFC_CTRL5
+#endif
 	{0xFFFFFFFF                             ,0x00000000,}
 };
 
@@ -3222,6 +3234,9 @@ void tvafe_init_reg(struct tvafe_cvd2_s *cvd2, struct tvafe_cvd2_mem_s *mem, enu
 	}
 	else if ((port >= TVIN_PORT_CVBS0) && (port <= TVIN_PORT_SVIDEO7))
 	{
+#ifdef CRYSTAL_25M
+                WRITE_CBUS_REG(HHI_VAFE_CLKIN_CNTL, 0x703);
+#endif
 		tvafe_set_cvbs_default(cvd2, mem, port, pinmux);
 		/*turn on/off av out*/
 		tvafe_enable_avout(enableavout);

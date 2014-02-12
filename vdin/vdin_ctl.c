@@ -32,7 +32,7 @@
 
 #define TVIN_MAX_PIXCLK 20000
 
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
+#if defined (VDIN_V2)
 #define TVIN_MAX_HACTIVE     4096
 #define TVIN_MAX_VACTIVE     4096
 #else
@@ -616,7 +616,7 @@ void vdin_set_cutwin(struct vdin_dev_s *devp)
 
 static inline void vdin_set_color_matrix1(unsigned int offset, tvin_format_t *tvin_fmt_p, enum vdin_format_convert_e format_convert)
 {
-        #if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON6TV
+#if defined(VDIN_V1)
 	//    unsigned int offset = devp->addr_offset;
 	enum vdin_matrix_csc_e    matrix_csc = VDIN_MATRIX_NULL;
 	struct vdin_matrix_lup_s *matrix_tbl;
@@ -1459,9 +1459,9 @@ inline void vdin_set_default_regmap(unsigned int offset)
 	//[7:0] write chroma addr = 1
 	WR_BITS(VDIN_WR_CTRL2, def_canvas_id+1,WRITE_CHROMA_CANVAS_ADDR_BIT,
 	                WRITE_CHROMA_CANVAS_ADDR_WID);
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON6TV
-                WR_BITS(VDIN_WR_CTRL2, 0,DISCARD_BEF_LINE_FIFO_BIT,
-	                DISCARD_BEF_LINE_FIFO_WID);
+#if defined(VDIN_V1)
+    WR_BITS(VDIN_WR_CTRL2, 0,DISCARD_BEF_LINE_FIFO_BIT,
+            DISCARD_BEF_LINE_FIFO_WID);
 	//[20:25] interger = 0
 	//[0:19] fraction = 0
 	WR(VDIN_VSC_PHASE_STEP, 0x0000000);
@@ -1591,7 +1591,7 @@ inline void vdin_hw_enable(unsigned int offset)
 
 inline void vdin_hw_disable(unsigned int offset)
 {
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
+#if defined(VDIN_V2)
 	/* disable cm2 */
 	WR_BITS(VDIN_CM_BRI_CON_CTRL,0,CM_TOP_EN_BIT,CM_TOP_EN_WID);
 #endif
@@ -1874,7 +1874,7 @@ inline void vdin_set_hscale(unsigned int offset, unsigned int src_w, unsigned in
 /*
  *just for veritical scale src_w is origin height,dst_h is the height after scale
  */
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON6TV
+#if defined(VDIN_V1)
 inline void vdin_set_vscale(unsigned int offset, unsigned int src_h,  unsigned int dst_h)
 {
 	int veri_phase_step,tmp;
@@ -1925,7 +1925,7 @@ inline void vdin_set_hvscale(struct vdin_dev_s *devp)
         }
 	pr_info("[vdin.%d] dst hactive:%u,",devp->index,devp->h_active);
 
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON6TV
+#if defined(VDIN_V1)
         if((devp->prop.scaling4h < devp->v_active) && (devp->prop.scaling4h > 0)) {
 		vdin_set_vscale(offset, devp->v_active, devp->prop.scaling4h);
                 devp->v_active = devp->prop.scaling4h;
@@ -1935,9 +1935,9 @@ inline void vdin_set_hvscale(struct vdin_dev_s *devp)
 
 }
 
+#if defined(VDIN_V1)
 inline void vdin_wr_reverse(unsigned int offset, bool hreverse, bool vreverse)
 {
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON6TV
 	if(hreverse)
 		WR_BITS(VDIN_WR_H_START_END, 1,
 				HORIZONTAL_REVERSE_BIT, HORIZONTAL_REVERSE_WID);
@@ -1950,104 +1950,17 @@ inline void vdin_wr_reverse(unsigned int offset, bool hreverse, bool vreverse)
 	else
 		WR_BITS(VDIN_WR_V_START_END, 0,
 				VERTICAL_REVERSE_BIT, VERTICAL_REVERSE_WID);
-#endif
 }
+#endif
 
-#if MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8
+#if defined(VDIN_V2)
 void vdin_bypass_isp(unsigned int offset)
 {
 	WR_BITS(VDIN_CM_BRI_CON_CTRL, 0,CM_TOP_EN_BIT, CM_TOP_EN_WID);
 	WR_BITS(VDIN_MATRIX_CTRL, 0, VDIN_MATRIX_EN_BIT, VDIN_MATRIX_EN_WID);
 	WR_BITS(VDIN_MATRIX_CTRL, 0, VDIN_MATRIX1_EN_BIT, VDIN_MATRIX1_EN_WID);
 }
-void set_chroma_regs(unsigned int offset, unsigned int h_active,unsigned int v_active)
-{
 
-        int i,j,k;
-        int cm2_cfg_reg[640];
-        int tmp[20];
-        int tmp_cfg;
-
-        //tmp_cfg = -8;
-        for ( i=0; i<640 ; i=i+1 ) {
-                //tmp_cfg = tmp_cfg>5 ? -5 : (tmp_cfg+1);
-                //cm2_cfg_reg[i] = tmp_cfg;
-                cm2_cfg_reg[i] = (i&15)-8;
-        }
-
-        for ( j = 0; j<32; j++) {
-                WR(VDIN_CHROMA_ADDR_PORT, 256+j*8);
-                for ( i = 0; i<20; i++) {
-                        tmp[i] = cm2_cfg_reg[j+32*i];
-                }
-                for ( k = 0; k<5; k++) {
-                        WR(VDIN_CHROMA_DATA_PORT,( ((tmp[k*4+3]&255)<<24)+
-                                      ((tmp[k*4+2]&255)<<16)+
-                                      ((tmp[k*4+1]&255)<< 8)+
-                                      ((tmp[k*4+0]&255)    ) ) );
-                }
-        }
-
-
-        WR(VDIN_CHROMA_ADDR_PORT, SAT_BYYB_NODE_REG0);
-        WR(VDIN_CHROMA_DATA_PORT, 0xfffefdfc);
-
-        WR(VDIN_CHROMA_ADDR_PORT, SAT_BYYB_NODE_REG1);
-        WR(VDIN_CHROMA_DATA_PORT, 0x03020100);
-
-        WR(VDIN_CHROMA_ADDR_PORT, SAT_BYYB_NODE_REG2);
-        WR(VDIN_CHROMA_DATA_PORT, 0x00000004);
-
-        WR(VDIN_CHROMA_ADDR_PORT, SAT_SRC_NODE_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x0bb80400);
-
-        WR(VDIN_CHROMA_ADDR_PORT, CM_ENH_SFT_MODE_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x00000000);
-
-        WR(VDIN_CHROMA_ADDR_PORT, FRM_SIZE_REG);
-        //Wr(VDIN0_CHROMA_DATA_PORT, 0x02d00500);
-        WR(VDIN_CHROMA_DATA_PORT, v_active<<16|h_active);
-
-        WR(VDIN_CHROMA_ADDR_PORT, FITLER_CFG_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x0000001f);
-
-        WR(VDIN_CHROMA_ADDR_PORT, CM_GLOBAL_GAIN_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x01000000);
-
-        WR(VDIN_CHROMA_ADDR_PORT, CM_ENH_CTL_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x00000077);
-
-        WR(VDIN_CHROMA_ADDR_PORT, ROI_X_SCOPE_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x02000100);
-
-        WR(VDIN_CHROMA_ADDR_PORT, ROI_Y_SCOPE_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x03000200);
-
-        WR(VDIN_CHROMA_ADDR_PORT, POI_XY_DIR_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x00110011);
-
-        WR(VDIN_CHROMA_ADDR_PORT, COI_Y_SCOPE_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x00008000);
-
-        WR(VDIN_CHROMA_ADDR_PORT, COI_H_SCOPE_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x00800000);
-
-        WR(VDIN_CHROMA_ADDR_PORT, COI_S_SCOPE_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x00800000);
-
-        WR(VDIN_CHROMA_ADDR_PORT, IFO_MODE_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x0000000c);
-
-        WR(VDIN_CHROMA_ADDR_PORT, POI_RPL_MODE_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x00000000);
-
-        WR(VDIN_CHROMA_ADDR_PORT, DEMO_OWR_YHS_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x33222111);
-	//enable cm2
-	WR_BITS(VDIN_CM_BRI_CON_CTRL,1,CM_TOP_EN_BIT,CM_TOP_EN_WID);
-	pr_info("%s cm2 init ok.\n",__func__);
-
-}
 void vdin_set_cm2(unsigned int offset,unsigned int w,unsigned int h,unsigned int *cm2)
 {
 	unsigned int i=0,j=0,start_addr=0x100;

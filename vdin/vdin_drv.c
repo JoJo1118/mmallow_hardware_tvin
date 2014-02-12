@@ -47,7 +47,7 @@
 #include <linux/amlogic/aml_common.h>
 #include <mach/irqs.h>
 #include <mach/mod_gate.h>
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
+#if MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8
 #include <mach/vpu.h>
 #endif
 /* Local Headers */
@@ -534,16 +534,16 @@ void vdin_start_dec(struct vdin_dev_s *devp)
 			devp->prop.scaling4w = devp->scaler4w;
 			devp->prop.scaling4h = devp->scaler4h;
         }
-	
+
 	vdin_get_format_convert(devp);
 	devp->curr_wr_vfe = NULL;
 	/* h_active/v_active will be recalculated by bellow calling */
 	vdin_set_decimation(devp);
 	vdin_set_cutwin(devp);
 	vdin_set_hvscale(devp);
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON6TV
-        /*reverse / disable reverse write buffer*/
-        vdin_wr_reverse(devp->addr_offset,reverse_flag,reverse_flag);
+#if defined(VDIN_V1)
+    /*reverse / disable reverse write buffer*/
+    vdin_wr_reverse(devp->addr_offset,reverse_flag,reverse_flag);
 #endif
 
 	/* h_active/v_active will be used by bellow calling */
@@ -634,7 +634,7 @@ void vdin_stop_dec(struct vdin_dev_s *devp)
 	vdin_hw_disable(devp->addr_offset);
 	disable_irq_nosync(devp->irq);
 	/* reset default canvas  */
-	vdin_set_def_wr_canvas(devp);	
+	vdin_set_def_wr_canvas(devp);
 	#ifdef CONFIG_ARCH_MESON8
 	switch_vpu_mem_pd_vmod(devp->addr_offset?VPU_VIU_VDIN1:VPU_VIU_VDIN0,VPU_MEM_POWER_DOWN);
 	#endif
@@ -659,7 +659,7 @@ int start_tvin_service(int no ,vdin_parm_t *para)
 	        pr_err("%s: port 0x%x, decode started already.\n",__func__,para->port);
 		ret = -EBUSY;
 	}
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
+#if defined(VDIN_V2)
 	if(para->port != TVIN_PORT_VIU){
 		ret = request_irq(devp->irq, vdin_v4l2_isr, IRQF_SHARED, devp->irq_name, (void *)devp);
 		/*disable vsync irq until vdin configured completely*/
@@ -727,7 +727,7 @@ int stop_tvin_service(int no)
 	struct vdin_dev_s *devp;
 	unsigned int end_time;
 	devp = vdin_devp[no];
-	
+
 	if(!(devp->flags&VDIN_FLAG_DEC_STARTED)){
 		pr_err("%s:decode hasn't started.\n",__func__);
 		return -EBUSY;
@@ -808,7 +808,7 @@ static int vdin_func(int no, vdin_arg_t *arg)
 			vdin_set_matrixs(devp,parm->matrix_id,parm->color_convert);
 			break;
 		case VDIN_CMD_SET_CM2:
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
+#if defined(VDIN_V2)
 			vdin_set_cm2(devp->addr_offset,devp->h_active,devp->v_active,parm->cm2);
 #endif
 			break;
@@ -1272,12 +1272,12 @@ irqreturn_t vdin_v4l2_isr(int irq, void *dev_id)
 		devp->stamp = stamp;
 		goto irq_handled;
 	}
-	
+
         if(!vdin_write_done_check(devp->addr_offset, devp)){
 		if(vdin_dbg_en)
 			pr_info("[vdin.%u] write undone skiped.\n",devp->index);
                 goto irq_handled;
-        }   
+        }
 
 
 	if(devp->last_wr_vfe){
@@ -1287,8 +1287,8 @@ irqreturn_t vdin_v4l2_isr(int irq, void *dev_id)
 	}
 	/*check vs is valid base on the time during continuous vs*/
         vdin_check_cycle(devp);
-        
-/* remove for m6&m8 camera function, may cause hardware disable bug on kernel 3.10 */        
+
+/* remove for m6&m8 camera function, may cause hardware disable bug on kernel 3.10 */
 //#if MESON_CPU_TYPE < MESON_CPU_TYPE_MESON8
 //	if (devp->flags & VDIN_FLAG_DEC_STOP_ISR){
 //		vdin_hw_disable(devp->addr_offset);
@@ -1332,7 +1332,7 @@ irqreturn_t vdin_v4l2_isr(int irq, void *dev_id)
 	/*check the skip frame*/
         if(devp->frontend && devp->frontend->sm_ops){
     	        sm_ops = devp->frontend->sm_ops;
-                if(sm_ops->check_frame_skip && 
+                if(sm_ops->check_frame_skip &&
         	        sm_ops->check_frame_skip(devp->frontend)) {
             	        goto irq_handled;
                 }
@@ -1365,7 +1365,7 @@ irqreturn_t vdin_v4l2_isr(int irq, void *dev_id)
        /* prepare for chroma canvas*/
                 if((devp->prop.dest_cfmt == TVIN_NV12)||(devp->prop.dest_cfmt == TVIN_NV21))
 			VSYNC_WR_MPEG_REG_BITS(VDIN_WR_CTRL2+devp->addr_offset, (next_wr_vfe->vf.canvas0Addr>>8)&0xff, WRITE_CHROMA_CANVAS_ADDR_BIT,WRITE_CHROMA_CANVAS_ADDR_WID);
-	}else{	
+	}else{
 		vdin_set_canvas_id(devp->addr_offset, (next_wr_vfe->vf.canvas0Addr&0xff));
                 if((devp->prop.dest_cfmt == TVIN_NV12)||(devp->prop.dest_cfmt == TVIN_NV21))
                         vdin_set_chma_canvas_id(devp->addr_offset, (next_wr_vfe->vf.canvas0Addr>>8)&0xff);
@@ -1873,13 +1873,13 @@ static int vdin_drv_probe(struct platform_device *pdev)
 		ret = PTR_ERR(vdevp->dev);
 		goto fail_create_device;
 	}
-	ret = vdin_create_device_files(vdevp->dev);	
+	ret = vdin_create_device_files(vdevp->dev);
 	if(ret < 0) {
 		pr_err("%s: fail to create vdin attribute files.\n", __func__);
 		goto fail_create_dev_file;
 	}
 	/* get memory address from resource */
-#if 0	
+#if 0
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 #else
         res = &memobj;
@@ -1976,14 +1976,14 @@ static int vdin_drv_remove(struct platform_device *pdev)
 
 	mutex_destroy(&vdevp->mm_lock);
 	mutex_destroy(&vdevp->fe_lock);
-	
+
 	vf_pool_free(vdevp->vfp);
 	vdin_remove_device_files(vdevp->dev);
 	vdin_delete_device(vdevp->index);
 	cdev_del(&vdevp->cdev);
 	vdin_devp[vdevp->index] = NULL;
 	kfree(vdevp);
-	
+
 	/* free drvdata */
 	dev_set_drvdata(vdevp->dev, NULL);
 	platform_set_drvdata(pdev, NULL);
@@ -2057,7 +2057,7 @@ static int __init vdin_drv_init(void)
 	ret = vdin_create_class_files(vdin_clsp);
 
 	ret = platform_driver_register(&vdin_driver);
-	
+
 	if (ret != 0) {
 		pr_err("%s: failed to register driver\n", __func__);
 		goto fail_pdrv_register;
@@ -2083,7 +2083,7 @@ fail_alloc_cdev_region:
 static void __exit vdin_drv_exit(void)
 {
 	vdin_unreg_v4l2();
-	vdin_remove_class_files(vdin_clsp);	
+	vdin_remove_class_files(vdin_clsp);
 	class_destroy(vdin_clsp);
 	unregister_chrdev_region(vdin_devno, VDIN_MAX_DEVS);
 	platform_driver_unregister(&vdin_driver);
@@ -2132,7 +2132,7 @@ int vdin_ctrl_open_fe(int no , int port)
 	pr_info("open device %s ok\n", dev_name(devp->dev));
         vdin_open_fe(port,0,devp);
         devp->parm.port = port;
-        devp->parm.info.fmt = TVIN_SIG_FMT_NULL; 
+        devp->parm.info.fmt = TVIN_SIG_FMT_NULL;
 	return 0;
 }
 

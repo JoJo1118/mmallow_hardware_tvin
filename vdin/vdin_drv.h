@@ -34,6 +34,7 @@
 #include "../tvin_global.h"
 #include "../tvin_frontend.h"
 #include "vdin_vf.h"
+#include "vdin_regs.h"
 
 #define VDIN_VER "Ref.2014/1/24a"
 

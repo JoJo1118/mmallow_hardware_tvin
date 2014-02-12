@@ -27,7 +27,7 @@
 #include <linux/amlogic/tvin/tvin_v4l2.h>
 #include <mach/mod_gate.h>
 #include <mach/cpu.h>
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
+#if MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8
 #include <mach/vpu.h>
 #endif
 /* Local Headers */
@@ -195,11 +195,6 @@ static ssize_t vdin_attr_store(struct device *dev,struct device_attribute *attr,
         devp = dev_get_drvdata(dev);
         parse_param(buf_orig,(char **)&parm);
 
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
-        if(!strcmp(parm[0],"cm2")){
-		set_chroma_regs(devp->addr_offset,devp->h_active,devp->v_active);
-	}else 
-#endif
 	    if(!strncmp(parm[0], "fps", 3)){
 		if(devp->cycle)
 			fps = (VDIN_CRYSTAL + (devp->cycle>>3))/devp->cycle;
@@ -404,13 +399,14 @@ static ssize_t vdin_vf_log_store(struct device * dev,
 static DEVICE_ATTR(vf_log, 0664, vdin_vf_log_show, vdin_vf_log_store);
 #endif //VF_LOG_EN
 
+#if defined(VDIN_V2)
 static ssize_t vdin_debug_for_isp_show(struct device * dev,
    struct device_attribute *attr, char * buf)
 {
    int len = 0;
-   
+
    return len;
-   
+
 }
 
 static ssize_t vdin_debug_for_isp_store(struct device * dev,
@@ -427,20 +423,18 @@ static ssize_t vdin_debug_for_isp_store(struct device * dev,
         parse_param(buf_orig,(char **)&parm);
 
 	if(!strcmp(parm[0], "bypass_isp")){
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
-                vdin_bypass_isp(devp->addr_offset);
-#endif
+        vdin_bypass_isp(devp->addr_offset);
 		tmp_isp.cam_command = CMD_ISP_BYPASS;
 		if(devp->frontend->dec_ops->ioctl)
 			devp->frontend->dec_ops->ioctl(devp->frontend,(void *)&tmp_isp);
-		pr_info("vdin bypass isp for raw data.\n");              
+		pr_info("vdin bypass isp for raw data.\n");
         }
         return count;
 }
 
 static DEVICE_ATTR(debug_for_isp, 0664, vdin_debug_for_isp_show, vdin_debug_for_isp_store);
- 
 
+#endif
 
 #ifdef ISR_LOG_EN
 static ssize_t vdin_isr_log_show(struct device *dev,
@@ -511,23 +505,22 @@ struct device_attribute *attr, const char * buf, size_t count)
 
 static DEVICE_ATTR(crop, 0664, vdin_crop_show, vdin_crop_store);
 
-
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
-static ssize_t vdin_cm2_show(struct device *dev, 
+#if defined(VDIN_V2)
+static ssize_t vdin_cm2_show(struct device *dev,
              struct device_attribute *attr,
 			                     char *buf)
 {
     struct vdin_dev_s *devp;
     unsigned int addr_port = VDIN_CHROMA_ADDR_PORT;
     unsigned int data_port = VDIN_CHROMA_DATA_PORT;
-	
+
     devp = dev_get_drvdata(dev);
     if (devp->addr_offset != 0) {
         addr_port = VDIN_CHROMA_ADDR_PORT + devp->addr_offset;
-	    data_port = VDIN_CHROMA_DATA_PORT + devp->addr_offset;	    
+	    data_port = VDIN_CHROMA_DATA_PORT + devp->addr_offset;
     }
     pr_info("addr_port: [0x%x] data_port: : [0x%x]\n",addr_port, data_port);
-    
+
 	pr_info("Usage:");
 	pr_info("	echo wm addr data0 data1 data2 data3 data4 > /sys/class/vdin/vdin0/cm2 \n");
 	pr_info("	echo rm addr > /sys/class/vdin/vdin0/cm2 \n");
@@ -651,11 +644,11 @@ int vdin_create_device_files(struct device *dev)
         ret = device_create_file(dev,&dev_attr_isr_log);
         #endif
         ret = device_create_file(dev,&dev_attr_attr);
-    #if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
-        ret = device_create_file(dev,&dev_attr_cm2);
-    #endif
-	ret = device_create_file(dev,&dev_attr_crop);
+#if defined(VDIN_V2)
+    ret = device_create_file(dev,&dev_attr_cm2);
 	ret = device_create_file(dev,&dev_attr_debug_for_isp);
+#endif
+	ret = device_create_file(dev,&dev_attr_crop);
 	return ret;
 }
 void vdin_remove_device_files(struct device *dev)
@@ -667,9 +660,11 @@ void vdin_remove_device_files(struct device *dev)
         device_remove_file(dev,&dev_attr_isr_log);
         #endif
         device_remove_file(dev,&dev_attr_attr);
-        #if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
+#if defined(VDIN_V2)
 	device_remove_file(dev,&dev_attr_cm2);
-        #endif
+	device_remove_file(dev,&dev_attr_debug_for_isp);
+#endif
+    device_remove_file(dev,&dev_attr_crop);
 	device_remove_file(dev,&dev_attr_sig_det);
 }
 static int memp = MEMP_DCDR_WITHOUT_3D;

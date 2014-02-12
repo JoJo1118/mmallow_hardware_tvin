@@ -37,7 +37,7 @@ RGB:                              RGB ( 0~255,  0~255,  0~255)
 #define RD(x)                                           READ_VCBUS_REG(x+offset)
 #define RD_BITS(x,start,length)                         READ_VCBUS_REG_BITS(x+offset,start,length)
 
-#if MESON_CPU_TYPE < MESON_CPU_TYPE_MESON8
+#if !defined(VDIN_V2)
 #define WRITE_VCBUS_REG(x,val)                          WRITE_CBUS_REG(x,val)
 #define WRITE_VCBUS_REG_BITS(x,val,start,length)        WRITE_CBUS_REG_BITS(x,val,start,length)
 #define READ_VCBUS_REG(x)                               READ_CBUS_REG(x)
@@ -159,11 +159,12 @@ extern bool vdin_write_done_check(unsigned int offset, struct vdin_dev_s *devp);
 extern bool vdin_check_vs(struct vdin_dev_s *devp);
 extern void vdin_calculate_duration(struct vdin_dev_s *devp);
 extern void vdin_output_ctl(unsigned int offset, unsigned int output_flag);
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON6TV
+#if defined(VDIN_V1)
 extern void vdin_wr_reverse(unsigned int offset, bool hreverse, bool vreverse);
 #endif
 extern void vdin_set_hvscale(struct vdin_dev_s *devp);
-extern void set_chroma_regs(unsigned int offset, unsigned int h_active,unsigned int v_active);
 extern void vdin_set_cm2(unsigned int offset,unsigned int w,unsigned int h,unsigned int *data);
 extern void vdin_bypass_isp(unsigned int offset);
+
 #endif
+

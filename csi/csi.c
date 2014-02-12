@@ -487,6 +487,7 @@ static int amcsi_feopen(struct tvin_frontend_s *fe, enum tvin_port_e port)
         }
 
         add_timer(&csi_devp->t);
+        cal_csi_para(&csi_devp->csi_parm);
         am_mipi_csi2_init(&csi_devp->csi_parm);
         return 0;
         //csi_devp->skip_vdin_frame_count = parm->reserved;

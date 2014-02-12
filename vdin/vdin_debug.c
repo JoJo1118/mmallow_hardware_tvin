@@ -121,7 +121,7 @@ static void dump_other_mem(char *path,unsigned int start,unsigned int offset)
         mm_segment_t old_fs = get_fs();
         set_fs(KERNEL_DS);
         filp = filp_open(path,O_RDWR|O_CREAT,0666);
-        
+
         if(IS_ERR(filp)){
                 printk(KERN_ERR"create %s error.\n",path);
                 return;
@@ -205,8 +205,8 @@ static ssize_t vdin_attr_store(struct device *dev,struct device_attribute *attr,
 			unsigned int start,offset;
 			start = simple_strtol(parm[2],NULL,16);
 			offset = simple_strtol(parm[3],NULL,16);
-			dump_other_mem(parm[1],start,offset);	
-		}else if(parm[1] != NULL){                        
+			dump_other_mem(parm[1],start,offset);
+		}else if(parm[1] != NULL){
                         vdin_dump_mem(parm[1],devp);
                 }
         }
@@ -326,7 +326,7 @@ static ssize_t vdin_attr_store(struct device *dev,struct device_attribute *attr,
                 if(parm[1] && parm[2] && parm[3]){
                         devp->scaler4w  = simple_strtoul(parm[1],NULL,10);
                         devp->scaler4h  = simple_strtoul(parm[2],NULL,10);
-			devp->dest_cfmt = simple_strtoul(parm[3],NULL,10); 
+			devp->dest_cfmt = simple_strtoul(parm[3],NULL,10);
 			devp->flags |= VDIN_FLAG_MANUAL_CONVERTION;
 			pr_info("enable manual convertion w=%u h=%u dest_cfmt=%s.\n",
 				devp->scaler4w,devp->scaler4h,tvin_color_fmt_str(devp->dest_cfmt));
@@ -491,15 +491,15 @@ struct device_attribute *attr, const char * buf, size_t count)
 		return count;
 	buf_orig = kstrdup(buf, GFP_KERNEL);
 	parse_param(buf_orig,parm);
-	
+
 	crop->hs = simple_strtol(parm[0],NULL,10);
 	crop->he = simple_strtol(parm[1],NULL,10);
 	crop->vs = simple_strtol(parm[2],NULL,10);
 	crop->ve = simple_strtol(parm[3],NULL,10);
 
-	pr_info("hs_offset %u,he_offset %u,vs_offset %u,ve_offset %u.\n",	
+	pr_info("hs_offset %u,he_offset %u,vs_offset %u,ve_offset %u.\n",
                                 crop->hs,crop->he,crop->vs,crop->ve);
-			
+
 	return count;
 }
 
@@ -529,11 +529,11 @@ static ssize_t vdin_cm2_show(struct device *dev,
 	return 0;
 }
 
-static ssize_t vdin_cm2_store(struct device *dev, 
+static ssize_t vdin_cm2_store(struct device *dev,
               struct device_attribute *attr,
 		   const char *buffer, size_t count)
 {
-        struct vdin_dev_s *devp;	        
+        struct vdin_dev_s *devp;
 	int n = 0;
 	char *buf_orig, *ps, *token;
 	char *parm[7];
@@ -541,11 +541,11 @@ static ssize_t vdin_cm2_store(struct device *dev,
 	int data[5] = {0};
 	unsigned int addr_port = VDIN_CHROMA_ADDR_PORT;
 	unsigned int data_port = VDIN_CHROMA_DATA_PORT;
-	
+
         devp = dev_get_drvdata(dev);
         if (devp->addr_offset != 0) {
                 addr_port = VDIN_CHROMA_ADDR_PORT + devp->addr_offset;
-	        data_port = VDIN_CHROMA_DATA_PORT + devp->addr_offset;	    
+	        data_port = VDIN_CHROMA_DATA_PORT + devp->addr_offset;
         }
 	buf_orig = kstrdup(buffer, GFP_KERNEL);
 	ps = buf_orig;
@@ -708,27 +708,8 @@ static void memp_set(int type)
 	switch (type) {
 	case MEMP_VDIN_WITHOUT_3D:
 	case MEMP_VDIN_WITH_3D:
-#ifdef CONFIG_ARCH_MESON6TV
-#ifndef CONFIG_MESON_M6C_ENHANCEMENT
-                aml_set_reg32_mask(P_MMC_QOS0_CTRL, 1<<25);
-                aml_set_reg32_mask(P_MMC_QOS2_CTRL, 1<<25);
-		aml_set_reg32_mask(P_MMC_QOS3_CTRL, 1<<25);
-		aml_set_reg32_mask(P_MMC_QOS4_CTRL, 1<<25);
-		aml_set_reg32_mask(P_MMC_QOS5_CTRL, 1<<25);
-                aml_set_reg32_mask(P_VPU_VD1_MMC_CTRL, 1<<12);
-		aml_clr_reg32_mask(P_VPU_DI_MEM_MMC_CTRL, 1<<12);
-		aml_set_reg32_mask(P_VPU_DI_INP_MMC_CTRL, 1<<12);
-		aml_set_reg32_mask(P_VPU_DI_CHAN2_MMC_CTRL, 1<<12);
-		aml_set_reg32_mask(P_VPU_DI_MTNWR_MMC_CTRL, 1<<12);
-		aml_clr_reg32_mask(P_VPU_DI_NRWR_MMC_CTRL, 1<<12);
-		aml_write_reg32(P_MMC_CHAN0_CTRL, 0x610ff);
-		aml_write_reg32(P_MMC_CHAN1_CTRL, 0x10ff);
-		aml_write_reg32(P_MMC_CHAN2_CTRL, 0x70ff);
-		aml_write_reg32(P_MMC_CHAN3_CTRL, 0xc01f);
-		aml_write_reg32(P_MMC_CHAN6_CTRL, 0x10ff);
-		aml_write_reg32(P_MMC_CHAN7_CTRL, 0x10ff);
-		aml_write_reg32(P_MMC_CHAN8_CTRL, 0x10ff);
-#else
+
+#if defined(CONFIG_ARCH_MESON6TVD)||(defined(CONFIG_ARCH_MESON6TV))
 		aml_set_reg32_mask(P_MMC_QOS7_CTRL0, 1<<25);	// set audio to urgent
                 aml_write_reg32(P_MMC_CHAN_CTRL0, 0xf);		// set ch1-7 arbiter weight to 0
 		aml_clr_reg32_mask(P_MMC_CHAN_CTRL1, 0xf<<20);	// set ch8 arbiter weight to 0
@@ -746,31 +727,10 @@ static void memp_set(int type)
                 aml_clr_reg32_mask(P_VPU_DI_NRWR_MMC_CTRL, 1<<12);   //           arb1
                 aml_clr_reg32_mask(P_VPU_DI_DIWR_MMC_CTRL, 1<<12);   //           arb1
 #endif
-#endif
 		break;
 	case MEMP_DCDR_WITHOUT_3D:
 	case MEMP_DCDR_WITH_3D:
-#ifdef CONFIG_ARCH_MESON6TV
-#ifndef CONFIG_MESON_M6C_ENHANCEMENT
-                aml_set_reg32_mask(P_MMC_QOS0_CTRL, 1<<25);
-                aml_set_reg32_mask(P_MMC_QOS2_CTRL, 1<<25);
-		aml_set_reg32_mask(P_MMC_QOS3_CTRL, 1<<25);
-		aml_set_reg32_mask(P_MMC_QOS4_CTRL, 1<<25);
-		aml_clr_reg32_mask(P_MMC_QOS5_CTRL, 1<<25);
-                aml_set_reg32_mask(P_VPU_VD1_MMC_CTRL, 1<<12);
-		aml_clr_reg32_mask(P_VPU_DI_MEM_MMC_CTRL, 1<<12);
-		aml_clr_reg32_mask(P_VPU_DI_INP_MMC_CTRL, 1<<12);
-		aml_clr_reg32_mask(P_VPU_DI_CHAN2_MMC_CTRL, 1<<12);
-		aml_clr_reg32_mask(P_VPU_DI_MTNWR_MMC_CTRL, 1<<12);
-		aml_clr_reg32_mask(P_VPU_DI_NRWR_MMC_CTRL, 1<<12);
-		aml_write_reg32(P_MMC_CHAN0_CTRL, 0x6307f);
-		aml_write_reg32(P_MMC_CHAN1_CTRL, 0x70ff);
-		aml_write_reg32(P_MMC_CHAN2_CTRL, 0x30ff);
-		aml_write_reg32(P_MMC_CHAN3_CTRL, 0x10ff);
-		aml_write_reg32(P_MMC_CHAN6_CTRL, 0x30ff);
-		aml_write_reg32(P_MMC_CHAN7_CTRL, 0x307f);
-		aml_write_reg32(P_MMC_CHAN8_CTRL, 0x30ff);
-#else
+#if defined(CONFIG_ARCH_MESON6TVD)||(defined(CONFIG_ARCH_MESON6TV))
 		aml_set_reg32_mask(P_MMC_QOS7_CTRL0, 1<<25);		// set audio to urgent
                 aml_write_reg32(P_MMC_CHAN_CTRL0, 0xf);			// set ch1-7 arbiter weight to 0
 		aml_clr_reg32_mask(P_MMC_CHAN_CTRL1, 0xf<<20);		// set ch8 arbiter weight to 0
@@ -787,32 +747,11 @@ static void memp_set(int type)
                 aml_clr_reg32_mask(P_VPU_DI_NRWR_MMC_CTRL, 1<<12);   //           arb1
                 aml_clr_reg32_mask(P_VPU_DI_DIWR_MMC_CTRL, 1<<12);   //           arb1
 #endif
-#endif
 		memp = type;
 		break;
 	case MEMP_ATV_WITHOUT_3D:
 	case MEMP_ATV_WITH_3D:
-#ifdef CONFIG_ARCH_MESON6TV
-#ifndef CONFIG_MESON_M6C_ENHANCEMENT
-                aml_set_reg32_mask(P_MMC_QOS0_CTRL, 1<<25);
-                aml_set_reg32_mask(P_MMC_QOS2_CTRL, 1<<25);
-		aml_clr_reg32_mask(P_MMC_QOS3_CTRL, 1<<25);
-		aml_set_reg32_mask(P_MMC_QOS4_CTRL, 1<<25);
-		aml_clr_reg32_mask(P_MMC_QOS5_CTRL, 1<<25);
-                aml_set_reg32_mask(P_VPU_VD1_MMC_CTRL, 1<<12);
-		aml_clr_reg32_mask(P_VPU_DI_MEM_MMC_CTRL, 1<<12);
-		aml_set_reg32_mask(P_VPU_DI_INP_MMC_CTRL, 1<<12);
-		aml_set_reg32_mask(P_VPU_DI_CHAN2_MMC_CTRL, 1<<12);
-		aml_set_reg32_mask(P_VPU_DI_MTNWR_MMC_CTRL, 1<<12);
-		aml_clr_reg32_mask(P_VPU_DI_NRWR_MMC_CTRL, 1<<12);
-		aml_write_reg32(P_MMC_CHAN0_CTRL, 0x610ff);
-		aml_write_reg32(P_MMC_CHAN1_CTRL, 0x10ff);
-		aml_write_reg32(P_MMC_CHAN2_CTRL, 0x70ff);
-		aml_write_reg32(P_MMC_CHAN3_CTRL, 0xc01f);
-		aml_write_reg32(P_MMC_CHAN6_CTRL, 0x10ff);
-		aml_write_reg32(P_MMC_CHAN7_CTRL, 0x10ff);
-		aml_write_reg32(P_MMC_CHAN8_CTRL, 0x10ff);
-#else
+#if defined(CONFIG_ARCH_MESON6TVD)||(defined(CONFIG_ARCH_MESON6TV))
 		aml_set_reg32_mask(P_MMC_QOS7_CTRL0, 1<<25);		// set audio to urgent
                 aml_write_reg32(P_MMC_CHAN_CTRL0, 0xf);			// set ch1-7 arbiter weight to 0
 		aml_clr_reg32_mask(P_MMC_CHAN_CTRL1, 0xf<<20);		// set ch8 arbiter weight to 0
@@ -834,7 +773,6 @@ static void memp_set(int type)
                 aml_set_reg32_mask(P_VPU_TVD3D_MMC_CTRL, 1<<15);     //           urgent
                 aml_set_reg32_mask(P_VPU_TVDVBI_MMC_CTRL, 1<<14);    //           arb2
                 aml_set_reg32_mask(P_VPU_TVD3D_MMC_CTRL, 1<<15);     //           urgent
-#endif
 #endif
 		memp = type;
 		break;

@@ -2065,11 +2065,6 @@ static int __init vdin_drv_init(void)
 	/*register vdin for v4l2 interface*/
         if(vdin_reg_v4l2(&vdin_4v4l2_ops))
                 pr_err("[vdin..] %s: register vdin v4l2 error.\n",__func__);
-#ifdef CONFIG_ARCH_MESON6TV
-#ifndef CONFIG_MESON_M6C_ENHANCEMENT
-	aml_write_reg32(P_MMC_CHAN5_CTRL, 0xc01f); // adjust vdin weight and age limit
-#endif
-#endif
 	return 0;
 
 fail_pdrv_register:

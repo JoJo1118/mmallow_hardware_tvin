@@ -709,7 +709,7 @@ static void memp_set(int type)
 	case MEMP_VDIN_WITHOUT_3D:
 	case MEMP_VDIN_WITH_3D:
 
-#if defined(CONFIG_ARCH_MESON6TVD)||(defined(CONFIG_ARCH_MESON6TV))
+#if defined(VDIN_V1)
 		aml_set_reg32_mask(P_MMC_QOS7_CTRL0, 1<<25);	// set audio to urgent
                 aml_write_reg32(P_MMC_CHAN_CTRL0, 0xf);		// set ch1-7 arbiter weight to 0
 		aml_clr_reg32_mask(P_MMC_CHAN_CTRL1, 0xf<<20);	// set ch8 arbiter weight to 0
@@ -730,7 +730,7 @@ static void memp_set(int type)
 		break;
 	case MEMP_DCDR_WITHOUT_3D:
 	case MEMP_DCDR_WITH_3D:
-#if defined(CONFIG_ARCH_MESON6TVD)||(defined(CONFIG_ARCH_MESON6TV))
+#if defined(VDIN_V1)
 		aml_set_reg32_mask(P_MMC_QOS7_CTRL0, 1<<25);		// set audio to urgent
                 aml_write_reg32(P_MMC_CHAN_CTRL0, 0xf);			// set ch1-7 arbiter weight to 0
 		aml_clr_reg32_mask(P_MMC_CHAN_CTRL1, 0xf<<20);		// set ch8 arbiter weight to 0
@@ -751,7 +751,7 @@ static void memp_set(int type)
 		break;
 	case MEMP_ATV_WITHOUT_3D:
 	case MEMP_ATV_WITH_3D:
-#if defined(CONFIG_ARCH_MESON6TVD)||(defined(CONFIG_ARCH_MESON6TV))
+#if defined(VDIN_V1)
 		aml_set_reg32_mask(P_MMC_QOS7_CTRL0, 1<<25);		// set audio to urgent
                 aml_write_reg32(P_MMC_CHAN_CTRL0, 0xf);			// set ch1-7 arbiter weight to 0
 		aml_clr_reg32_mask(P_MMC_CHAN_CTRL1, 0xf<<20);		// set ch8 arbiter weight to 0

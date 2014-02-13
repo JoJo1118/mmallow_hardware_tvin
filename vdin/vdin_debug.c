@@ -143,13 +143,13 @@ static void vdin_dump_state(vdin_dev_t *devp)
 			"color_format	= %s(%d)\n"
 			"format_convert = %s(%d)\n"
 			"aspect_ratio	= %s(%d)\n"
-			"pixel_repeat/dvi	= %u / %u\n",
+			"decimation_ratio/dvi	= %u / %u\n",
 			tvin_sig_fmt_str(devp->parm.info.fmt), devp->parm.info.fmt,
 			tvin_trans_fmt_str(devp->prop.trans_fmt), devp->prop.trans_fmt,
 			tvin_color_fmt_str(devp->prop.color_format), devp->prop.color_format,
 			vdin_fmt_convert_str(devp->format_convert), devp->format_convert,
 			tvin_aspect_ratio_str(devp->prop.aspect_ratio), devp->prop.aspect_ratio,
-			devp->prop.pixel_repeat, devp->prop.dvi_info);
+			devp->prop.decimation_ratio, devp->prop.dvi_info);
 	vdin_dump_vf_state(devp->vfp);
 	if(vf){
 		pr_info("current vframe(%u):\n buf(w%u,h%u),type (0x%x,%u), duration(%d), ratio_control (0x%x).\n",

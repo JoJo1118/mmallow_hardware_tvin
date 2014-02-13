@@ -538,7 +538,7 @@ static void am656in_get_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_
 	struct am656in_dev_s *devp = container_of(fe, am656in_dev_t, frontend);
 	prop->color_format = devp->para.cfmt;
 	prop->dest_cfmt    = devp->para.dfmt;
-	prop->pixel_repeat = 0;
+	prop->decimation_ratio = 0;
 }
 
 /*as use the spin_lock,

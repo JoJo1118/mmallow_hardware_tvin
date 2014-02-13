@@ -111,9 +111,9 @@ static void it660xin_get_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig
         it660xin_t *devp = container_of(fe,it660xin_t,frontend);
         prop->color_format = TVIN_RGB444;
         if(devp->parm.h_active >= 1440)
-        prop->pixel_repeat = 2;
+                prop->decimation_ratio = 1;
         else 
-               prop->pixel_repeat = 0;
+                prop->decimation_ratio = 0;
 }
 static struct tvin_state_machine_ops_s it660xin_sm_ops = {
         .get_sig_propery = it660xin_get_sig_propery,

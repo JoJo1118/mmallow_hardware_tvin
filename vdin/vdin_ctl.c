@@ -347,23 +347,23 @@ inline void vdin_get_format_convert(struct vdin_dev_s *devp)
 			case TVIN_YVYU422:
 			case TVIN_UYVY422:
 			case TVIN_VYUY422:
-				if(devp->prop.dest_cfmt == TVIN_YUV422)
-					devp->format_convert = VDIN_FORMAT_CONVERT_YUV_YUV422;
-				else if(devp->prop.dest_cfmt == TVIN_NV21)
+				if(devp->prop.dest_cfmt == TVIN_NV21)
 					devp->format_convert = VDIN_FORMAT_CONVERT_YUV_NV21;
-				else if(devp->prop.dest_cfmt == TVIN_NV21)
+				else if(devp->prop.dest_cfmt == TVIN_NV12)
 					devp->format_convert = VDIN_FORMAT_CONVERT_YUV_NV12;
+				else 
+					devp->format_convert = VDIN_FORMAT_CONVERT_YUV_YUV422;
 				break;
 			case TVIN_YUV444:
 				if(devp->prop.dest_cfmt == TVIN_YUV444)
 					devp->format_convert = VDIN_FORMAT_CONVERT_YUV_YUV444;
-				else if(devp->prop.dest_cfmt == TVIN_YUV422)
+				else 
 					devp->format_convert = VDIN_FORMAT_CONVERT_YUV_YUV422;
 				break;
 			case TVIN_RGB444:
 				if(devp->prop.dest_cfmt == TVIN_YUV444)
 					devp->format_convert = VDIN_FORMAT_CONVERT_RGB_YUV444;
-				else if(devp->prop.dest_cfmt == TVIN_YUV422)
+				else 
 					devp->format_convert = VDIN_FORMAT_CONVERT_RGB_YUV422;
 				break;
 			default:
@@ -533,37 +533,20 @@ static inline void vdin_set_top(unsigned int offset, enum tvin_port_e port, enum
 void vdin_set_decimation(struct vdin_dev_s *devp)
 {
 	unsigned int offset = devp->addr_offset;
-	unsigned int decimation_ratio = 0;
-	unsigned short new_clk = 0;
-	//enum tvin_sig_fmt_e fmt = devp->parm.info.fmt;
-	//const struct tvin_format_s *fmt_info = tvin_get_fmt_info(fmt);
+	unsigned int new_clk = 0;
 
-	if ((devp->prop.pixel_repeat >=  2) &&
-			(devp->prop.pixel_repeat <= 16))
-		decimation_ratio = devp->prop.pixel_repeat - 1;
-	new_clk = devp->fmt_info_p->pixel_clk / (decimation_ratio + 1);
+	new_clk = devp->fmt_info_p->pixel_clk / (devp->prop.decimation_ratio + 1);
 
-	while (new_clk > TVIN_MAX_PIXCLK)
-	{
-		decimation_ratio++;
-		new_clk = devp->fmt_info_p->pixel_clk / (decimation_ratio + 1);
-	}
-	pr_info("%s decimation_ratio = %d\n",__func__, decimation_ratio);
+	pr_info("%s decimation_ratio=%u,new_clk=%u.\n",__func__, devp->prop.decimation_ratio,new_clk);
 
-	devp->h_active = devp->fmt_info_p->h_active / (decimation_ratio + 1);
+	devp->h_active = devp->fmt_info_p->h_active / (devp->prop.decimation_ratio + 1);
 	devp->v_active = devp->fmt_info_p->v_active;
 
-	/* disable decimation function for hdmi input */
-	if ((devp->parm.port >= TVIN_PORT_HDMI0) &&
-	    (devp->parm.port <= TVIN_PORT_HDMI7)
-	    //&& (devp->fmt_info_p->pixel_clk <= TVIN_MAX_PIXCLK)
-       )
-	    decimation_ratio = 0;
-	if (decimation_ratio)
+	if (devp->prop.decimation_ratio)
 	{
 		// ratio
 		WR_BITS(VDIN_ASFIFO_CTRL2,
-				decimation_ratio, ASFIFO_DECIMATION_NUM_BIT, ASFIFO_DECIMATION_NUM_WID);
+				devp->prop.decimation_ratio, ASFIFO_DECIMATION_NUM_BIT, ASFIFO_DECIMATION_NUM_WID);
 		// en
 		WR_BITS(VDIN_ASFIFO_CTRL2,
 				1, ASFIFO_DECIMATION_DE_EN_BIT, ASFIFO_DECIMATION_DE_EN_WID);

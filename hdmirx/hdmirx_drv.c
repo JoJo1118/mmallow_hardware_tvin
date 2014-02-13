@@ -404,7 +404,7 @@ void hdmirx_get_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_property
 		prop->trans_fmt = TVIN_TFMT_3D_LA;
 	}
 	/* 1: no repeat; 2: repeat 1 times; 3: repeat two; ... */
-	prop->pixel_repeat = hdmirx_hw_get_pixel_repeat();
+	prop->decimation_ratio = hdmirx_hw_get_pixel_repeat() - 1;
 
 	//patch for 4096*2160 fmt buffer limit
 	if(TVIN_SIG_FMT_HDMI_4096_2160_00HZ == sig_fmt) {

@@ -172,7 +172,6 @@ typedef struct tvin_sig_property_s {
         enum tvin_color_fmt_e    color_format;
 	enum tvin_color_fmt_e    dest_cfmt;//for vdin matrix destination color fmt
         enum tvin_aspect_ratio_e aspect_ratio;
-        unsigned int             pixel_repeat;
         unsigned int             dvi_info;
 	unsigned short           scaling4h;//for vscaler
         unsigned short           scaling4w;//for hscaler
@@ -180,7 +179,7 @@ typedef struct tvin_sig_property_s {
         unsigned int 		 he;//for horizontal end cut window
         unsigned int 		 vs;//for vertical start cut window
         unsigned int 		 ve;//for vertical end cut window
-        unsigned short           decimation_ratio;//for decimation
+        unsigned int           decimation_ratio;//for decimation
 } tvin_sig_property_t;
 
 #define TVAFE_VF_POOL_SIZE              6//8

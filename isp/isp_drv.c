@@ -1264,7 +1264,7 @@ static void isp_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_property
 	prop->ve = 0;
 	prop->hs = 0;
 	prop->he = 0;
-        prop->pixel_repeat = 0;
+        prop->decimation_ratio = 0;
 }
 static bool isp_frame_skip(struct tvin_frontend_s *fe)
 {

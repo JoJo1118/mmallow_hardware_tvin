@@ -142,7 +142,7 @@ int DownStreamCount = 0 ;
 BYTE KSVList[15] ;
 #endif // SUPPORT_REPEATER
 
-
+extern vdin_v4l2_ops_t *get_vdin_v4l2_ops();
 static void start_vdin(int width, int height, int frame_rate, int field_flag);
 static void stop_vdin(void);
 /*****************************
@@ -1122,8 +1122,9 @@ dump_InfoFrame(void)
 
 static void stop_vdin(void)
 {
+    vdin_v4l2_ops_t *vpos = get_vdin_v4l2_ops();
     if(hdmirx_device.vdin_started){
-        stop_tvin_service(0);
+        vpos->stop_tvin_service(0);
         set_invert_top_bot(false);
         hdmirx_device.vdin_started=0;
         printk("%s: stop vdin\n", __func__);
@@ -1132,6 +1133,7 @@ static void stop_vdin(void)
 
 static void start_vdin(int width, int height, int frame_rate, int field_flag)
 {
+	vdin_v4l2_ops_t *vpos;
 #ifdef USE_TVIN_CAMERA
     tvin_parm_t para;
 #else
@@ -1139,12 +1141,14 @@ static void start_vdin(int width, int height, int frame_rate, int field_flag)
 #endif    
     if(hdmirx_device.vdin_enable == 0){
         return;
-    }    
+    }
+    
+    vpos = get_vdin_v4l2_ops();
     if(hdmirx_device.vdin_started){
         if(hdmirx_device.cur_width != width ||
                 hdmirx_device.cur_height != height ||
                 hdmirx_device.cur_frame_rate != frame_rate){
-            stop_tvin_service(0);
+            vpos->stop_tvin_service(0);
             hdmirx_device.vdin_started=0;
             printk("%s: stop vdin\n", __func__);
         }
@@ -1280,7 +1284,7 @@ static void start_vdin(int width, int height, int frame_rate, int field_flag)
         para.reserved = 0; //skip_num
 
 #endif      	
-        start_tvin_service(0,&para);
+        vpos->start_tvin_service(0,&para);
         hdmirx_device.vdin_started = 1;
         
         printk("%s: %dx%d %d/s\n", __func__, width, height, frame_rate);

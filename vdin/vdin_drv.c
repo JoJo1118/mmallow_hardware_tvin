@@ -115,10 +115,6 @@ static bool vdin_dbg_en = 0;
 module_param(vdin_dbg_en,bool,0664);
 MODULE_PARM_DESC(vdin_dbg_en,"enable/disable vdin debug information");
 
-static bool reverse_flag = false;
-module_param(reverse_flag,bool,0644);
-MODULE_PARM_DESC(reverse_flag,"reverse/disreverse vdin buffer & osd");
-
 static bool invert_top_bot = false;
 module_param(invert_top_bot,bool,0644);
 MODULE_PARM_DESC(invert_top_bot,"invert field type top or bottom");
@@ -519,21 +515,26 @@ static void vdin_vf_init(struct vdin_dev_s *devp)
 void vdin_start_dec(struct vdin_dev_s *devp)
 {
 	struct tvin_state_machine_ops_s *sm_ops;
-	//enum tvin_sig_fmt_e fmt = 0;
 	/* avoid null pointer oops */
 	if (!devp ||!devp->fmt_info_p){
                 printk("[vdin..]%s null error.\n",__func__);
 	        return;
 	}
-        //fmt = devp->parm.info.fmt;
         if(devp->frontend && devp->frontend->sm_ops){
 	        sm_ops = devp->frontend->sm_ops;
 	        sm_ops->get_sig_propery(devp->frontend, &devp->prop);
-		if(devp->flags & VDIN_FLAG_MANUAL_CONVERTION)
-			devp->prop.dest_cfmt = devp->dest_cfmt;
-			devp->prop.scaling4w = devp->scaler4w;
-			devp->prop.scaling4h = devp->scaler4h;
-        }
+			
+		devp->parm.info.cfmt = devp->prop.color_format;
+		if((devp->parm.dest_width!=0)||(devp->parm.dest_height!=0)){
+			devp->prop.scaling4w = devp->parm.dest_width;
+			devp->prop.scaling4h = devp->parm.dest_height;
+		}
+		if(devp->flags & VDIN_FLAG_MANUAL_CONVERTION){
+			devp->prop.dest_cfmt = devp->debug.dest_cfmt;
+			devp->prop.scaling4w = devp->debug.scaler4w;
+			devp->prop.scaling4h = devp->debug.scaler4h;
+		}
+       }
 
 	vdin_get_format_convert(devp);
 	devp->curr_wr_vfe = NULL;
@@ -543,7 +544,7 @@ void vdin_start_dec(struct vdin_dev_s *devp)
 	vdin_set_hvscale(devp);
 #if defined(VDIN_V1)
     /*reverse / disable reverse write buffer*/
-    vdin_wr_reverse(devp->addr_offset,reverse_flag,reverse_flag);
+    vdin_wr_reverse(devp->addr_offset,devp->parm.h_reverse,devp->parm.v_reverse);
 #endif
 
 	/* h_active/v_active will be used by bellow calling */
@@ -1520,15 +1521,6 @@ static long vdin_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 				mutex_unlock(&devp->fe_lock);
 				break;
 			}
-			devp->parm.cutwin.hs = parm.cutwin.hs;
-			// odd number in line width => decrease to even number in line width
-			if (((parm.cutwin.hs != 0) || (parm.cutwin.he != 0)) &&
-					((parm.cutwin.hs + parm.cutwin.he) & 1)
-			   )
-				devp->parm.cutwin.hs++;
-			devp->parm.cutwin.he = parm.cutwin.he;
-			devp->parm.cutwin.vs = parm.cutwin.vs;
-			devp->parm.cutwin.ve = parm.cutwin.ve;
                         devp->parm.info.fmt = parm.info.fmt;
                         devp->fmt_info_p  = tvin_get_fmt_info(devp->parm.info.fmt);
                         if(!devp->fmt_info_p) {
@@ -1642,7 +1634,6 @@ static long vdin_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		}
 		case TVIN_IOC_G_SIG_INFO: {
 			struct tvin_info_s info;
-			unsigned int frame_ratio = 0;
 			memset(&info, 0, sizeof(tvin_info_t));
 			mutex_lock(&devp->fe_lock);
 			/* if port is not opened, ignore this command */
@@ -1658,13 +1649,11 @@ static long vdin_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 			if ((devp->parm.port >= TVIN_PORT_HDMI0) &&
 				(devp->parm.port <= TVIN_PORT_HDMI7) )
 			{
-				info.reserved &= 0xffffff;
 				if(devp->cycle)	{
-					frame_ratio = (VDIN_CRYSTAL + (devp->cycle>>3))/devp->cycle;
-					info.reserved  |= (frame_ratio<<24);
+					info.fps = (VDIN_CRYSTAL + (devp->cycle>>3))/devp->cycle;
 				}
 				if(vdin_dbg_en)
-					pr_info("current dvi frame ratio is %u.cycle is %u.\n",(info.reserved>>24),devp->cycle);
+					pr_info("current dvi frame ratio is %u.cycle is %u.\n",info.fps,devp->cycle);
 			}
 			if (copy_to_user(argp, &info, sizeof(tvin_info_t))) {
 				ret = -EFAULT;

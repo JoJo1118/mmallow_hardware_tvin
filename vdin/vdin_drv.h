@@ -36,7 +36,7 @@
 #include "vdin_vf.h"
 #include "vdin_regs.h"
 
-#define VDIN_VER "Ref.2014/1/24a"
+#define VDIN_VER "Ref.2014/2/17a"
 
 /*the counter of vdin*/
 #define VDIN_MAX_DEVS			2
@@ -110,7 +110,13 @@ static inline const char *vdin_fmt_convert_str(enum vdin_format_convert_e fmt_cv
 	}
 }
 
-
+/*******for debug **********/
+typedef struct vdin_debug_s {
+	tvin_cutwin_t        		cutwin;
+        unsigned short                  scaler4h;//for vscaler
+        unsigned short                  scaler4w;//for hscaler
+        unsigned short                  dest_cfmt;//for color fmt convertion
+} vdin_debug_t;
 typedef struct vdin_dev_s {
 	unsigned int		        index;
 
@@ -180,10 +186,7 @@ typedef struct vdin_dev_s {
 	unsigned int			hcnt64_tag;
 	unsigned int			cycle_tag;
         unsigned int                    start_time;//ms vdin start time    
-        /*******for debug **********/
-        unsigned short                  scaler4h;//for vscaler
-        unsigned short                  scaler4w;//for hscaler
-        unsigned short                  dest_cfmt;//for color fmt convertion
+        vdin_debug_t                    debug;
 } vdin_dev_t;
 
 extern int vdin_create_class_files(struct class *vdin_clsp);

@@ -324,16 +324,16 @@ static ssize_t vdin_attr_store(struct device *dev,struct device_attribute *attr,
         }
         else if(!strcmp(parm[0],"convertion")){
                 if(parm[1] && parm[2] && parm[3]){
-                        devp->scaler4w  = simple_strtoul(parm[1],NULL,10);
-                        devp->scaler4h  = simple_strtoul(parm[2],NULL,10);
-			devp->dest_cfmt = simple_strtoul(parm[3],NULL,10);
+                        devp->debug.scaler4w  = simple_strtoul(parm[1],NULL,10);
+                        devp->debug.scaler4h  = simple_strtoul(parm[2],NULL,10);
+			devp->debug.dest_cfmt = simple_strtoul(parm[3],NULL,10);
 			devp->flags |= VDIN_FLAG_MANUAL_CONVERTION;
 			pr_info("enable manual convertion w=%u h=%u dest_cfmt=%s.\n",
-				devp->scaler4w,devp->scaler4h,tvin_color_fmt_str(devp->dest_cfmt));
+				devp->debug.scaler4w,devp->debug.scaler4h,tvin_color_fmt_str(devp->debug.dest_cfmt));
                 } else {
                 	devp->flags &= (~VDIN_FLAG_MANUAL_CONVERTION);
                         pr_info("disable manual convertion w=%u h=%u dest_cfmt=%s.\n",
-				devp->scaler4w,devp->scaler4h,tvin_color_fmt_str(devp->dest_cfmt));
+				devp->debug.scaler4w,devp->debug.scaler4h,tvin_color_fmt_str(devp->debug.dest_cfmt));
                 }
         }
         else if(!strcmp(parm[0],"state")){
@@ -474,7 +474,7 @@ struct device_attribute *attr, char * buf)
 {
         int len = 0;
         struct vdin_dev_s *devp = dev_get_drvdata(dev);
-        tvin_cutwin_t *crop = &devp->parm.cutwin;
+        tvin_cutwin_t *crop = &devp->debug.cutwin;
 
         len += sprintf(buf+len,"hs_offset %u,he_offset %u,vs_offset %u,ve_offset %u.\n",
 				crop->hs,crop->he,crop->vs,crop->ve);
@@ -486,7 +486,7 @@ struct device_attribute *attr, const char * buf, size_t count)
 {
 	char *parm[4]={NULL},*buf_orig;
 	struct vdin_dev_s *devp = dev_get_drvdata(dev);
-	tvin_cutwin_t *crop = &devp->parm.cutwin;
+	tvin_cutwin_t *crop = &devp->debug.cutwin;
 	if(!buf)
 		return count;
 	buf_orig = kstrdup(buf, GFP_KERNEL);

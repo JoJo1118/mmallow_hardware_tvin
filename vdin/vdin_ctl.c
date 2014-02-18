@@ -483,7 +483,7 @@ static inline void vdin_set_top(unsigned int offset, enum tvin_port_e port, enum
 			break;
 		case 0x80: // dvin
 			vdin_mux = VDIN_MUX_DVIN;
-			WR_BITS(VDIN_ASFIFO_CTRL3, 0xe2, VDI6_ASFIFO_CTRL_BIT, VDI6_ASFIFO_CTRL_WID);
+			WR_BITS(VDIN_ASFIFO_CTRL2, 0xe4, VDI5_ASFIFO_CTRL_BIT, VDI5_ASFIFO_CTRL_WID);
 			break;
 		case 0xc0: //viu
 			vdin_mux = VDIN_MUX_VIU;

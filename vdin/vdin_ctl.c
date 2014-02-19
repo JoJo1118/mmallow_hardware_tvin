@@ -1961,7 +1961,7 @@ void vdin_set_cm2(unsigned int offset,unsigned int w,unsigned int h,unsigned int
 		WR(VDIN_CHROMA_DATA_PORT,cm2[160+i]);
 	}
 	/*config cm2 frame size*/
-	WR(VDIN_CHROMA_ADDR_PORT,FRM_SIZE_REG);
+	WR(VDIN_CHROMA_ADDR_PORT,0x205);
 	WR(VDIN_CHROMA_DATA_PORT,h<<16|w);
 
     WR_BITS(VDIN_CM_BRI_CON_CTRL, 1, CM_TOP_EN_BIT,CM_TOP_EN_WID);

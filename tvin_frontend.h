@@ -77,7 +77,7 @@ int tvin_reg_frontend(struct tvin_frontend_s *fe);
 void tvin_unreg_frontend(struct tvin_frontend_s *fe);
 struct tvin_frontend_s * tvin_get_frontend(enum tvin_port_e port, int index);
 struct tvin_decoder_ops_s *tvin_get_fe_ops(enum tvin_port_e port, int index);
-struct tvin_decoder_ops_s *tvin_get_sm_ops(enum tvin_port_e port, int index);
+struct tvin_state_machine_ops_s *tvin_get_sm_ops(enum tvin_port_e port, int index);
 
 #endif
 

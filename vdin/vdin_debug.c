@@ -261,8 +261,8 @@ static ssize_t vdin_attr_store(struct device *dev,struct device_attribute *attr,
                 vdin_open_fe(port,0,devp);
                 devp->parm.port = port;
                 devp->parm.info.fmt = fmt;
-                devp->fmt_info_p  = tvin_get_fmt_info(fmt);
-		devp->flags |= VDIN_FLAG_DEC_STARTED;
+                devp->fmt_info_p  = (struct tvin_format_s*)tvin_get_fmt_info(fmt);
+				devp->flags |= VDIN_FLAG_DEC_STARTED;
                 vdin_start_dec(devp);
         }
         else if(!strcmp(parm[0],"tvstop")){

@@ -694,7 +694,8 @@ int start_tvin_service(int no ,vdin_parm_t *para)
                 devp->fmt_info_p->pixel_clk = para->h_active*para->v_active*para->frame_rate;
                 devp->fmt_info_p->pixel_clk /=10000;
 	}else{
-                devp->fmt_info_p = tvin_get_fmt_info(devp->parm.info.fmt);
+                devp->fmt_info_p = (struct tvin_format_s*)tvin_get_fmt_info(devp->parm.info.fmt);
+				//devp->fmt_info_p = tvin_get_fmt_info(devp->parm.info.fmt);
         }
         if(!devp->fmt_info_p) {
 		pr_err("%s(%d): error, fmt is null!!!\n", __func__, no);
@@ -1522,7 +1523,8 @@ static long vdin_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 				break;
 			}
                         devp->parm.info.fmt = parm.info.fmt;
-                        devp->fmt_info_p  = tvin_get_fmt_info(devp->parm.info.fmt);
+                        devp->fmt_info_p  = (struct tvin_format_s*)tvin_get_fmt_info(devp->parm.info.fmt);
+						//devp->fmt_info_p  = tvin_get_fmt_info(devp->parm.info.fmt);
                         if(!devp->fmt_info_p) {
 				pr_err("TVIN_IOC_START_DEC(%d) error, fmt is null \n", devp->index);
 				ret = -EFAULT;
@@ -1752,7 +1754,7 @@ static long vdin_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		}
 		default:
 			ret = -ENOIOCTLCMD;
-			pr_info("%s %d is not supported command\n", __func__, cmd);
+			//pr_info("%s %d is not supported command\n", __func__, cmd);
 			break;
 	}
 	return ret;

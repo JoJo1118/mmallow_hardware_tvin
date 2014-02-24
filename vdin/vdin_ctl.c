@@ -32,28 +32,34 @@
 
 #define TVIN_MAX_PIXCLK 20000
 
-#define TVIN_MAX_HACTIVE 1920
+#if defined (VDIN_V2)
+#define TVIN_MAX_HACTIVE     4096
+#define TVIN_MAX_VACTIVE     4096
+#else
+#define TVIN_MAX_HACTIVE     1920
+#define TVIN_MAX_VACTIVE     1080
+#endif
 
 /*
 *protection for vga vertical de adjustment,if vertical blanking too short
-*mybe too short to process one field data 
+*mybe too short to process one field data
 */
-static int vbp_offset = 17;
+static short vbp_offset = 15;
 module_param(vbp_offset, short, 0664);
 MODULE_PARM_DESC(vbp_offset, "the mix lines after vsync");
 
 /* black bar det enable/disable test */
-static int black_bar_enable = 0;
+static bool black_bar_enable = 0;
 module_param(black_bar_enable, bool, 0664);
 MODULE_PARM_DESC(black_bar_enable, "black bar enable/disable");
+
+static bool hist_bar_enable = 0;
+module_param(hist_bar_enable, bool, 0664);
+MODULE_PARM_DESC(hist_bar_enable, "hist bar enable/disable");
 
 static int color_convert = 0;
 module_param(color_convert, int, 0664);
 MODULE_PARM_DESC(color_convert, "color_convert");
-
-static int vga_yuv422_enable = 0;
-module_param(vga_yuv422_enable, int, 0664);
-MODULE_PARM_DESC(vga_yuv422_enable, "vga_yuv422_enable");
 
 static unsigned int max_undone_cnt = 60;
 module_param(max_undone_cnt,uint,0644);
@@ -332,37 +338,39 @@ static struct vdin_matrix_lup_s vdin_matrix_lup[] =
 
 inline void vdin_get_format_convert(struct vdin_dev_s *devp)
 {
-	if (devp->prop.color_format == TVIN_RGB444)
-	{
-		if ((devp->parm.port >= TVIN_PORT_VGA0) &&
-				(devp->parm.port <= TVIN_PORT_VGA7) &&
-				!vga_yuv422_enable
-		   ) {
-			devp->format_convert = VDIN_FORMAT_CONVERT_RGB_YUV444;
-		} else if(devp->parm.port == TVIN_PORT_VIU) {
-			if(devp->prop.dest_cfmt == TVIN_NV12)
-				devp->format_convert = VDIN_FORMAT_CONVERT_RGB_NV12;
-			else if(devp->prop.dest_cfmt == TVIN_NV21)
-				devp->format_convert = VDIN_FORMAT_CONVERT_RGB_NV21;
-			else
-				devp->format_convert = VDIN_FORMAT_CONVERT_RGB_YUV422;
-		} else if(devp->prop.dest_cfmt == TVIN_RGB444) {
-			devp->format_convert = VDIN_FORMAT_CONVERT_RGB_RGB;
-		} else {
-			devp->format_convert = VDIN_FORMAT_CONVERT_RGB_YUV422;
+	if(devp->prop.color_format == devp->prop.dest_cfmt)
+		devp->format_convert = VDIN_FORMAT_CONVERT_MAX;
+	else {
+		switch(devp->prop.color_format){
+			case TVIN_YUV422:
+			case TVIN_YUYV422:
+			case TVIN_YVYU422:
+			case TVIN_UYVY422:
+			case TVIN_VYUY422:
+				if(devp->prop.dest_cfmt == TVIN_NV21)
+					devp->format_convert = VDIN_FORMAT_CONVERT_YUV_NV21;
+				else if(devp->prop.dest_cfmt == TVIN_NV12)
+					devp->format_convert = VDIN_FORMAT_CONVERT_YUV_NV12;
+				else 
+					devp->format_convert = VDIN_FORMAT_CONVERT_YUV_YUV422;
+				break;
+			case TVIN_YUV444:
+				if(devp->prop.dest_cfmt == TVIN_YUV444)
+					devp->format_convert = VDIN_FORMAT_CONVERT_YUV_YUV444;
+				else 
+					devp->format_convert = VDIN_FORMAT_CONVERT_YUV_YUV422;
+				break;
+			case TVIN_RGB444:
+				if(devp->prop.dest_cfmt == TVIN_YUV444)
+					devp->format_convert = VDIN_FORMAT_CONVERT_RGB_YUV444;
+				else 
+					devp->format_convert = VDIN_FORMAT_CONVERT_RGB_YUV422;
+				break;
+			default:
+				devp->format_convert = VDIN_FORMAT_CONVERT_MAX;
+			break;
 		}
-	}    
-	else if(devp->prop.color_format >= TVIN_YUV422 && devp->prop.color_format <= TVIN_VYUY422)
-	{
-		devp->format_convert = VDIN_FORMAT_CONVERT_YUV_YUV422;
-		
-                if(devp->prop.dest_cfmt == TVIN_NV12)
-			devp->format_convert = VDIN_FORMAT_CONVERT_YUV_NV12;
-		else if(devp->prop.dest_cfmt == TVIN_NV21)
-			devp->format_convert = VDIN_FORMAT_CONVERT_YUV_NV21;
 	}
-	else
-	        devp->format_convert = VDIN_FORMAT_CONVERT_YUV_YUV422;
 }
 
 
@@ -447,11 +455,11 @@ static inline void vdin_set_top(unsigned int offset, enum tvin_port_e port, enum
 			break;
 		case 0x02: // bt656
 			vdin_mux = VDIN_MUX_656;
-			WR_BITS(VDIN_ASFIFO_CTRL0, 0xe4, VDI1_ASFIFO_CTRL_BIT, VDI1_ASFIFO_CTRL_WID);			
+			WR_BITS(VDIN_ASFIFO_CTRL0, 0xe4, VDI1_ASFIFO_CTRL_BIT, VDI1_ASFIFO_CTRL_WID);
 			break;
 		case 0x04: // VGA
 			vdin_mux = VDIN_MUX_TVFE;
-			WR_BITS(VDIN_ASFIFO_CTRL1, 0xe4, VDI3_ASFIFO_CTRL_BIT,VDI3_ASFIFO_CTRL_WID);
+			WR_BITS(VDIN_ASFIFO_CTRL0, 0xe4, VDI2_ASFIFO_CTRL_BIT,VDI2_ASFIFO_CTRL_WID);
 			// In the order of RGB for further RGB->YUV601 or RGB->YUV709 convertion
 			vdin_data_bus_0 = VDIN_MAP_RCR;
 			vdin_data_bus_1 = VDIN_MAP_Y_G;
@@ -459,23 +467,23 @@ static inline void vdin_set_top(unsigned int offset, enum tvin_port_e port, enum
 			break;
 		case 0x08: // COMPONENT
 			vdin_mux = VDIN_MUX_TVFE;
-			WR_BITS(VDIN_ASFIFO_CTRL1, 0xe4, VDI3_ASFIFO_CTRL_BIT,VDI3_ASFIFO_CTRL_WID);
+			WR_BITS(VDIN_ASFIFO_CTRL0, 0xe4, VDI2_ASFIFO_CTRL_BIT,VDI2_ASFIFO_CTRL_WID);
 			break;
 		case 0x10: // CVBS
 			vdin_mux = VDIN_MUX_CVD2;
-			WR_BITS(VDIN_ASFIFO_CTRL1, 0xe4, VDI4_ASFIFO_CTRL_BIT, VDI4_ASFIFO_CTRL_WID);
+			WR_BITS(VDIN_ASFIFO_CTRL1, 0xe4, VDI3_ASFIFO_CTRL_BIT, VDI3_ASFIFO_CTRL_WID);
 			break;
 		case 0x20: // SVIDEO
 			vdin_mux = VDIN_MUX_CVD2;
-			WR_BITS(VDIN_ASFIFO_CTRL1, 0xe4, VDI4_ASFIFO_CTRL_BIT, VDI4_ASFIFO_CTRL_WID);
+			WR_BITS(VDIN_ASFIFO_CTRL1, 0xe4, VDI3_ASFIFO_CTRL_BIT, VDI3_ASFIFO_CTRL_WID);
 			break;
 		case 0x40: // hdmi
 			vdin_mux = VDIN_MUX_HDMI;
-			WR_BITS(VDIN_ASFIFO_CTRL2, 0xe4, VDI5_ASFIFO_CTRL_BIT, VDI5_ASFIFO_CTRL_WID);
+			WR_BITS(VDIN_ASFIFO_CTRL1, 0xe4, VDI4_ASFIFO_CTRL_BIT, VDI4_ASFIFO_CTRL_WID);
 			break;
 		case 0x80: // dvin
 			vdin_mux = VDIN_MUX_DVIN;
-			WR_BITS(VDIN_ASFIFO_CTRL3, 0xe2, VDI6_ASFIFO_CTRL_BIT, VDI6_ASFIFO_CTRL_WID);
+			WR_BITS(VDIN_ASFIFO_CTRL2, 0xe4, VDI5_ASFIFO_CTRL_BIT, VDI5_ASFIFO_CTRL_WID);
 			break;
 		case 0xc0: //viu
 			vdin_mux = VDIN_MUX_VIU;
@@ -525,36 +533,20 @@ static inline void vdin_set_top(unsigned int offset, enum tvin_port_e port, enum
 void vdin_set_decimation(struct vdin_dev_s *devp)
 {
 	unsigned int offset = devp->addr_offset;
-	unsigned int decimation_ratio = 0;
-	unsigned short new_clk = 0;
-	//enum tvin_sig_fmt_e fmt = devp->parm.info.fmt;
-	//const struct tvin_format_s *fmt_info = tvin_get_fmt_info(fmt);
+	unsigned int new_clk = 0;
 
-	if ((devp->prop.pixel_repeat >=  2) &&
-			(devp->prop.pixel_repeat <= 16))
-		decimation_ratio = devp->prop.pixel_repeat - 1;
-	new_clk = devp->fmt_info_p->pixel_clk / (decimation_ratio + 1);
+	new_clk = devp->fmt_info_p->pixel_clk / (devp->prop.decimation_ratio + 1);
 
-	while (new_clk > TVIN_MAX_PIXCLK)
-	{
-		decimation_ratio++;
-		new_clk = devp->fmt_info_p->pixel_clk / (decimation_ratio + 1);
-	}
-	pr_info("%s decimation_ratio = %d\n",__func__, decimation_ratio);
+	pr_info("%s decimation_ratio=%u,new_clk=%u.\n",__func__, devp->prop.decimation_ratio,new_clk);
 
-	devp->h_active = devp->fmt_info_p->h_active / (decimation_ratio + 1);
+	devp->h_active = devp->fmt_info_p->h_active / (devp->prop.decimation_ratio + 1);
 	devp->v_active = devp->fmt_info_p->v_active;
 
-	/* disable decimation function for hdmi input */
-	if ((devp->parm.port >= TVIN_PORT_HDMI0) &&
-	    (devp->parm.port <= TVIN_PORT_HDMI7) &&
-       (devp->fmt_info_p->pixel_clk <= TVIN_MAX_PIXCLK))
-	    decimation_ratio = 0;
-	if (decimation_ratio)
+	if (devp->prop.decimation_ratio)
 	{
 		// ratio
 		WR_BITS(VDIN_ASFIFO_CTRL2,
-				decimation_ratio, ASFIFO_DECIMATION_NUM_BIT, ASFIFO_DECIMATION_NUM_WID);
+				devp->prop.decimation_ratio, ASFIFO_DECIMATION_NUM_BIT, ASFIFO_DECIMATION_NUM_WID);
 		// en
 		WR_BITS(VDIN_ASFIFO_CTRL2,
 				1, ASFIFO_DECIMATION_DE_EN_BIT, ASFIFO_DECIMATION_DE_EN_WID);
@@ -580,60 +572,34 @@ void vdin_set_cutwin(struct vdin_dev_s *devp)
 	unsigned int offset = devp->addr_offset;
 	unsigned int he = 0,ve = 0;
 
-#if 1
-	if (((devp->parm.cutwin.hs) ||
-				(devp->parm.cutwin.he) ||
-				(devp->parm.cutwin.vs) ||
-				(devp->parm.cutwin.ve)
-	    )                                                                     &&
-			(devp->h_active > (devp->parm.cutwin.hs + devp->parm.cutwin.he)) &&
-			(devp->v_active > (devp->parm.cutwin.vs + devp->parm.cutwin.ve)) &&
-			(devp->parm.port == TVIN_PORT_ISP)
+	if (((devp->prop.hs)||(devp->prop.he)||(devp->prop.vs)||(devp->prop.ve)) &&
+		(devp->h_active > (devp->prop.hs + devp->prop.he)) &&
+		(devp->v_active > (devp->prop.vs + devp->prop.ve))
 	   )
 	{
-		devp->h_active -= (devp->parm.cutwin.he + devp->parm.cutwin.hs);
-		devp->v_active -= (devp->parm.cutwin.ve + devp->parm.cutwin.vs);
-		he = devp->parm.cutwin.hs + devp->h_active - 1;
-		ve = devp->parm.cutwin.vs + devp->v_active - 1;
-#ifdef TVAFE_SET_CVBS_MANUAL_FMT_POS
-		/* set new video size, change size only if manual fmt is wrong */
-		if ((devp->parm.port >= TVIN_PORT_CVBS0) &&
-				(devp->parm.port <= TVIN_PORT_SVIDEO7))
-		{
-			if ((devp->cvbs_pos_chg == TVIN_CVBS_POS_P_TO_N) ||
-					(devp->cvbs_pos_chg == TVIN_CVBS_POS_N_TO_P))
-			{
-				if (devp->parm.info.fmt == TVIN_SIG_FMT_CVBS_PAL_I)  //288-240
-				{
-					devp->v_active -= 48;
-					devp->parm.cutwin.ve -= 48;
-				}
-				else
-				{
-					devp->v_active += 48;
-					devp->parm.cutwin.ve += 48;
-				}
-			}
-		}
-#endif
-		WR(VDIN_WIN_H_START_END, (devp->parm.cutwin.hs << INPUT_WIN_H_START_BIT) | (he << INPUT_WIN_H_END_BIT));
-		WR(VDIN_WIN_V_START_END, (devp->parm.cutwin.vs << INPUT_WIN_V_START_BIT) | (ve << INPUT_WIN_V_END_BIT));
+		devp->h_active -= (devp->prop.he + devp->prop.hs);
+		devp->v_active -= (devp->prop.ve + devp->prop.vs);
+		he = devp->prop.hs + devp->h_active - 1;
+		ve = devp->prop.vs + devp->v_active - 1;
+
+		WR(VDIN_WIN_H_START_END, (devp->prop.hs << INPUT_WIN_H_START_BIT) | (he << INPUT_WIN_H_END_BIT));
+		WR(VDIN_WIN_V_START_END, (devp->prop.vs << INPUT_WIN_V_START_BIT) | (ve << INPUT_WIN_V_END_BIT));
 		WR_BITS(VDIN_COM_CTRL0, 1, INPUT_WIN_SEL_EN_BIT, INPUT_WIN_SEL_EN_WID);
 		pr_info("%s enable cutwin hs = %d, he = %d,  vs = %d, ve = %d\n", __func__,
-				devp->parm.cutwin.hs, devp->parm.cutwin.he, devp->parm.cutwin.vs, devp->parm.cutwin.ve);
+			devp->prop.hs, devp->prop.he, devp->prop.vs, devp->prop.ve);
 	}
 	else{
 		pr_info("%s disable cutwin!!! hs = %d, he = %d,  vs = %d, ve = %d\n", __func__,
-				devp->parm.cutwin.hs, devp->parm.cutwin.he, devp->parm.cutwin.vs, devp->parm.cutwin.ve);
+			devp->prop.hs, devp->prop.he, devp->prop.vs, devp->prop.ve);
 	}
-#endif
+
 }
 
 
 
 static inline void vdin_set_color_matrix1(unsigned int offset, tvin_format_t *tvin_fmt_p, enum vdin_format_convert_e format_convert)
 {
-        #if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON6TV
+#if defined(VDIN_V1)
 	//    unsigned int offset = devp->addr_offset;
 	enum vdin_matrix_csc_e    matrix_csc = VDIN_MATRIX_NULL;
 	struct vdin_matrix_lup_s *matrix_tbl;
@@ -842,7 +808,6 @@ void vdin_set_matrix(struct vdin_dev_s *devp)
 {
 
 	//vdin_set_color_matrix1(devp->addr_offset, devp->fmt_info_p, devp->format_convert);
-
 	vdin_set_color_matrix0(devp->addr_offset, devp->fmt_info_p, devp->format_convert);
 }
 
@@ -933,7 +898,7 @@ static inline void vdin_set_histogram(unsigned int offset, unsigned int hs, unsi
 static inline void vdin_set_wr_ctrl(unsigned int offset, unsigned int v, unsigned int h, enum vdin_format_convert_e format_convert)
 {
 	unsigned int write_format444=0, swap_cbcr=0;
-        unsigned int def_canvas_id = offset? vdin_canvas_ids[1][0]:vdin_canvas_ids[0][0];
+        //unsigned int def_canvas_id = offset? vdin_canvas_ids[1][0]:vdin_canvas_ids[0][0];
 
 	switch (format_convert)
 	{
@@ -1048,8 +1013,6 @@ inline unsigned int vdin_get_meas_vstamp(unsigned int offset)
 {
 	return (RD(VDIN_MEAS_VS_COUNT_LO ));
 }
-
-
 
 inline unsigned int vdin_get_active_h(unsigned int offset)
 {
@@ -1177,7 +1140,7 @@ inline void vdin_set_vframe_prop_info(struct vframe_s *vf, struct vdin_dev_s *de
 	vf->prop.hist.height     = RD_BITS(VDIN_HIST_V_START_END,HIST_VEND_BIT,HIST_VEND_WID) -
 		RD_BITS(VDIN_HIST_V_START_END,HIST_VSTART_BIT,HIST_VSTART_WID)+1;
 	vf->prop.hist.width      = RD_BITS(VDIN_HIST_H_START_END,HIST_HEND_BIT,HIST_HEND_WID) -
-		RD_BITS(VDIN_HIST_V_START_END,HIST_HSTART_BIT,HIST_HSTART_WID)+1;
+		RD_BITS(VDIN_HIST_H_START_END,HIST_HSTART_BIT,HIST_HSTART_WID)+1;
 	vf->prop.hist.luma_max   = RD_BITS(VDIN_HIST_MAX_MIN, HIST_MAX_BIT, HIST_MAX_WID);
 	vf->prop.hist.luma_min   = RD_BITS(VDIN_HIST_MAX_MIN, HIST_MIN_BIT, HIST_MIN_WID);
 	vf->prop.hist.gamma[0]   = RD_BITS(VDIN_DNLP_HIST00, HIST_ON_BIN_00_BIT, HIST_ON_BIN_00_WID);
@@ -1260,10 +1223,12 @@ inline void vdin_set_vframe_prop_info(struct vframe_s *vf, struct vdin_dev_s *de
 	}
 
 	// Update Histgram windown with detected BlackBar window
-	vdin_set_histogram(offset, bbar.left, bbar.right, bbar.top, bbar.bottom);
+	if(hist_bar_enable)
+	        vdin_set_histogram(offset, 0, vf->width - 1, 0, vf->height - 1);
+	else
+	        vdin_set_histogram(offset, bbar.left, bbar.right, bbar.top, bbar.bottom);
 
-	if (black_bar_enable)
-	{
+	if(black_bar_enable) {
 		vf->prop.bbar.top        = bbar.top;
 		vf->prop.bbar.bottom     = bbar.bottom;
 		vf->prop.bbar.left       = bbar.left;
@@ -1477,9 +1442,9 @@ inline void vdin_set_default_regmap(unsigned int offset)
 	//[7:0] write chroma addr = 1
 	WR_BITS(VDIN_WR_CTRL2, def_canvas_id+1,WRITE_CHROMA_CANVAS_ADDR_BIT,
 	                WRITE_CHROMA_CANVAS_ADDR_WID);
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON6TV
-                WR_BITS(VDIN_WR_CTRL2, 0,DISCARD_BEF_LINE_FIFO_BIT,
-	                DISCARD_BEF_LINE_FIFO_WID);
+#if defined(VDIN_V1)
+    WR_BITS(VDIN_WR_CTRL2, 0,DISCARD_BEF_LINE_FIFO_BIT,
+            DISCARD_BEF_LINE_FIFO_WID);
 	//[20:25] interger = 0
 	//[0:19] fraction = 0
 	WR(VDIN_VSC_PHASE_STEP, 0x0000000);
@@ -1609,7 +1574,7 @@ inline void vdin_hw_enable(unsigned int offset)
 
 inline void vdin_hw_disable(unsigned int offset)
 {
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
+#if defined(VDIN_V2)
 	/* disable cm2 */
 	WR_BITS(VDIN_CM_BRI_CON_CTRL,0,CM_TOP_EN_BIT,CM_TOP_EN_WID);
 #endif
@@ -1768,7 +1733,7 @@ inline void vdin_calculate_duration(struct vdin_dev_s *devp)
 	struct vframe_s *curr_wr_vf = NULL;
 	//enum tvin_sig_fmt_e fmt = devp->parm.info.fmt;
     const struct tvin_format_s *fmt_info = devp->fmt_info_p;
-    unsigned int frame_rate = (VDIN_CRYSTAL + (devp->cycle>>3))/devp->cycle;
+    //unsigned int frame_rate = (VDIN_CRYSTAL + (devp->cycle>>3))/devp->cycle;
     enum tvin_port_e port = devp->parm.port;
 
 	curr_wr_vf = &devp->curr_wr_vfe->vf;
@@ -1829,7 +1794,7 @@ inline void vdin_set_hscale(unsigned int offset, unsigned int src_w, unsigned in
 		0xf75d31fb, 0xf75a34fb, 0xf75837fa, 0xf7553afa, 0xf8523cfa, 0xf8503ff9,
 		0xf84d42f9, 0xf84a45f9, 0xf84848f8
 	};
-
+/*
 	unsigned int filt_coef1[] =  {//2 point bilinear
 		0x00800000, 0x007e0200, 0x007c0400, 0x007a0600, 0x00780800, 0x00760a00,
 		0x00740c00, 0x00720e00, 0x00701000, 0x006e1200, 0x006c1400, 0x006a1600,
@@ -1847,6 +1812,7 @@ inline void vdin_set_hscale(unsigned int offset, unsigned int src_w, unsigned in
 		0x50300000, 0x4e320000, 0x4c340000, 0x4a360000, 0x48380000, 0x463a0000,
 		0x443c0000, 0x423e0000, 0x40400000
 	};
+	*/
 	int horz_phase_step,i;
 	if(!dst_w)
 	{
@@ -1891,7 +1857,7 @@ inline void vdin_set_hscale(unsigned int offset, unsigned int src_w, unsigned in
 /*
  *just for veritical scale src_w is origin height,dst_h is the height after scale
  */
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON6TV
+#if defined(VDIN_V1)
 inline void vdin_set_vscale(unsigned int offset, unsigned int src_h,  unsigned int dst_h)
 {
 	int veri_phase_step,tmp;
@@ -1932,35 +1898,29 @@ inline void vdin_set_vscale(unsigned int offset, unsigned int src_h,  unsigned i
 inline void vdin_set_hvscale(struct vdin_dev_s *devp)
 {
         unsigned int offset = devp->addr_offset;
-    
-        if (((devp->scaler4w < devp->h_active) && (devp->scaler4w != 0)) ||
-                (devp->h_active > TVIN_MAX_HACTIVE)	&&
-                ((devp->parm.port >= TVIN_PORT_HDMI0)&&(devp->parm.port <= TVIN_PORT_HDMI7))
-           ){
-            if ((devp->h_active > TVIN_MAX_HACTIVE)&&(devp->scaler4w == 0)) {
-                vdin_set_hscale(offset, devp->h_active, TVIN_MAX_HACTIVE);
+
+        if((devp->prop.scaling4w < devp->h_active) && (devp->prop.scaling4w > 0)) {
+	        vdin_set_hscale(offset,devp->h_active,devp->prop.scaling4w);
+                devp->h_active = devp->prop.scaling4w;
+        } else if (devp->h_active > TVIN_MAX_HACTIVE) {
+                vdin_set_hscale(offset,devp->h_active,TVIN_MAX_HACTIVE);
                 devp->h_active = TVIN_MAX_HACTIVE;
-            } else {
-                vdin_set_hscale(offset, devp->h_active, devp->scaler4w);
-                devp->h_active = devp->scaler4w;
-            }
-            pr_info("[vdin.%d] dst hactive:%u.\n",devp->index, devp->h_active);
-        } //else
-        //  pr_err("[vdin%x..] dst hactive:0x%x not valid.\n",devp->addr_offset, dst_w);
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON6TV
-        if ((devp->scaler4h < devp->v_active) && (devp->scaler4h != 0)) {
-                vdin_set_vscale(offset, devp->v_active, devp->scaler4h);
-                devp->v_active = devp->scaler4h;
-                pr_info("[vdin.%d] dst vactive:%u.\n",devp->index, devp->v_active);
-        } //else
-        //  pr_err("[vdin%x..] dst vactive:0x%x not valid.\n",devp->addr_offset, dst_h);
+        }
+	pr_info("[vdin.%d] dst hactive:%u,",devp->index,devp->h_active);
+
+#if defined(VDIN_V1)
+        if((devp->prop.scaling4h < devp->v_active) && (devp->prop.scaling4h > 0)) {
+		vdin_set_vscale(offset, devp->v_active, devp->prop.scaling4h);
+                devp->v_active = devp->prop.scaling4h;
+	}
+        pr_info(" dst vactive:%u.\n",devp->v_active);
 #endif
 
 }
 
+#if defined(VDIN_V1)
 inline void vdin_wr_reverse(unsigned int offset, bool hreverse, bool vreverse)
 {
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON6TV
 	if(hreverse)
 		WR_BITS(VDIN_WR_H_START_END, 1,
 				HORIZONTAL_REVERSE_BIT, HORIZONTAL_REVERSE_WID);
@@ -1973,104 +1933,17 @@ inline void vdin_wr_reverse(unsigned int offset, bool hreverse, bool vreverse)
 	else
 		WR_BITS(VDIN_WR_V_START_END, 0,
 				VERTICAL_REVERSE_BIT, VERTICAL_REVERSE_WID);
-#endif
 }
+#endif
 
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
+#if defined(VDIN_V2)
 void vdin_bypass_isp(unsigned int offset)
 {
 	WR_BITS(VDIN_CM_BRI_CON_CTRL, 0,CM_TOP_EN_BIT, CM_TOP_EN_WID);
 	WR_BITS(VDIN_MATRIX_CTRL, 0, VDIN_MATRIX_EN_BIT, VDIN_MATRIX_EN_WID);
 	WR_BITS(VDIN_MATRIX_CTRL, 0, VDIN_MATRIX1_EN_BIT, VDIN_MATRIX1_EN_WID);
 }
-void set_chroma_regs(unsigned int offset, unsigned int h_active,unsigned int v_active)
-{
 
-        int i,j,k;
-        int cm2_cfg_reg[640];
-        int tmp[20];
-        int tmp_cfg;
-
-        //tmp_cfg = -8;
-        for ( i=0; i<640 ; i=i+1 ) {
-                //tmp_cfg = tmp_cfg>5 ? -5 : (tmp_cfg+1); 
-                //cm2_cfg_reg[i] = tmp_cfg;
-                cm2_cfg_reg[i] = (i&15)-8;
-        }
-
-        for ( j = 0; j<32; j++) {
-                WR(VDIN_CHROMA_ADDR_PORT, 256+j*8);
-                for ( i = 0; i<20; i++) {
-                        tmp[i] = cm2_cfg_reg[j+32*i];
-                }
-                for ( k = 0; k<5; k++) {
-                        WR(VDIN_CHROMA_DATA_PORT,( ((tmp[k*4+3]&255)<<24)+
-                                      ((tmp[k*4+2]&255)<<16)+
-                                      ((tmp[k*4+1]&255)<< 8)+
-                                      ((tmp[k*4+0]&255)    ) ) );
-                }
-        }
-
-
-        WR(VDIN_CHROMA_ADDR_PORT, SAT_BYYB_NODE_REG0);
-        WR(VDIN_CHROMA_DATA_PORT, 0xfffefdfc);
-
-        WR(VDIN_CHROMA_ADDR_PORT, SAT_BYYB_NODE_REG1);
-        WR(VDIN_CHROMA_DATA_PORT, 0x03020100);
-
-        WR(VDIN_CHROMA_ADDR_PORT, SAT_BYYB_NODE_REG2);
-        WR(VDIN_CHROMA_DATA_PORT, 0x00000004);
-
-        WR(VDIN_CHROMA_ADDR_PORT, SAT_SRC_NODE_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x0bb80400);
-
-        WR(VDIN_CHROMA_ADDR_PORT, CM_ENH_SFT_MODE_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x00000000);
-
-        WR(VDIN_CHROMA_ADDR_PORT, FRM_SIZE_REG);
-        //Wr(VDIN0_CHROMA_DATA_PORT, 0x02d00500);
-        WR(VDIN_CHROMA_DATA_PORT, v_active<<16|h_active);
-
-        WR(VDIN_CHROMA_ADDR_PORT, FITLER_CFG_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x0000001f);
-
-        WR(VDIN_CHROMA_ADDR_PORT, CM_GLOBAL_GAIN_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x01000000);
-
-        WR(VDIN_CHROMA_ADDR_PORT, CM_ENH_CTL_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x00000077);
-
-        WR(VDIN_CHROMA_ADDR_PORT, ROI_X_SCOPE_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x02000100);
-
-        WR(VDIN_CHROMA_ADDR_PORT, ROI_Y_SCOPE_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x03000200);
-
-        WR(VDIN_CHROMA_ADDR_PORT, POI_XY_DIR_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x00110011);
-
-        WR(VDIN_CHROMA_ADDR_PORT, COI_Y_SCOPE_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x00008000);
-
-        WR(VDIN_CHROMA_ADDR_PORT, COI_H_SCOPE_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x00800000);
-
-        WR(VDIN_CHROMA_ADDR_PORT, COI_S_SCOPE_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x00800000);
-
-        WR(VDIN_CHROMA_ADDR_PORT, IFO_MODE_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x0000000c);
-
-        WR(VDIN_CHROMA_ADDR_PORT, POI_RPL_MODE_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x00000000);
-
-        WR(VDIN_CHROMA_ADDR_PORT, DEMO_OWR_YHS_REG);
-        WR(VDIN_CHROMA_DATA_PORT, 0x33222111);
-	//enable cm2
-	WR_BITS(VDIN_CM_BRI_CON_CTRL,1,CM_TOP_EN_BIT,CM_TOP_EN_WID);
-	pr_info("%s cm2 init ok.\n",__func__);
-
-}
 void vdin_set_cm2(unsigned int offset,unsigned int w,unsigned int h,unsigned int *cm2)
 {
 	unsigned int i=0,j=0,start_addr=0x100;
@@ -2088,9 +1961,9 @@ void vdin_set_cm2(unsigned int offset,unsigned int w,unsigned int h,unsigned int
 		WR(VDIN_CHROMA_DATA_PORT,cm2[160+i]);
 	}
 	/*config cm2 frame size*/
-	WR(VDIN_CHROMA_ADDR_PORT,FRM_SIZE_REG);
+	WR(VDIN_CHROMA_ADDR_PORT,0x205);
 	WR(VDIN_CHROMA_DATA_PORT,h<<16|w);
-	
+
     WR_BITS(VDIN_CM_BRI_CON_CTRL, 1, CM_TOP_EN_BIT,CM_TOP_EN_WID);
 }
 #endif

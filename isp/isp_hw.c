@@ -39,7 +39,7 @@ MODULE_PARM_DESC(af_filter0,"\n filter for af hist.\n");
 *reg 0x00~0x07
 *reg 0xaf
 */
-
+#if 0
 static int isp_param_lns_lut_480p[1024] = {
 	0x8a809c8a,0x857c9785,0x80769080,0x7a71897a,0x756d8575,0x71688171,0x6c657b6c,0x69617769,0x665f7366,0x635c6f63,0x615a6c61,0x5f586a5f,0x5e57685e,0x5d56675d,0x5c55655c,0x5b55665b,0x5c56655c,0x5c55665c,0x5c56665c,0x5d57675d,0x5f58695f,0x60596c60,0x625b6f62,0x645d7264,0x68607668,0x6b637b6b,0x70678070,0x746b8474,0x796f8a79,0x7d74907d,0x83799783,0x887e9c88,
 	0x887e9a88,0x837a9483,0x7d748e7d,0x786f8778,0x736b8273,0x6e677d6e,0x6a62776a,0x675f7367,0x645d6f64,0x615a6c61,0x5f59695f,0x5d57675d,0x5b56655b,0x5a55645a,0x59546359,0x59536359,0x59546259,0x59546359,0x5a55635a,0x5b55645b,0x5c56665c,0x5e58695e,0x60596c60,0x635c6e63,0x655e7365,0x69617769,0x6d657c6d,0x71698171,0x766d8676,0x7b728c7b,0x81779381,0x867c9986,
@@ -214,17 +214,19 @@ static int isp_param_lns_lut_5m[1024] = {
 	0x877d9687,0x82799182,0x7d738a7d,0x776e8477,0x716a7f71,0x6c65796c,0x68617468,0x645d7064,0x625b6c62,0x5f58695f,0x5c56655c,0x5a55635a,0x59536159,0x57526057,0x56525f56,0x56515e56,0x56515e56,0x56515f56,0x57526057,0x58536158,0x5a54635a,0x5b56655b,0x5d57685d,0x60596b60,0x635c6f63,0x675f7367,0x6c63796c,0x70677e70,0x756c8375,0x7a70887a,0x7e748d7e,0x81779281,
 	0x89809a89,0x847b9484,0x7e768e7e,0x79718879,0x746c8274,0x6e687d6e,0x6a63786a,0x66607366,0x645d7064,0x605a6c60,0x5e58695e,0x5c56665c,0x5b55645b,0x5a54635a,0x59546259,0x59536159,0x58536158,0x59536259,0x59546259,0x5a54645a,0x5c56665c,0x5e57685e,0x60596b60,0x625b6e62,0x665e7266,0x6a62776a,0x6e657c6e,0x73698073,0x776e8577,0x7c728b7c,0x80768f80,0x82789382
 };
-
+#endif
 void isp_top_init(xml_top_t *top,unsigned int w,unsigned int h)
 {
+#if 0
 	unsigned short offset[XML_TOP]={
 		0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0xaf
 	};
 	int i = 0;
 	if(top){
-		//for(i=0;i < XML_TOP;i++)
-                //	WR(ISP_VCBUS_BASE+offset[i],top->reg_map[i]);
+		for(i=0;i < XML_TOP;i++)
+                WR(ISP_VCBUS_BASE+offset[i],top->reg_map[i]);
 	}
+#endif
 	/*config input size*/
 	WR(ISP_HV_SIZE,w<<REG_HSIZE_BIT|h);
         WR(ISP_HBLANK,w<<REG_TOTAL_W_BIT|10);
@@ -505,6 +507,7 @@ static void isp_set_lnsd(xml_lut_ls_t *lnsd)
 	}
 }
 
+#if 0
 static void isp_set_lnsd_test(unsigned int w,unsigned int h)
 {
 	int i;
@@ -564,6 +567,7 @@ static void isp_set_lnsd_test(unsigned int w,unsigned int h)
     WRITE_VCBUS_REG(0x2daf, 0x00000000); // lens shielding lut ram: hardware read mode	
     WRITE_VCBUS_REG(0x2d28, (READ_VCBUS_REG(0x2d28)|0x10000000));
 }
+#endif
 
 void isp_set_lnsd_mode(unsigned int mode)
 {
@@ -1238,7 +1242,7 @@ void isp_ls_curve(unsigned int psize_v2h,    // pixel_size_percentage_vertical_t
 {
     unsigned int haxis[32], vaxis[32], curve[32][32];
     unsigned int hmax = 0, vmax = 0, vcenter = 0, hcenter = 0, rradium = 0, xscale = 0, yscale = 0;
-    unsigned int i = 0, j = 0, dx = 0, dy = 0, data = 0, control = READ_VCBUS_REG(0x2d28);
+    unsigned int i = 0, j = 0, dx = 0, dy = 0, control = READ_VCBUS_REG(0x2d28);
 
     // validation
     if ((psize_v2h < 50) || (psize_v2h > 200))

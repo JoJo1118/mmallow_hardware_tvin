@@ -16,6 +16,6 @@ source "../hardware/tvin/csi/Kconfig"
 source "../hardware/tvin/viu/Kconfig"
 source "../hardware/tvin/it660x/Kconfig"
 source "../hardware/tvin/isp/Kconfig"
-
+source "../hardware/tvin/vdin_ctrl/Kconfig"
 endif
 

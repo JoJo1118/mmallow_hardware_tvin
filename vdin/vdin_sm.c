@@ -53,7 +53,7 @@ static unsigned int back_nosig_counter     = 0; // STATE_UNSTABLE
 static unsigned int back_stable_counter    = 0; // STATE_UNSTABLE
 static unsigned int exit_prestable_counter = 0; // STATE_PRESTABLE
 #endif
-static int sm_debug_enable = 1;
+static bool sm_debug_enable = true;
 
 static int sm_print_nosig  = 0;
 static int sm_print_notsup = 0;
@@ -75,6 +75,9 @@ MODULE_PARM_DESC(atv_unstable_in_cnt, "atv_unstable_in_cnt");
 static int atv_unstable_out_cnt = 50;
 module_param(atv_unstable_out_cnt, int, 0664);
 MODULE_PARM_DESC(atv_unstable_out_cnt, "atv_unstable_out_cnt");
+static int hdmi_unstable_out_cnt = 25;
+module_param(hdmi_unstable_out_cnt, int, 0664);
+MODULE_PARM_DESC(hdmi_unstable_out_cnt, "hdmi_unstable_out_cnt");
 
 static int atv_stable_out_cnt = 10;
 module_param(atv_stable_out_cnt, int, 0664);
@@ -161,6 +164,301 @@ void tvin_smr_init_counter(int index)
  * tvin state machine routine
  *
  */
+#ifdef CONFIG_ADC_CAL_SIGNALED
+void tvin_smr(struct vdin_dev_s *devp)
+{
+        struct tvin_state_machine_ops_s *sm_ops;
+        struct tvin_info_s *info;
+        enum tvin_port_e port = TVIN_PORT_NULL;
+        unsigned int unstable_in_cnt;
+        struct tvin_sm_s *sm_p;
+        if (!devp || !devp->frontend)
+        {
+                sm_dev[devp->index].state = TVIN_SM_STATUS_NULL;
+                return;
+        }
+
+        sm_ops = devp->frontend->sm_ops;
+        info = &devp->parm.info;
+        port = devp->parm.port;
+        sm_p = &sm_dev[devp->index];
+
+                        if (devp->parm.flag & TVIN_PARM_FLAG_CAL)
+                        {
+                                if ((((port >= TVIN_PORT_COMP0) && (port <= TVIN_PORT_COMP7)) ||
+                                                        ((port >= TVIN_PORT_VGA0 ) && (port <= TVIN_PORT_VGA7 ))
+                                    ) &&
+                                                (sm_ops->adc_cal)
+                                   )
+                                {
+                                        if (!sm_ops->adc_cal(devp->frontend))
+                                                devp->parm.flag &= ~TVIN_PARM_FLAG_CAL;
+                                }
+                                else
+                                        devp->parm.flag &= ~TVIN_PARM_FLAG_CAL;
+                        }
+        switch (sm_p->state)
+        {
+                case TVIN_SM_STATUS_NOSIG:
+                        ++sm_p->state_counter;
+                        if (sm_ops->nosig(devp->frontend))
+                        {
+                                sm_p->exit_nosig_counter = 0;
+                                if (sm_p->state_counter >= nosig_in_cnt)
+                                {
+                                        sm_p->state_counter       = nosig_in_cnt;
+                                        info->status        = TVIN_SIG_STATUS_NOSIG;
+                                        info->fmt           = TVIN_SIG_FMT_NULL;
+                                        if (sm_debug_enable && !sm_print_nosig) {
+                                                pr_info("[smr.%d] no signal\n",devp->index);
+                                                sm_print_nosig = 1;
+                                        }
+                                        sm_print_unstable = 0;
+                                }
+                        }
+                        else
+                        {
+                                ++sm_p->exit_nosig_counter;
+                                if (sm_p->exit_nosig_counter >= nosig2_unstable_cnt)
+                                {
+                                        tvin_smr_init_counter(devp->index);
+                                        sm_p->state = TVIN_SM_STATUS_UNSTABLE;
+                                        if (sm_debug_enable)
+                                                pr_info("[smr.%d] no signal --> unstable\n",devp->index);
+                                        sm_print_nosig  = 0;
+                                        sm_print_unstable = 0;
+                                }
+                        }
+                        break;
+
+                case TVIN_SM_STATUS_UNSTABLE:
+                        ++sm_p->state_counter;
+                        if (sm_ops->nosig(devp->frontend))
+                        {
+                                sm_p->back_stable_counter = 0;
+                                ++sm_p->back_nosig_counter;
+                                if (sm_p->back_nosig_counter >= sm_p->back_nosig_max_cnt)
+                                {
+                                        tvin_smr_init_counter(devp->index);
+                                        sm_p->state = TVIN_SM_STATUS_NOSIG;
+                                        info->status = TVIN_SIG_STATUS_NOSIG;
+                                        info->fmt    = TVIN_SIG_FMT_NULL;
+                                        if (sm_debug_enable)
+                                                pr_info("[smr.%d] unstable --> no signal\n",devp->index);
+                                        sm_print_nosig  = 0;
+                                        sm_print_unstable = 0;
+                                }
+                        }
+                        else
+                        {
+                                sm_p->back_nosig_counter = 0;
+                                if (sm_ops->fmt_changed(devp->frontend) )
+
+                                {
+                                        sm_p->back_stable_counter = 0;
+                                        if((port == TVIN_PORT_CVBS0)&&devp->unstable_flag)
+                                                unstable_in_cnt = sm_p->atv_unstable_in_cnt;//UNSTABLE_ATV_MAX_CNT;
+                                        else
+                                                unstable_in_cnt = other_unstable_in_cnt;
+                                        if (sm_p->state_counter >= unstable_in_cnt)
+                                        {
+                                                sm_p->state_counter  = unstable_in_cnt;
+                                                info->status   = TVIN_SIG_STATUS_UNSTABLE;
+                                                info->fmt      = TVIN_SIG_FMT_NULL;
+                                                if (sm_debug_enable && !sm_print_unstable) {
+                                                        pr_info("[smr.%d] unstable\n",devp->index);
+                                                        sm_print_unstable = 1;
+                                                }
+                                                sm_print_nosig  = 0;
+                                        }
+                                }
+                                else
+                                {
+                                        ++sm_p->back_stable_counter;
+                                        if(port == TVIN_PORT_CVBS0)
+                                                unstable_in_cnt = sm_p->atv_unstable_out_cnt;//UNSTABLE_ATV_MAX_CNT;
+                                        else if ((port >= TVIN_PORT_HDMI0) && (port <= TVIN_PORT_HDMI7 ))
+                                                unstable_in_cnt = sm_p->hdmi_unstable_out_cnt;
+                                        else
+                                                unstable_in_cnt = other_unstable_out_cnt;
+                                        if (sm_p->back_stable_counter >= unstable_in_cnt)
+                                        {   //must wait enough time for cvd signal lock
+                                                sm_p->back_stable_counter    = 0;
+                                                sm_p->state_counter               = 0;
+                                                if (sm_ops->get_fmt) {
+                                                        info->fmt   = sm_ops->get_fmt(devp->frontend);
+                                                        if (sm_ops->get_sig_propery)
+                                                        {
+                                                                sm_ops->get_sig_propery(devp->frontend, &devp->prop);
+                                                                devp->parm.info.trans_fmt = devp->prop.trans_fmt;
+                                                                devp->parm.info.reserved = devp->prop.dvi_info;
+								devp->pre_prop.color_format = devp->prop.color_format;
+                                                        }
+                                                }
+                                                else
+                                                        info->fmt   = TVIN_SIG_FMT_NULL;
+
+                                                /* set signal status */
+                                                if(info->fmt == TVIN_SIG_FMT_NULL)
+                                                {
+                                                        info->status = TVIN_SIG_STATUS_NOTSUP;
+                                                        if (sm_debug_enable && !sm_print_notsup) {
+                                                                pr_info("[smr.%d] unstable --> not support\n",devp->index);
+                                                                sm_print_notsup = 1;
+                                                        }
+                                                }
+                                                else
+                                                {
+                                                        if (sm_ops->fmt_config)
+                                                                sm_ops->fmt_config(devp->frontend);
+                                                        tvin_smr_init_counter(devp->index);
+                                                        sm_p->state = TVIN_SM_STATUS_PRESTABLE;
+                                                        if (sm_debug_enable)
+                                                                pr_info("[smr.%d] unstable --> prestable, and format is %d(%s)\n",
+                                                                                devp->index,info->fmt, tvin_sig_fmt_str(info->fmt));
+                                                        sm_print_nosig  = 0;
+                                                        sm_print_unstable = 0;
+                                                        sm_print_fmt_nosig = 0;
+                                                        sm_print_fmt_chg = 0;
+                                                }
+                                        }
+                                }
+                        }
+                        break;
+
+                case TVIN_SM_STATUS_PRESTABLE:
+                        {
+                                bool nosig = false, fmt_changed = false;//, pll_lock = false;
+                                devp->unstable_flag = true;
+
+                                if (sm_ops->nosig(devp->frontend)) {
+                                        nosig = true;
+                                        if (sm_debug_enable)
+                                                pr_info("[smr.%d] warning: no signal\n",devp->index);
+                                }
+
+                                if (sm_ops->fmt_changed(devp->frontend)) {
+                                        fmt_changed = true;
+                                        if (sm_debug_enable)
+                                                pr_info("[smr.%d] warning: format changed\n",devp->index);
+                                }
+
+                                if (nosig || fmt_changed)
+                                {
+                                        ++sm_p->state_counter;
+                                        if (sm_p->state_counter >= other_stable_out_cnt)
+                                        {
+                                                tvin_smr_init_counter(devp->index);
+                                                sm_p->state = TVIN_SM_STATUS_UNSTABLE;
+                                                if (sm_debug_enable)
+                                                        pr_info("[smr.%d] prestable --> unstable\n",devp->index);
+                                                sm_print_nosig  = 0;
+                                                sm_print_notsup = 0;
+                                                sm_print_unstable = 0;
+
+                                                break;
+                                        }
+                                }
+                                else
+                                {
+                                        sm_p->state_counter = 0;
+                                }
+
+                                /* wait comp stable */
+                                if ((port >= TVIN_PORT_COMP0) &&
+                                                (port <= TVIN_PORT_COMP7))
+                                {
+                                        ++sm_p->exit_prestable_counter;
+                                        if (sm_p->exit_prestable_counter >= comp_pre2_stable_cnt)
+                                        {
+                                                tvin_smr_init_counter(devp->index);
+                                                sm_p->state       = TVIN_SM_STATUS_STABLE;
+                                                info->status        = TVIN_SIG_STATUS_STABLE;
+                                                if (sm_debug_enable)
+                                                        pr_info("[smr.%d] prestable --> stable\n",devp->index);
+                                                sm_print_nosig  = 0;
+                                                sm_print_notsup = 0;
+                                        }
+                                }
+                                else
+                                {
+                                        sm_p->state       = TVIN_SM_STATUS_STABLE;
+                                        info->status        = TVIN_SIG_STATUS_STABLE;
+                                        if (sm_debug_enable)
+                                                pr_info("[smr.%d] prestable --> stable\n",devp->index);
+                                        sm_print_nosig  = 0;
+                                        sm_print_notsup = 0;
+                                }
+                                break;
+                        }
+                case TVIN_SM_STATUS_STABLE:
+                        {
+                                bool nosig = false, fmt_changed = false;//, pll_lock = false;
+                                unsigned int stable_out_cnt = 0;
+
+                                devp->unstable_flag = true;
+                                if (sm_ops->nosig(devp->frontend)) {
+                                        nosig = true;
+                                        if (sm_debug_enable && !sm_print_fmt_nosig)
+                                        {
+                                                pr_info("[smr.%d] warning: no signal\n",devp->index);
+                                                sm_print_fmt_nosig = 1;
+                                        }
+                                }
+
+                                if (sm_ops->fmt_changed(devp->frontend)) {
+                                        fmt_changed = true;
+                                        if (sm_debug_enable && !sm_print_fmt_chg)
+                                        {
+                                                pr_info("[smr.%d] warning: format changed\n",devp->index);
+                                                sm_print_fmt_chg = 1;
+                                        }
+                                }
+                            hdmirx_color_fmt_handler(devp);
+#if 0
+                                if (sm_ops->pll_lock(devp->frontend)) {
+                                        pll_lock = true;
+                                }
+                                else {
+                                        pll_lock = false;
+                                        if (sm_debug_enable)
+                                                pr_info("[smr] warning: pll lock failed\n");
+                                }
+#endif
+
+                                if (nosig || fmt_changed /* || !pll_lock */)
+                                {
+                                        ++sm_p->state_counter;
+                                        if (port == TVIN_PORT_CVBS0)
+                                                stable_out_cnt = sm_p->atv_stable_out_cnt;
+                                        else
+                                                stable_out_cnt = other_stable_out_cnt;
+                                        if (sm_p->state_counter >= stable_out_cnt)
+                                        {
+                                                tvin_smr_init_counter(devp->index);
+                                                sm_p->state = TVIN_SM_STATUS_UNSTABLE;
+                                                if (sm_debug_enable)
+                                                        pr_info("[smr.%d] stable --> unstable\n",devp->index);
+                                                sm_print_nosig  = 0;
+                                                sm_print_notsup = 0;
+                                                sm_print_unstable = 0;
+                                                sm_print_fmt_nosig = 0;
+                                                sm_print_fmt_chg = 0;
+                                        }
+                                }
+                                else
+                                {
+                                        sm_p->state_counter = 0;
+                                }
+                                break;
+                        }
+                case TVIN_SM_STATUS_NULL:
+                default:
+                        sm_p->state = TVIN_SM_STATUS_NOSIG;
+                        break;
+        }
+}
+#else
 void tvin_smr(struct vdin_dev_s *devp)
 {
         struct tvin_state_machine_ops_s *sm_ops;
@@ -275,6 +573,8 @@ void tvin_smr(struct vdin_dev_s *devp)
                                         ++sm_p->back_stable_counter;
                                         if(port == TVIN_PORT_CVBS0)
                                                 unstable_in_cnt = sm_p->atv_unstable_out_cnt;//UNSTABLE_ATV_MAX_CNT;
+                                        else if ((port >= TVIN_PORT_HDMI0) && (port <= TVIN_PORT_HDMI7 ))
+                                                unstable_in_cnt = sm_p->hdmi_unstable_out_cnt;
                                         else
                                                 unstable_in_cnt = other_unstable_out_cnt;
                                         if (sm_p->back_stable_counter >= unstable_in_cnt)
@@ -393,37 +693,11 @@ void tvin_smr(struct vdin_dev_s *devp)
                         {
                                 bool nosig = false, fmt_changed = false;//, pll_lock = false;
                                 unsigned int stable_out_cnt = 0;
-#ifdef TVAFE_SET_CVBS_MANUAL_FMT_POS
-                                enum tvin_cvbs_pos_ctl_e pos_ctl = TVIN_CVBS_POS_NULL;
-#endif
 
                                 devp->unstable_flag = true;
 
                                 if (devp->parm.flag & TVIN_PARM_FLAG_CAL)
                                         devp->parm.flag &= ~TVIN_PARM_FLAG_CAL;
-#ifdef TVAFE_SET_CVBS_MANUAL_FMT_POS
-                                /* cvbs manual fmt video size checking */
-                                if ((port >= TVIN_PORT_CVBS0) && (port <= TVIN_PORT_SVIDEO7) && (sm_ops->set_cvbs_fmt_pos))
-                                {
-                                        pos_ctl = sm_ops->set_cvbs_fmt_pos(devp->frontend);
-                                        if (devp->cvbs_pos_chg != pos_ctl)
-                                        {
-                                                if (pos_ctl != TVIN_CVBS_POS_NULL)
-                                                {
-                                                        /* avoid black screen for auto<-->fmt switch */
-                                                        if (devp->cvbs_pos_chg != TVIN_CVBS_POS_NULL)
-                                                        {
-                                                                fmt_changed = true;
-                                                                info->status = TVIN_SIG_STATUS_UNSTABLE;
-                                                                if (sm_debug_enable)
-                                                                        pr_info("[smr.%d] warning: cvbs manual fmt change:%d \n", 
-                                                                                        devp->index,devp->cvbs_pos_chg);
-                                                        }
-                                                }
-                                                devp->cvbs_pos_chg = pos_ctl;
-                                        }
-                                }
-#endif
                                 if (sm_ops->nosig(devp->frontend)) {
                                         nosig = true;
                                         if (sm_debug_enable && !sm_print_fmt_nosig)
@@ -487,7 +761,7 @@ void tvin_smr(struct vdin_dev_s *devp)
                         break;
         }
 }
-
+#endif
 /*
  * tvin state machine routine init
  *
@@ -500,6 +774,7 @@ void tvin_smr_init(int index)
         sm_dev[index].atv_unstable_in_cnt = atv_unstable_in_cnt;
         sm_dev[index].back_nosig_max_cnt =back_nosig_max_cnt;
         sm_dev[index].atv_unstable_out_cnt = atv_unstable_out_cnt;
+        sm_dev[index].hdmi_unstable_out_cnt = hdmi_unstable_out_cnt;
         tvin_smr_init_counter(index);
 }
 

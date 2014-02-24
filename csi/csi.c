@@ -205,7 +205,7 @@ static void amcsi_get_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_pr
         printk("TVIN_NV21=%d, TVIN_YUV422=%d, devp->para.cfmt=%d, devp->para.dfmt=%d\n",
                         TVIN_NV21, TVIN_YUV422, devp->para.cfmt, devp->para.dfmt);
         prop->dest_cfmt =TVIN_NV21;
-        prop->pixel_repeat = 0;
+        prop->decimation_ratio = 0;
 }
 
 /*as use the spin_lock,

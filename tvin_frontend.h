@@ -52,9 +52,6 @@ typedef struct tvin_state_machine_ops_s {
         bool (*adc_cal)(struct tvin_frontend_s *fe);
         bool (*pll_lock) (struct tvin_frontend_s *fe);
         void (*get_sig_propery)(struct tvin_frontend_s *fe, struct tvin_sig_property_s *prop);
-#ifdef TVAFE_SET_CVBS_MANUAL_FMT_POS
-        enum tvin_cvbs_pos_ctl_e (*set_cvbs_fmt_pos) (struct tvin_frontend_s *fe);
-#endif
         void (*vga_set_param)(struct tvafe_vga_parm_s *vga_parm, struct tvin_frontend_s *fe);
         void (*vga_get_param)(struct tvafe_vga_parm_s *vga_parm, struct tvin_frontend_s *fe);
         bool (*check_frame_skip)(struct tvin_frontend_s *fe);
@@ -80,7 +77,7 @@ int tvin_reg_frontend(struct tvin_frontend_s *fe);
 void tvin_unreg_frontend(struct tvin_frontend_s *fe);
 struct tvin_frontend_s * tvin_get_frontend(enum tvin_port_e port, int index);
 struct tvin_decoder_ops_s *tvin_get_fe_ops(enum tvin_port_e port, int index);
-struct tvin_decoder_ops_s *tvin_get_sm_ops(enum tvin_port_e port, int index);
+struct tvin_state_machine_ops_s *tvin_get_sm_ops(enum tvin_port_e port, int index);
 
 #endif
 

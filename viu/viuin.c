@@ -86,6 +86,10 @@ static unsigned int vsync_enter_line_threshold_overflow_count = 0;
 module_param(vsync_enter_line_threshold_overflow_count,uint,0664);
 MODULE_PARM_DESC(vsync_enter_line_threshold_overflow_count,"\n count of overflow encoder process line num over threshold drop the frame.\n");
 
+static unsigned short v_cut_offset = 0;
+module_param(v_cut_offset,ushort,0664);
+MODULE_PARM_DESC(v_cut_offset,"the cut window vertical offset for viuin");
+
 typedef struct viuin_s{
         unsigned int flag;
         struct vframe_prop_s *prop;
@@ -625,26 +629,45 @@ static struct tvin_decoder_ops_s viu_dec_ops ={
 
 static void viuin_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_property_s *prop)
 {
-    viuin_t *devp = container_of(fe,viuin_t,frontend);
+        viuin_t *devp = container_of(fe,viuin_t,frontend);
 
-#if ((MESON_CPU_TYPE == MESON_CPU_TYPE_MESON6) || (MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8))
-    prop->color_format = TVIN_YUV422;
-#else
-    prop->color_format = TVIN_RGB444;
-#endif
-    prop->dest_cfmt = devp->parm.dfmt;
-    prop->pixel_repeat = 0;
+        #if ((MESON_CPU_TYPE == MESON_CPU_TYPE_MESON6) || (MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8))
+        prop->color_format = TVIN_YUV422;
+        #else
+        prop->color_format = TVIN_RGB444;
+        #endif
+        prop->dest_cfmt = devp->parm.dfmt;
+
+        prop->scaling4w = devp->parm.dest_hactive;
+	prop->scaling4h = devp->parm.dest_vactive;
+	
+	prop->vs = v_cut_offset;
+	prop->ve = 0;
+	prop->hs = 0;
+	prop->he = 0;
+        prop->decimation_ratio = 0;
+}
+
+static bool viu_check_frame_skip(struct tvin_frontend_s *fe)
+{
+	viuin_t *devp = container_of(fe,viuin_t,frontend);
+	if(devp->parm.skip_count > 0){
+		devp->parm.skip_count--;
+		return true;
+	}
+	return false;
+		
 }
 
 static struct tvin_state_machine_ops_s viu_sm_ops ={
        .get_sig_propery = viuin_sig_propery,
+       .check_frame_skip = viu_check_frame_skip,
 };
 
 static struct class* gamma_proc_clsp;
-
 static int viuin_probe(struct platform_device *pdev)
 {
-	int ret = 0, i = 0;
+	int ret = 0;
 	struct viuin_s *viuin_devp;
         viuin_devp = kmalloc(sizeof(viuin_t),GFP_KERNEL);
         memset(viuin_devp,0,sizeof(viuin_t));
@@ -658,6 +681,7 @@ static int viuin_probe(struct platform_device *pdev)
 		return ret;
 	}
 #ifdef CONFIG_GAMMA_AUTO_TUNE
+	int i = 0;
 	for(i = 0; gamma_proc_class_attrs[i].attr.name; i++){
 		if(class_create_file(gamma_proc_clsp,&gamma_proc_class_attrs[i]) < 0)
 			goto err;
@@ -675,8 +699,8 @@ static int viuin_probe(struct platform_device *pdev)
         platform_set_drvdata(pdev,viuin_devp);
         printk("[viuin..]%s probe ok.\n",__func__);
 	return 0;
-err:
 #ifdef CONFIG_GAMMA_AUTO_TUNE
+err:
 	for(i=0; gamma_proc_class_attrs[i].attr.name; i++){
 		class_remove_file(gamma_proc_clsp,&gamma_proc_class_attrs[i]);
 	}
@@ -687,10 +711,10 @@ err:
 }
 
 static int viuin_remove(struct platform_device *pdev)
-{
-        int i=0;
+{        
         struct viuin_s *devp = platform_get_drvdata(pdev);
-  #ifdef CONFIG_GAMMA_AUTO_TUNE              
+  #ifdef CONFIG_GAMMA_AUTO_TUNE
+  		int i=0;
         for(i=0; gamma_proc_class_attrs[i].attr.name; i++) {
 		class_remove_file(gamma_proc_clsp,&gamma_proc_class_attrs[i]);
 	}

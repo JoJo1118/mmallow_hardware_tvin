@@ -19,7 +19,7 @@
 #include "../tvin_global.h"
 #include "../tvin_format_table.h"
 
-#define HDMIRX_VER "Ref.2013/11/26"
+#define HDMIRX_VER "Ref.2014/01/17"
 #define HDMI_STATE_CHECK_FREQ     (20*5)
 #define ABS(x) ((x)<0 ? -(x) : (x))
 #define CEC_FUNC_ENABLE		0
@@ -33,7 +33,7 @@ typedef enum hdmirx_src_type_e {
 
 /* add new value at the end,
  * do not insert new value in the middle
- * to avoid wrong VIC value !!! 
+ * to avoid wrong VIC value !!!
  */
 typedef enum HDMI_Video_Type_ {
 
@@ -83,9 +83,9 @@ typedef enum HDMI_Video_Type_ {
 	HDMI_2880x480p60_16x9,
 	HDMI_2880x576p50,
 	HDMI_2880x576p50_16x9,
-	HDMI_1080i50_1250,          /* 39 */     
+	HDMI_1080i50_1250,          /* 39 */
 
-   
+
 
 	HDMI_1080I120 = 46,
 	HDMI_720p120  = 47,
@@ -283,7 +283,7 @@ struct hdmi_rx_ctrl_hdcp {
 };
 
 #define CHANNEL_STATUS_SIZE   24
- 
+
 struct aud_info_s{
     /* info frame*/
     /*
@@ -320,7 +320,7 @@ struct vendor_specific_info_s{
     unsigned char _3d_structure;
     unsigned char _3d_ext_data;
 };
- 
+
 struct rx {
 	/** HDMI RX received signal changed */
 	uint change;
@@ -332,7 +332,7 @@ struct rx {
 	struct hdmi_rx_ctrl ctrl;
 	/** HDMI RX controller HDCP configuration */
 	struct hdmi_rx_ctrl_hdcp hdcp;
-	
+
 	/* wrapper */
 	unsigned int state;
 	unsigned char pow5v_state[10];
@@ -354,29 +354,6 @@ struct rx {
 
 };
 
-static unsigned first_bit_set(uint32_t data)
-{
-	unsigned n = 32;
-
-	if (data != 0) 
-	{
-		for (n = 0; (data & 1) == 0; n++) 
-		{
-			data >>= 1;
-		}
-	}
-	return n;
-}
-
-static uint32_t get(uint32_t data, uint32_t mask)
-{
-	return (data & mask) >> first_bit_set(mask);
-}
-
-static uint32_t set(uint32_t data, uint32_t mask, uint32_t value)
-{
-	return ((value << first_bit_set(mask)) & mask) | (data & ~mask);
-}
 
 extern struct rx rx;
 extern int hdmirx_log_flag;
@@ -392,6 +369,9 @@ int hdmirx_wr_phy(uint8_t reg_address, uint16_t data);
 uint16_t hdmirx_rd_phy(uint8_t reg_address);
 uint32_t hdmirx_rd_bits_dwc( uint16_t addr, uint32_t mask);
 void hdmirx_wr_bits_dwc( uint16_t addr, uint32_t mask, uint32_t value);
+
+uint32_t get(uint32_t data, uint32_t mask);
+uint32_t set(uint32_t data, uint32_t mask, uint32_t value);
 
 int hdmirx_control_clk_range(unsigned long min, unsigned long max);
 int hdmirx_packet_fifo_rst(void);

@@ -23,6 +23,7 @@
 #include <linux/mutex.h>
 #include <linux/interrupt.h>
 #include <linux/time.h>
+#include <linux/device.h>
 
 /* Amlogic Headers */
 #include <linux/amlogic/amports/vframe.h>
@@ -33,8 +34,9 @@
 #include "../tvin_global.h"
 #include "../tvin_frontend.h"
 #include "vdin_vf.h"
+#include "vdin_regs.h"
 
-#define VDIN_VER "Ref.2013/12/19a"
+#define VDIN_VER "Ref.2014/2/17a"
 
 /*the counter of vdin*/
 #define VDIN_MAX_DEVS			2
@@ -108,8 +110,13 @@ static inline const char *vdin_fmt_convert_str(enum vdin_format_convert_e fmt_cv
 	}
 }
 
-extern int vdin_reg_v4l2(vdin_v4l2_ops_t *ops);
-
+/*******for debug **********/
+typedef struct vdin_debug_s {
+	tvin_cutwin_t        		cutwin;
+        unsigned short                  scaler4h;//for vscaler
+        unsigned short                  scaler4w;//for hscaler
+        unsigned short                  dest_cfmt;//for color fmt convertion
+} vdin_debug_t;
 typedef struct vdin_dev_s {
 	unsigned int		        index;
 
@@ -143,7 +150,7 @@ typedef struct vdin_dev_s {
 	unsigned int			canvas_max_size;
 	unsigned int			canvas_max_num;
 	struct vf_entry			*curr_wr_vfe;
-	struct vf_entry         *last_wr_vfe;
+	struct vf_entry                 *last_wr_vfe;
 	unsigned int			curr_field_type;
 
 	unsigned int			irq;
@@ -152,11 +159,8 @@ typedef struct vdin_dev_s {
 	unsigned int			vga_clr_cnt;
 	unsigned int			vs_cnt_valid;
 	unsigned int			vs_cnt_ignore;
-#ifdef TVAFE_SET_CVBS_MANUAL_FMT_POS
-	enum tvin_cvbs_pos_ctl_e	cvbs_pos_chg;
-#endif
 	struct tvin_parm_s		parm;
-                struct tvin_format_s                 *fmt_info_p;
+        struct tvin_format_s            *fmt_info_p;
 	struct vf_pool			*vfp;
 
 	struct tvin_frontend_s		*frontend;
@@ -182,10 +186,20 @@ typedef struct vdin_dev_s {
 	unsigned int			hcnt64_tag;
 	unsigned int			cycle_tag;
         unsigned int                    start_time;//ms vdin start time    
-        unsigned short                  scaler4h;//for vscaler
-        unsigned short                  scaler4w;//for hscaler
-        unsigned short                  dest_cfmt;//for color fmt convertion
+        vdin_debug_t                    debug;
 } vdin_dev_t;
+
+extern int vdin_create_class_files(struct class *vdin_clsp);
+extern void vdin_remove_class_files(struct class *vdin_clsp);
+extern int vdin_create_device_files(struct device *dev);
+extern void vdin_remove_device_files(struct device *dev);
+extern int vdin_open_fe(enum tvin_port_e port, int index,  struct vdin_dev_s *devp);
+extern void vdin_close_fe(struct vdin_dev_s *devp);
+extern void vdin_start_dec(struct vdin_dev_s *devp);
+extern void vdin_stop_dec(struct vdin_dev_s *devp);
+extern irqreturn_t vdin_isr_simple(int irq, void *dev_id);
+extern irqreturn_t vdin_isr(int irq, void *dev_id);
+extern irqreturn_t vdin_v4l2_isr(int irq, void *dev_id);
 
 #endif /* __TVIN_VDIN_DRV_H */
 

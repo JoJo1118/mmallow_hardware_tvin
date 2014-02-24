@@ -15,6 +15,14 @@
 #ifndef __VDIN_REGS_H
 #define __VDIN_REGS_H
 
+#if ((MESON_CPU_TYPE == MESON_CPU_TYPE_MESON6TV)|| \
+     (MESON_CPU_TYPE == MESON_CPU_TYPE_MESON6TVD))
+    #define VDIN_V1  //for m6tv
+#elif (MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8)
+    #define VDIN_V1  //for m6tv
+    #define VDIN_V2  //for m8
+#else
+#endif
 //#define VDIN_SCALE_COEF_IDX                        0x1200
 //#define VDIN_SCALE_COEF                            0x1201
 
@@ -61,7 +69,7 @@
 /* 0: no data input 1: common data input */
 #define COMMON_DATA_IN_EN_BIT           4
 #define COMMON_DATA_IN_EN_WID           1
-/* 1: MPEG, 2: 656, 3: TVFE, 4: CVD2, 5: HDMI_Rx,6: DVIN otherwise: NULL 
+/* 1: MPEG, 2: 656, 3: TVFE, 4: CVD2, 5: HDMI_Rx,6: DVIN otherwise: NULL
 *7: loopback from VIU1, 8: MIPI csi2 in meson6
 */
 #define VDIN_SEL_BIT                    0
@@ -295,7 +303,7 @@
 #define VDIN_PROBE_POST_WID                 1
 #define VDIN_PROBE_SEL_BIT                  4//00: select matrix0, 01: select matrix1,otherwise select nothing
 #define VDIN_PROBE_SEL_WID                  2
-#define VDIN_MATRIX_COEF_INDEX_BIT          2//00: select mat0, 01: select mat1, otherwise slect nothing 
+#define VDIN_MATRIX_COEF_INDEX_BIT          2//00: select mat0, 01: select mat1, otherwise slect nothing
 #define VDIN_MATRIX_COEF_INDEX_WID          2
 #define VDIN_MATRIX1_EN_BIT                 1//Bit 1   mat1 conversion matrix enable
 #define VDIN_MATRIX1_EN_WID                 1
@@ -387,7 +395,7 @@
 
 //#define VDIN_WR_CTRL                            0x1220
 
-//Applicable only bit[13:12]=0 or 10. 
+//Applicable only bit[13:12]=0 or 10.
 //0: Output every even pixels' CbCr;
 //1: Output every odd pixels' CbCr;
 //10: Output an average value per even&odd pair of pixels;
@@ -454,7 +462,7 @@
 #define WR_VEND_BIT                     0
 #define WR_VEND_WID                     13  // directly send out
 
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON6TV
+#if defined(VDIN_V1)
 //#define VDIN_VSC_PHASE_STEP                       0x1223
 #define INTERGER_PORTION_BIT            20
 #define INTERGER_PORTION_WID           5
@@ -485,7 +493,7 @@
 #define DUMMY_COMPONENT2_WID               8
 
 //#define VDIN_MATRIX_PROBE_COLOR           0x1228
-//Read only 
+//Read only
 #define COMPONENT0_PROBE_COLOR_BIT                20
 #define COMPONENT0_PROBE_COLOR_WID                10
 #define COMPONENT1_PROBE_COLOR_BIT                10
@@ -493,7 +501,7 @@
 #define COMPONENT2_PROBE_COLOR_BIT                0
 #define COMPONENT2_PROBE_COLOR_WID                10
 
-//#define VDIN_MATRIX_HL_COLOR                0x1229 
+//#define VDIN_MATRIX_HL_COLOR                0x1229
 #define COMPONENT0_HL_COLOR_BIT                   16
 #define COMPONENT0_HL_COLOR_WID                   8
 #define COMPONENT1_HL_COLOR_BIT                   8
@@ -506,13 +514,25 @@
 #define PROBE_POS_X_WID                           13
 #define PROBE_POX_Y_BIT                           0
 #define PROBE_POX_Y_WID                           13
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
+//#define VDIN_HIST_CTRL                             0x1230
+//Bit 10:9  ldim_stts_din_sel, 00: from matrix0 dout,  01: from vsc_dout, 10: from matrix1 dout, 11: form matrix1 din
+#define LDIM_STTS_DIN_SEL_BIT                     9
+#define LDIM_STTS_DIN_SEL_WID                     2
+#define LDIM_STTS_EN_BIT                          8
+#define LDIM_STTS_EN_WID                          1
+//00: from matrix0 dout,  01: from vsc_dout, 10: from matrix1 dout, 11: form matrix1 din
+#define HIST_DIN_SEL_BIT                          2
+#define HIST_DIN_SEL_WID                          2
+
+#endif
+
+#if defined(VDIN_V2)
 
 //#define VDIN_CHROMA_ADDR_PORT 	      0x122b
 
-//#define VDIN_CHROMA_DATA_PORT 	      0x122c 	
+//#define VDIN_CHROMA_DATA_PORT 	      0x122c
 
-//#define VDIN_CM_BRI_CON_CTRL 		      0x122d 	
+//#define VDIN_CM_BRI_CON_CTRL 		      0x122d
 #define CM_TOP_EN_BIT				  28
 #define CM_TOP_EN_WID				  1
 #define BRI_CON_EN_BIT				  27
@@ -524,26 +544,17 @@
 #define REG_ADJ_CON_BIT				  0
 #define REG_ADJ_CON_WID				  12
 
-//#define VDIN_GO_LINE_CTRL 		     0x122f 
+//#define VDIN_GO_LINE_CTRL 		     0x122f
 #define CLK_CYC_CNT_CLR_BIT                       17
 #define CLK_CYC_CNT_CLR_WID                       1
 //Bit 17  clk_cyc_cnt_clr, if true, clear this register
 #define LINE_CNT_SRC_SEL_BIT                      16
 #define LINE_CNT_SRC_SEL_WID                      1
-//Bit 16 if true, use vpu clock to count one line, otherwise use actually hsync to count line_cnt 
+//Bit 16 if true, use vpu clock to count one line, otherwise use actually hsync to count line_cnt
 //Bit 15:0   line width using vpu clk
 #define LINE_WID_USING_VPU_CLK_BIT                0
 #define LINE_WID_USING_VPU_CLK_WID                16
-#endif
-//#define VDIN_HIST_CTRL                             0x1230
-//Bit 10:9  ldim_stts_din_sel, 00: from matrix0 dout,  01: from vsc_dout, 10: from matrix1 dout, 11: form matrix1 din 
-#define LDIM_STTS_DIN_SEL_BIT                     9
-#define LDIM_STTS_DIN_SEL_WID                     2
-#define LDIM_STTS_EN_BIT                          8
-#define LDIM_STTS_EN_WID                          1
-//00: from matrix0 dout,  01: from vsc_dout, 10: from matrix1 dout, 11: form matrix1 din
-#define HIST_DIN_SEL_BIT                          2
-#define HIST_DIN_SEL_WID                          2
+
 #endif
 
 //#define VDIN_HIST_CTRL                             0x1230
@@ -778,7 +789,8 @@
 #define HIST_ON_BIN_63_WID              16
 #define HIST_ON_BIN_62_BIT              0
 #define HIST_ON_BIN_62_WID              16
-#ifdef CONFIG_ARCH_MESON6TV
+
+#if defined(VDIN_V1)
 //#define VDIN_LDIM_STTS_HIST_REGION_IDX       0x1257
 #define LOCAL_DIM_STATISTIC_EN_BIT          31
 #define LOCAL_DIM_STATISTIC_EN_WID         1
@@ -828,13 +840,14 @@
 #define LOW_0_12_WID                    13
 
 //#define VDIN_LDIM_STTS_HIST_READ_REGION           0x1259
-//REGION STATISTIC DATA READ OUT PORT, 
+//REGION STATISTIC DATA READ OUT PORT,
 #define MAX_COMP2_BIT                   20
 #define MAX_COMP2_WID                  10
 #define MAX_COMP1_BIT                   10
 #define MAX_COMP1_WID                  10
 #define MAX_COMP0_BIT                   0
 #define MAX_COMP0_WID                  10
+
 #endif
 
 
@@ -1003,8 +1016,8 @@
 #define INPUT_WIN_V_END_WID              13
 
 
-//Bit 15:8 vdi7 asfifo_ctrl 
-//Bit 7:0 vdi6 asfifo_ctrl 
+//Bit 15:8 vdi7 asfifo_ctrl
+//Bit 7:0 vdi6 asfifo_ctrl
 //#define VDIN_ASFIFO_CTRL3                                 0x126f
 #define VDI8_ASFIFO_CTRL_BIT		16
 #define VDI8_ASFIFO_CTRL_WID            8
@@ -1013,291 +1026,4 @@
 #define VDI6_ASFIFO_CTRL_BIT            0
 #define VDI6_ASFIFO_CTRL_WID            8
 
-
-////===========================================////
-//// CM2 ADDR
-////===========================================////
-
-#define SAT_BYYB_NODE_REG0          0x200   // default 32'h0 
-#define SAT_BYYB_NODE_REG1          0x201   // default 32'h0
-#define SAT_BYYB_NODE_REG2          0x202   // default 32'h0
-#define SAT_SRC_NODE_REG            0x203   // default 32'h0
-#define CM_ENH_SFT_MODE_REG         0x204   // default 32'h0
-#define FRM_SIZE_REG                0x205   // default 32'h0
-#define FITLER_CFG_REG              0x206   // default 32'h0
-#define CM_GLOBAL_GAIN_REG          0x207   // default 32'h0
-#define CM_ENH_CTL_REG              0x208   // default 32'h0
-
-#define ROI_X_SCOPE_REG             0x209   // default 32'h0
-#define ROI_Y_SCOPE_REG             0x20a   // default 32'h0
-#define POI_XY_DIR_REG              0x20b   // default 32'h0
-#define COI_Y_SCOPE_REG             0x20c   // default 32'h0
-#define COI_H_SCOPE_REG             0x20d   // default 32'h0
-#define COI_S_SCOPE_REG             0x20e   // default 32'h0
-#define IFO_MODE_REG                0x20f   // default 32'h0
-#define POI_RPL_MODE_REG            0x210   // default 32'h0
-#define DEMO_OWR_YHS_REG            0x211   // default 32'h0
-#define DEMO_POI_Y_REG              0x212   // default 32'h0
-#define DEMO_POI_H_REG              0x213   // default 32'h0
-#define DEMO_POI_S_REG              0x214   // default 32'h0
-//#define LUMA_BYH_LIMT_REG           0x215   // default 32'h0
-#define LUMA_ADJ_LIMT_REG           0x215   // default 32'h0
-#define SAT_ADJ_LIMT_REG            0x216   // default 32'h0
-#define HUE_ADJ_LIMT_REG            0x217   // default 32'h0
-#define UVHS_OFST_REG               0x218   // default 32'h0
-#define HUE_CFG_PARA_REG            0x219   // default 32'h0
-#define DEMO_SPLT_CFG_REG           0x21a   // default 32'h0
-#define DEMO_SPLT_YHS_REG           0x21b   // default 32'h0    
-
-////========= NODE 0 COEFFICIENT ==============////
-
-#define REG_CM2_ENH_COEFF0_H00      0x100   // default 32'H0
-                                                  // [ 7: 0] : luma_byh_hx   / [15: 8] : sat_byhs_s0hx 
-                                                  // [23:16] : sat_byhs_s0hx / [31:24] : sat_byhs_s2hx
-#define REG_CM2_ENH_COEFF1_H00      0x101   // default 32'H0
-                                                  // [ 7: 0] : hue_byh_hx   / [15: 8] : hue_byy_y0hx 
-                                                  // [23:16] : hue_byy_y1hx / [31:24] : hue_byy_y2hx
-#define REG_CM2_ENH_COEFF2_H00      0x102   // default 32'H0
-                                                  // [ 7: 0] : hue_byy_y3hx / [15: 8] : hue_byy_y4hx 
-                                                  // [23:16] : hue_bys_s0hx / [31:24] : hue_bys_s1hx
-#define REG_CM2_ENH_COEFF3_H00      0x103   // default 32'H0
-                                                  // [ 7: 0] : hue_bys_s2hx / [15: 8] : hue_bys_s3hx 
-                                                  // [23:16] : hue_bys_s4hx / [31:24] : hue_byya_y0hx
-#define REG_CM2_ENH_COEFF4_H00      0x104   // default 32'H0
-                                                  // [ 7: 0] : hue_byya_y1hx / [15: 8] : hue_byya_y2hx 
-                                                  // [23:16] : hue_byya_y3hx / [31:24] : hue_byya_y4hx
-
-////========= NODE 1 COEFFICIENT ==============////
-
-#define REG_CM2_ENH_COEFF0_H01      0x108   // default 32'H0
-                                                  // [ 7: 0] : luma_byh_hx   / [15: 8] : sat_byhs_s0hx 
-                                                  // [23:16] : sat_byhs_s0hx / [31:24] : sat_byhs_s2hx
-#define REG_CM2_ENH_COEFF1_H01      0x109   // default 32'H0
-                                                  // [ 7: 0] : hue_byh_hx   / [15: 8] : hue_byy_y0hx 
-                                                  // [23:16] : hue_byy_y1hx / [31:24] : hue_byy_y2hx
-#define REG_CM2_ENH_COEFF2_H01      0x10a   // default 32'H0
-                                                  // [ 7: 0] : hue_byy_y3hx / [15: 8] : hue_byy_y4hx 
-                                                  // [23:16] : hue_bys_s0hx / [31:24] : hue_bys_s1hx
-#define REG_CM2_ENH_COEFF3_H01      0x10b   // default 32'H0
-                                                  // [ 7: 0] : hue_bys_s2hx / [15: 8] : hue_bys_s3hx 
-                                                  // [23:16] : hue_bys_s4hx / [31:24] : hue_byya_y0hx
-#define REG_CM2_ENH_COEFF4_H01      0x10c   // default 32'H0
-                                                  // [ 7: 0] : hue_byya_y1hx / [15: 8] : hue_byya_y2hx 
-                                                  // [23:16] : hue_byya_y3hx / [31:24] : hue_byya_y4hx
-
-////========= NODE 2 COEFFICIENT ==============////
-
-#define REG_CM2_ENH_COEFF0_H02      0x110   // default 32'H0
-                                                  // [ 7: 0] : luma_byh_hx   / [15: 8] : sat_byhs_s0hx 
-                                                  // [23:16] : sat_byhs_s0hx / [31:24] : sat_byhs_s2hx
-#define REG_CM2_ENH_COEFF1_H02      0x111   // default 32'H0
-                                                  // [ 7: 0] : hue_byh_hx   / [15: 8] : hue_byy_y0hx 
-                                                  // [23:16] : hue_byy_y1hx / [31:24] : hue_byy_y2hx
-#define REG_CM2_ENH_COEFF2_H02      0x112   // default 32'H0
-                                                  // [ 7: 0] : hue_byy_y3hx / [15: 8] : hue_byy_y4hx 
-                                                  // [23:16] : hue_bys_s0hx / [31:24] : hue_bys_s1hx
-#define REG_CM2_ENH_COEFF3_H02      0x113   // default 32'H0
-                                                  // [ 7: 0] : hue_bys_s2hx / [15: 8] : hue_bys_s3hx 
-                                                  // [23:16] : hue_bys_s4hx / [31:24] : hue_byya_y0hx
-#define REG_CM2_ENH_COEFF4_H02      0x114   // default 32'H0
-                                                  // [ 7: 0] : hue_byya_y1hx / [15: 8] : hue_byya_y2hx 
-                                                  // [23:16] : hue_byya_y3hx / [31:24] : hue_byya_y4hx
-
-////========= NODE 3 COEFFICIENT ==============////
-
-#define REG_CM2_ENH_COEFF0_H03      0x118   // default 32'H0
-                                                  // [ 7: 0] : luma_byh_hx   / [15: 8] : sat_byhs_s0hx 
-                                                  // [23:16] : sat_byhs_s0hx / [31:24] : sat_byhs_s2hx
-#define REG_CM2_ENH_COEFF1_H03      0x119   // default 32'H0
-                                                  // [ 7: 0] : hue_byh_hx   / [15: 8] : hue_byy_y0hx 
-                                                  // [23:16] : hue_byy_y1hx / [31:24] : hue_byy_y2hx
-#define REG_CM2_ENH_COEFF2_H03      0x11a   // default 32'H0
-                                                  // [ 7: 0] : hue_byy_y3hx / [15: 8] : hue_byy_y4hx 
-                                                  // [23:16] : hue_bys_s0hx / [31:24] : hue_bys_s1hx
-#define REG_CM2_ENH_COEFF3_H03      0x11b   // default 32'H0
-                                                  // [ 7: 0] : hue_bys_s2hx / [15: 8] : hue_bys_s3hx 
-                                                  // [23:16] : hue_bys_s4hx / [31:24] : hue_byya_y0hx
-#define REG_CM2_ENH_COEFF4_H03      0x11c   // default 32'H0
-                                                  // [ 7: 0] : hue_byya_y1hx / [15: 8] : hue_byya_y2hx 
-                                                  // [23:16] : hue_byya_y3hx / [31:24] : hue_byya_y4hx
-
-////========= NODE 4 COEFFICIENT ==============////
-
-#define REG_CM2_ENH_COEFF0_H04      0x120   // default 32'H0
-                                                  // [ 7: 0] : luma_byh_hx   / [15: 8] : sat_byhs_s0hx 
-                                                  // [23:16] : sat_byhs_s0hx / [31:24] : sat_byhs_s2hx
-#define REG_CM2_ENH_COEFF1_H04      0x121   // default 32'H0
-                                                  // [ 7: 0] : hue_byh_hx   / [15: 8] : hue_byy_y0hx 
-                                                  // [23:16] : hue_byy_y1hx / [31:24] : hue_byy_y2hx
-#define REG_CM2_ENH_COEFF2_H04      0x122   // default 32'H0
-                                                  // [ 7: 0] : hue_byy_y3hx / [15: 8] : hue_byy_y4hx 
-                                                  // [23:16] : hue_bys_s0hx / [31:24] : hue_bys_s1hx
-#define REG_CM2_ENH_COEFF3_H04      0x123   // default 32'H0
-                                                  // [ 7: 0] : hue_bys_s2hx / [15: 8] : hue_bys_s3hx 
-                                                  // [23:16] : hue_bys_s4hx / [31:24] : hue_byya_y0hx
-#define REG_CM2_ENH_COEFF4_H04      0x124   // default 32'H0
-                                                  // [ 7: 0] : hue_byya_y1hx / [15: 8] : hue_byya_y2hx 
-                                                  // [23:16] : hue_byya_y3hx / [31:24] : hue_byya_y4hx
-
-////========= NODE 5 COEFFICIENT ==============////
-
-#define REG_CM2_ENH_COEFF0_H05      0x128   // default 32'H0
-                                                  // [ 7: 0] : luma_byh_hx   / [15: 8] : sat_byhs_s0hx 
-                                                  // [23:16] : sat_byhs_s0hx / [31:24] : sat_byhs_s2hx
-#define REG_CM2_ENH_COEFF1_H05      0x129   // default 32'H0
-                                                  // [ 7: 0] : hue_byh_hx   / [15: 8] : hue_byy_y0hx 
-                                                  // [23:16] : hue_byy_y1hx / [31:24] : hue_byy_y2hx
-#define REG_CM2_ENH_COEFF2_H05      0x12a   // default 32'H0
-                                                  // [ 7: 0] : hue_byy_y3hx / [15: 8] : hue_byy_y4hx 
-                                                // [23:16] : hue_bys_s0hx / [31:24] : hue_bys_s1hx
-#define REG_CM2_ENH_COEFF3_H05      0x12b   // default 32'H0
-                                                  // [ 7: 0] : hue_bys_s2hx / [15: 8] : hue_bys_s3hx 
-                                                  // [23:16] : hue_bys_s4hx / [31:24] : hue_byya_y0hx
-#define REG_CM2_ENH_COEFF4_H05      0x12c   // default 32'H0
-                                                  // [ 7: 0] : hue_byya_y1hx / [15: 8] : hue_byya_y2hx 
-                                                  // [23:16] : hue_byya_y3hx / [31:24] : hue_byya_y4hx
-
-////========= NODE 6 COEFFICIENT ==============////
-
-#define REG_CM2_ENH_COEFF0_H06      0x130   // default 32'H0
-                                                  // [ 7: 0] : luma_byh_hx   / [15: 8] : sat_byhs_s0hx 
-                                                  // [23:16] : sat_byhs_s0hx / [31:24] : sat_byhs_s2hx
-#define REG_CM2_ENH_COEFF1_H06      0x131   // default 32'H0
-                                                  // [ 7: 0] : hue_byh_hx   / [15: 8] : hue_byy_y0hx 
-                                                  // [23:16] : hue_byy_y1hx / [31:24] : hue_byy_y2hx
-#define REG_CM2_ENH_COEFF2_H06      0x132   // default 32'H0
-                                                  // [ 7: 0] : hue_byy_y3hx / [15: 8] : hue_byy_y4hx 
-                                                  // [23:16] : hue_bys_s0hx / [31:24] : hue_bys_s1hx
-#define REG_CM2_ENH_COEFF3_H06      0x133   // default 32'H0
-                                                  // [ 7: 0] : hue_bys_s2hx / [15: 8] : hue_bys_s3hx 
-                                                  // [23:16] : hue_bys_s4hx / [31:24] : hue_byya_y0hx
-#define REG_CM2_ENH_COEFF4_H06      0x134   // default 32'H0
-                                                  // [ 7: 0] : hue_byya_y1hx / [15: 8] : hue_byya_y2hx 
-                                                  // [23:16] : hue_byya_y3hx / [31:24] : hue_byya_y4hx
-
-////========= NODE 7 COEFFICIENT ==============////
-
-#define REG_CM2_ENH_COEFF0_H07      0x138   // default 32'H0
-                                                  // [ 7: 0] : luma_byh_hx   / [15: 8] : sat_byhs_s0hx 
-                                                  // [23:16] : sat_byhs_s0hx / [31:24] : sat_byhs_s2hx
-#define REG_CM2_ENH_COEFF1_H07      0x139   // default 32'H0
-                                                  // [ 7: 0] : hue_byh_hx   / [15: 8] : hue_byy_y0hx 
-                                                  // [23:16] : hue_byy_y1hx / [31:24] : hue_byy_y2hx
-#define REG_CM2_ENH_COEFF2_H07      0x13a   // default 32'H0
-                                                  // [ 7: 0] : hue_byy_y3hx / [15: 8] : hue_byy_y4hx 
-                                                  // [23:16] : hue_bys_s0hx / [31:24] : hue_bys_s1hx
-#define REG_CM2_ENH_COEFF3_H07      0x13b   // default 32'H0
-                                                  // [ 7: 0] : hue_bys_s2hx / [15: 8] : hue_bys_s3hx 
-                                                  // [23:16] : hue_bys_s4hx / [31:24] : hue_byya_y0hx
-#define REG_CM2_ENH_COEFF4_H07      0x13c   // default 32'H0
-                                                  // [ 7: 0] : hue_byya_y1hx / [15: 8] : hue_byya_y2hx 
-                                                  // [23:16] : hue_byya_y3hx / [31:24] : hue_byya_y4hx
-
-////========= NODE 8 COEFFICIENT ==============////
-
-#define REG_CM2_ENH_COEFF0_H08      0x140   // default 32'H0
-                                                  // [ 7: 0] : luma_byh_hx   / [15: 8] : sat_byhs_s0hx 
-                                                  // [23:16] : sat_byhs_s0hx / [31:24] : sat_byhs_s2hx
-#define REG_CM2_ENH_COEFF1_H08      0x141   // default 32'H0
-                                                  // [ 7: 0] : hue_byh_hx   / [15: 8] : hue_byy_y0hx 
-                                                  // [23:16] : hue_byy_y1hx / [31:24] : hue_byy_y2hx
-#define REG_CM2_ENH_COEFF2_H08      0x142   // default 32'H0
-                                                  // [ 7: 0] : hue_byy_y3hx / [15: 8] : hue_byy_y4hx 
-                                                  // [23:16] : hue_bys_s0hx / [31:24] : hue_bys_s1hx
-#define REG_CM2_ENH_COEFF3_H08      0x143   // default 32'H0
-                                                  // [ 7: 0] : hue_bys_s2hx / [15: 8] : hue_bys_s3hx 
-                                                  // [23:16] : hue_bys_s4hx / [31:24] : hue_byya_y0hx
-#define REG_CM2_ENH_COEFF4_H08      0x144   // default 32'H0
-                                                  // [ 7: 0] : hue_byya_y1hx / [15: 8] : hue_byya_y2hx 
-                                                  // [23:16] : hue_byya_y3hx / [31:24] : hue_byya_y4hx
-
-////========= NODE 9 COEFFICIENT ==============////
-
-#define REG_CM2_ENH_COEFF0_H09      0x148   // default 32'H0
-                                                  // [ 7: 0] : luma_byh_hx   / [15: 8] : sat_byhs_s0hx 
-                                                  // [23:16] : sat_byhs_s0hx / [31:24] : sat_byhs_s2hx
-#define REG_CM2_ENH_COEFF1_H09      0x149   // default 32'H0
-                                                  // [ 7: 0] : hue_byh_hx   / [15: 8] : hue_byy_y0hx 
-                                                  // [23:16] : hue_byy_y1hx / [31:24] : hue_byy_y2hx
-#define REG_CM2_ENH_COEFF2_H09      0x14a   // default 32'H0
-                                                  // [ 7: 0] : hue_byy_y3hx / [15: 8] : hue_byy_y4hx 
-                                                  // [23:16] : hue_bys_s0hx / [31:24] : hue_bys_s1hx
-#define REG_CM2_ENH_COEFF3_H09      0x14b   // default 32'H0
-                                                  // [ 7: 0] : hue_bys_s2hx / [15: 8] : hue_bys_s3hx 
-                                                  // [23:16] : hue_bys_s4hx / [31:24] : hue_byya_y0hx
-#define REG_CM2_ENH_COEFF4_H09      0x14c   // default 32'H0
-                                                  // [ 7: 0] : hue_byya_y1hx / [15: 8] : hue_byya_y2hx 
-                                                  // [23:16] : hue_byya_y3hx / [31:24] : hue_byya_y4hx
-
-////========= NODE 10 COEFFICIENT ==============////
-
-#define REG_CM2_ENH_COEFF0_H10      0x150   // default 32'H0
-                                                  // [ 7: 0] : luma_byh_hx   / [15: 8] : sat_byhs_s0hx 
-                                                  // [23:16] : sat_byhs_s0hx / [31:24] : sat_byhs_s2hx
-#define REG_CM2_ENH_COEFF1_H10      0x151   // default 32'H0
-                                                  // [ 7: 0] : hue_byh_hx   / [15: 8] : hue_byy_y0hx 
-                                                  // [23:16] : hue_byy_y1hx / [31:24] : hue_byy_y2hx
-#define REG_CM2_ENH_COEFF2_H10      0x152   // default 32'H0
-                                                  // [ 7: 0] : hue_byy_y3hx / [15: 8] : hue_byy_y4hx 
-                                                  // [23:16] : hue_bys_s0hx / [31:24] : hue_bys_s1hx
-#define REG_CM2_ENH_COEFF3_H10      0x153   // default 32'H0
-                                                  // [ 7: 0] : hue_bys_s2hx / [15: 8] : hue_bys_s3hx 
-                                                  // [23:16] : hue_bys_s4hx / [31:24] : hue_byya_y0hx
-#define REG_CM2_ENH_COEFF4_H10      0x154   // default 32'H0
-                                                  // [ 7: 0] : hue_byya_y1hx / [15: 8] : hue_byya_y2hx 
-                                                  // [23:16] : hue_byya_y3hx / [31:24] : hue_byya_y4hx
-
-////========= NODE 11 COEFFICIENT ==============////
-
-#define REG_CM2_ENH_COEFF0_H11      0x158   // default 32'H0
-                                                  // [ 7: 0] : luma_byh_hx   / [15: 8] : sat_byhs_s0hx 
-                                                  // [23:16] : sat_byhs_s0hx / [31:24] : sat_byhs_s2hx
-#define REG_CM2_ENH_COEFF1_H11      0x159   // default 32'H0
-                                                  // [ 7: 0] : hue_byh_hx   / [15: 8] : hue_byy_y0hx 
-                                                  // [23:16] : hue_byy_y1hx / [31:24] : hue_byy_y2hx
-#define REG_CM2_ENH_COEFF2_H11      0x15a   // default 32'H0
-                                                  // [ 7: 0] : hue_byy_y3hx / [15: 8] : hue_byy_y4hx 
-                                                  // [23:16] : hue_bys_s0hx / [31:24] : hue_bys_s1hx
-#define REG_CM2_ENH_COEFF3_H11      0x15b   // default 32'H0
-                                                  // [ 7: 0] : hue_bys_s2hx / [15: 8] : hue_bys_s3hx 
-                                                  // [23:16] : hue_bys_s4hx / [31:24] : hue_byya_y0hx
-#define REG_CM2_ENH_COEFF4_H11      0x15c   // default 32'H0
-                                                  // [ 7: 0] : hue_byya_y1hx / [15: 8] : hue_byya_y2hx 
-                                                  // [23:16] : hue_byya_y3hx / [31:24] : hue_byya_y4hx
-
-//========= NODE 12 COEFFICIENT ==============////
-
-#define REG_CM2_ENH_COEFF0_H12      0x160   // default 32'H0
-                                                  // [ 7: 0] : luma_byh_hx   / [15: 8] : sat_byhs_s0hx 
-                                                  // [23:16] : sat_byhs_s0hx / [31:24] : sat_byhs_s2hx
-#define REG_CM2_ENH_COEFF1_H12      0x161   // default 32'H0
-                                                  // [ 7: 0] : hue_byh_hx   / [15: 8] : hue_byy_y0hx 
-                                                  // [23:16] : hue_byy_y1hx / [31:24] : hue_byy_y2hx
-#define REG_CM2_ENH_COEFF2_H12      0x162   // default 32'H0
-                                                  // [ 7: 0] : hue_byy_y3hx / [15: 8] : hue_byy_y4hx 
-                                                  // [23:16] : hue_bys_s0hx / [31:24] : hue_bys_s1hx
-#define REG_CM2_ENH_COEFF3_H12      0x163   // default 32'H0
-                                                  // [ 7: 0] : hue_bys_s2hx / [15: 8] : hue_bys_s3hx 
-                                                  // [23:16] : hue_bys_s4hx / [31:24] : hue_byya_y0hx
-#define REG_CM2_ENH_COEFF4_H12      0x164   // default 32'H0
-                                                  // [ 7: 0] : hue_byya_y1hx / [15: 8] : hue_byya_y2hx 
-                                                  // [23:16] : hue_byya_y3hx / [31:24] : hue_byya_y4hx
-
-////========= NODE 13 COEFFICIENT ==============////
-
-#define REG_CM2_ENH_COEFF0_H13      0x168   // default 32'H0
-                                                  // [ 7: 0] : luma_byh_hx   / [15: 8] : sat_byhs_s0hx 
-                                                  // [23:16] : sat_byhs_s0hx / [31:24] : sat_byhs_s2hx
-#define REG_CM2_ENH_COEFF1_H13      0x169   // default 32'H0
-                                                  // [ 7: 0] : hue_byh_hx   / [15: 8] : hue_byy_y0hx 
-                                                  // [23:16] : hue_byy_y1hx / [31:24] : hue_byy_y2hx
-#define REG_CM2_ENH_COEFF2_H13      0x16a   // default 32'H0
-                                                  // [ 7: 0] : hue_byy_y3hx / [15: 8] : hue_byy_y4hx 
-                                                  // [23:16] : hue_bys_s0hx / [31:24] : hue_bys_s1hx
-#define REG_CM2_ENH_COEFF3_H13      0x16b   // default 32'H0
-                                                  // [ 7: 0] : hue_bys_s2hx / [15: 8] : hue_bys_s3hx 
-                                                  // [23:16] : hue_bys_s4hx / [31:24] : hue_byya_y0hx
-#define REG_CM2_ENH_COEFF4_H13      0x16c   // default 32'H0
-                                                  // [ 7: 0] : hue_byya_y1hx / [15: 8] : hue_byya_y2hx 
-                                                  // [23:16] : hue_byya_y3hx / [31:24] : hue_byya_y4hx
 #endif // __VDIN_REGS_H

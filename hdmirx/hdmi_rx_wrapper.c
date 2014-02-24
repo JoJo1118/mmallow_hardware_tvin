@@ -34,7 +34,6 @@
 //#include <linux/amports/canvas.h>
 #include <asm/uaccess.h>
 #include <asm/delay.h>
-#include <mach/regs.h>
 #include <mach/clock.h>
 #include <mach/register.h>
 #include <mach/power_gate.h>
@@ -78,7 +77,7 @@ static int sig_lost_lock_cnt = 0;		//signal ready PLL lock --> unlock
 static unsigned sig_lost_lock_max = 10;
 
 static int sig_stable_cnt = 0;			//signal stable
-static unsigned sig_stable_max = 25;
+static unsigned sig_stable_max = 100;//25;
 
 static int cfg_wait_cnt = 0;			//hw_cfg_mode = 1
 static int cfg_wait_max = 50;
@@ -1469,6 +1468,7 @@ static bool doublecheck_repetition(int size)
     }
     return false;
 }
+extern int cur_colorspace;
 void hdmirx_hw_monitor(void)
 {
     int pre_sample_rate;
@@ -1497,6 +1497,7 @@ void hdmirx_hw_monitor(void)
 	        hdmirx_hw_config();
 	        hdmi_rx_ctrl_edid_update();
 	    }
+		cur_colorspace = 0xff;
 		rx.state = HDMIRX_HWSTATE_5V_LOW;
 		hdmirx_print("\n[HDMIRX State] init->5v low\n");
 		hdmirx_print("\nHdmirx driver version: %s\n", HDMIRX_VER);
@@ -1615,6 +1616,7 @@ void hdmirx_hw_monitor(void)
 		            sig_unlock_cnt = sig_unlock_max;
 					sig_lock_cnt = 0;
 		            rx.no_signal = true;
+					cur_colorspace = 0xff;
 					sw_5v_sts = false;
 		        }
 		    }
@@ -2408,7 +2410,7 @@ void dump_hdcp_data(void)
 	printk("\n hdcp-ksv = %x---%x",rx.hdcp.bksv[0],rx.hdcp.bksv[1]);
 	printk("\n hdcp-key:");
 	for(i=0; i<HDCP_KEYS_SIZE; i+=4){
-		printk("\n%x    %x    %x    %x",rx.hdcp.bksv[i],rx.hdcp.bksv[i+1],rx.hdcp.bksv[i+2],rx.hdcp.bksv[i+3]);
+		printk("\n%x    %x    %x    %x",rx.hdcp.keys[i],rx.hdcp.keys[i+1],rx.hdcp.keys[i+2],rx.hdcp.keys[i+3]);
 	}
 }
 void dump_edid_reg(void)

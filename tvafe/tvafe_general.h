@@ -33,6 +33,12 @@ typedef struct tvafe_cal_operand_s {
 	unsigned int bpg_v;
 	unsigned int clk_ctl;
 	unsigned int vafe_ctl;
+#ifdef CONFIG_ADC_CAL_SIGNALED	
+	unsigned int pin_a_mux:2;
+	unsigned int pin_b_mux:3;
+	unsigned int pin_c_mux:3;
+	unsigned int sog_mux  :3;
+#endif
 	unsigned int sync_mux :1;
 	unsigned int clk_ext  :1;
 	unsigned int bpg_m    :2;

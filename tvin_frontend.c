@@ -104,7 +104,7 @@ EXPORT_SYMBOL(tvin_get_frontend);
 struct tvin_decoder_ops_s *tvin_get_fe_ops(enum tvin_port_e port, int index)
 {
 	struct tvin_frontend_s *f = NULL;
-	if(f=tvin_get_frontend(port,index)&&f->dec_ops) {
+	if((f=tvin_get_frontend(port,index))&&(f->dec_ops)) {
 		return f->dec_ops;
 	}
 	return NULL;
@@ -112,10 +112,10 @@ struct tvin_decoder_ops_s *tvin_get_fe_ops(enum tvin_port_e port, int index)
 
 EXPORT_SYMBOL(tvin_get_fe_ops);
 
-struct tvin_decoder_ops_s *tvin_get_sm_ops(enum tvin_port_e port, int index)
+struct tvin_state_machine_ops_s *tvin_get_sm_ops(enum tvin_port_e port, int index)
 {
 	struct tvin_frontend_s *f = NULL;
-	if(f=tvin_get_frontend(port,index)&&f->dec_ops) {
+	if((f=tvin_get_frontend(port,index))&&(f->sm_ops)) {
 		return f->sm_ops;
 	}
 	return NULL;

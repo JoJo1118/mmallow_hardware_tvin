@@ -146,11 +146,11 @@ static int cdto_adj_step = TVAFE_CVD2_CDTO_ADJ_STEP;
 module_param(cdto_adj_step, int, 0664);
 MODULE_PARM_DESC(cdto_adj_step, "cvd2_adj_step");
 
-static int cvd_dbg_en = 0;
+static bool cvd_dbg_en = 0;
 module_param(cvd_dbg_en, bool, 0664);
 MODULE_PARM_DESC(cvd_dbg_en, "cvd2 debug enable");
 
-static int cvd_nonstd_dbg_en = 0;
+static bool cvd_nonstd_dbg_en = 0;
 module_param(cvd_nonstd_dbg_en, bool, 0664);
 MODULE_PARM_DESC(cvd_nonstd_dbg_en, "cvd2 nonstd debug enable");
 
@@ -581,7 +581,7 @@ inline void tvafe_cvd2_reset_pga(void)
 /*
  * tvafe cvd2 read cdto setting from Reg
  */
-static unsigned int tvafe_cvd2_get_cdto()
+static unsigned int tvafe_cvd2_get_cdto(void)
 {
 	unsigned int cdto = 0;
 
@@ -952,6 +952,7 @@ EXPORT_SYMBOL(tvafe_cvd2_get_hv_lock);
 /*
  * tvafe cvd2 check current cordic match status
  */
+/*
 static bool tvafe_cvd2_cordic_match(struct tvafe_cvd2_s *cvd2)
 {
 	int in_min = 0;
@@ -986,7 +987,7 @@ static bool tvafe_cvd2_cordic_match(struct tvafe_cvd2_s *cvd2)
 	}
 
 }
-
+*/
 /*
  * tvafe cvd2 non-standard signal detection
  */
@@ -1096,7 +1097,6 @@ static bool tvafe_cvd2_sig_unstable(struct tvafe_cvd2_s *cvd2)
 static bool tvafe_cvd2_condition_shift(struct tvafe_cvd2_s *cvd2)
 {
 	bool ret = false;
-	int out_min, out_max;
 
 	if (tvafe_cvd2_sig_unstable(cvd2))
 	{
@@ -1903,7 +1903,7 @@ inline void tvafe_cvd2_adj_pga(struct tvafe_cvd2_s *cvd2)
 	}
 
 	return;
-}
+} 
 #endif
 
 #ifdef TVAFE_SET_CVBS_CDTO_EN
@@ -2107,91 +2107,14 @@ inline void tvafe_cvd2_check_3d_comb(struct tvafe_cvd2_s *cvd2)
 	}
 }
 
-#ifdef TVAFE_SET_CVBS_MANUAL_FMT_POS
-
 /*
- * tvafe cvd2 video position reg setting
- */
-static void tvafe_cvd2_set_video_pos(enum tvin_sig_fmt_e fmt)
+* tvafe cvd2 set reset to high
+*/
+inline void tvafe_cvd2_hold_rst(struct tvafe_cvd2_s *cvd2)
 {
-	if (fmt == TVIN_SIG_FMT_CVBS_PAL_I)
-	{
-		if (READ_APB_REG(ACD_REG_2E) != 0x00170137)
-		{
-			/* set positon with ntsc fmt */
-			WRITE_APB_REG(CVD2_ACTIVE_VIDEO_VSTART, 0x2a);
-			WRITE_APB_REG(CVD2_ACTIVE_VIDEO_VHEIGHT, 0xc0);
-			WRITE_APB_REG_BITS(CVD2_CONTROL0, 1, VLINE_625_BIT, VLINE_625_WID);
-			WRITE_APB_REG(ACD_REG_2E, 0x00170137);
-			if (cvd_dbg_en)
-				pr_info("[tvafe..] %s: set:%s position. \n",__func__, tvin_sig_fmt_str(fmt));
-		}
-	}
-	else
-	{
-		if (READ_APB_REG(ACD_REG_2E) != 0x00110101)
-		{
-			/* set positon with ntsc fmt */
-			WRITE_APB_REG(CVD2_ACTIVE_VIDEO_VSTART, 0x22);
-			WRITE_APB_REG(CVD2_ACTIVE_VIDEO_VHEIGHTt, 0x61);
-			WRITE_APB_REG_BITS(CVD2_CONTROL0, 0, VLINE_625_BIT, VLINE_625_WID);
-			WRITE_APB_REG(ACD_REG_2E, 0x00110101);
-			if (cvd_dbg_en)
-				pr_info("[tvafe..] %s: set:%s position. \n",__func__, tvin_sig_fmt_str(fmt));
-		}
-	}
+	WRITE_APB_REG_BITS(CVD2_RESET_REGISTER, 1, SOFT_RST_BIT, SOFT_RST_WID);
 }
 
-/*
- * tvafe cvd2 video position adjustment
- */
-inline enum tvin_cvbs_pos_ctl_e tvafe_cvd2_set_pos(struct tvafe_cvd2_s *cvd2)
-{
-	/* Get the per-device structure that contains this frontend */
-	enum tvin_cvbs_pos_ctl_e cvbs_pos_ctl = TVIN_CVBS_POS_NULL;
-
-	if (cvd2->manual_fmt == TVIN_SIG_FMT_CVBS_PAL_I)
-	{
-		if (!cvd2->hw.line625)  //wrong format, change video size
-		{
-			cvbs_pos_ctl = TVIN_CVBS_POS_P_TO_N;
-			tvafe_cvd2_set_video_pos(TVIN_SIG_FMT_CVBS_NTSC_M);
-		}
-		else  //right format, reload video size
-		{
-			cvbs_pos_ctl = TVIN_CVBS_POS_P_TO_P;
-			tvafe_cvd2_set_video_pos((TVIN_SIG_FMT_CVBS_PAL_I);
-					}
-					}
-					else if ((cvd2->manual_fmt == TVIN_SIG_FMT_CVBS_NTSC_M) )
-					{
-					if (cvd2->hw.line625)  //wrong format, change video size
-					{
-					cvbs_pos_ctl = TVIN_CVBS_POS_N_TO_P;
-					tvafe_cvd2_set_video_pos((TVIN_SIG_FMT_CVBS_PAL_I);
-						}
-						else  //right format, reload video size
-						{
-						cvbs_pos_ctl = TVIN_CVBS_POS_N_TO_N;
-						tvafe_cvd2_set_video_pos((TVIN_SIG_FMT_CVBS_NTSC_M);
-							}
-							}
-							else  // reset default postion
-							{
-							tvafe_cvd2_set_video_pos(cvd2->config_fmt);
-							}
-
-							return (cvbs_pos_ctl);
-							}
-#endif
-
-							/*
-							 * tvafe cvd2 set reset to high
-							 */
-							inline void tvafe_cvd2_hold_rst(struct tvafe_cvd2_s *cvd2)
-							{
-							WRITE_APB_REG_BITS(CVD2_RESET_REGISTER, 1, SOFT_RST_BIT, SOFT_RST_WID);
-							}
 void tvafe_cvd2_set_reg8a(unsigned int v)
 {
 	cvd_reg8a = v;

@@ -14,7 +14,7 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
-#include <linux/slab.h>
+#include <linux/slab.h> 
 #include <linux/interrupt.h>
 #include <linux/fs.h>
 #include <linux/device.h>
@@ -61,6 +61,10 @@ static tvafe_pin_mux_t tvafe_pinmux;
 static bool enable_db_reg = true;
 module_param(enable_db_reg, bool, 0644);
 MODULE_PARM_DESC(enable_db_reg, "enable/disable tvafe load reg");
+static int vga_yuv422_enable = 0;
+module_param(vga_yuv422_enable, int, 0664);
+MODULE_PARM_DESC(vga_yuv422_enable, "vga_yuv422_enable");
+
 
 /*****************************the  version of changing log************************/
 static char last_version_s[]="2013-11-4||10-13";
@@ -112,7 +116,7 @@ static ssize_t tvafe_store(struct device *dev, struct device_attribute *attr,con
 	        tvafe_adc_comphase_pr();
         else if(!strncmp(buff,"vdin_bbld",strlen("vdin_bbld"))){
                 tvin_vdin_bbar_init(devp->tvafe.parm.info.fmt);
-                devp->tvafe.adc.vga_auto.phase_state == VGA_VDIN_BORDER_DET;
+                devp->tvafe.adc.vga_auto.phase_state = VGA_VDIN_BORDER_DET;
         }
         else if(!strncmp(buff,"pdown",strlen("pdown"))){
                 tvafe_enable_module(false);
@@ -130,8 +134,7 @@ static ssize_t tvafe_store(struct device *dev, struct device_attribute *attr,con
 	}
 	else if(!strncmp(buff,"set_edid",strlen("set_edid"))){
 		int i=0;
-		struct tvafe_vga_edid_s edid={ 	
-										0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00,
+		struct tvafe_vga_edid_s edid={ {0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00,
 									 	0x30, 0xa4, 0x21, 0x00, 0x01, 0x01, 0x01, 0x01,
 									 	0x0e, 0x17, 0x01, 0x03, 0x80, 0x24, 0x1d, 0x78,
 									 	0xee, 0x00, 0x0c, 0x0a, 0x05, 0x04, 0x09, 0x02,
@@ -163,6 +166,7 @@ static ssize_t tvafe_store(struct device *dev, struct device_attribute *attr,con
 										0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 										0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 										0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+										}
 										};
 		
 		for(i=0; i<32; i++)
@@ -219,8 +223,7 @@ the steps above set  the cvd that  will  write the signal data to mem
 *************************************************/
 static ssize_t dumpmem_store(struct device *dev, struct device_attribute *attr,const char *buff,size_t len)
 {
-	unsigned int n=0, fps=0;
-    	unsigned char ret=0;
+	unsigned int n=0;
 	char *buf_orig, *ps, *token;
     	char *parm[6] = {NULL};
     	struct tvafe_dev_s *devp;
@@ -240,29 +243,28 @@ static ssize_t dumpmem_store(struct device *dev, struct device_attribute *attr,c
 	    	}
 	if(!strncmp(parm[0], "dumpmem", strlen("dumpmem"))){
 	 	 if(parm[1] != NULL){
-
 		    struct file *filp = NULL;
 		    loff_t pos = 0;
 		    void * buf = NULL;
-		    int i = 0;
    // unsigned int canvas_real_size = devp->canvas_h * devp->canvas_w;
 		    mm_segment_t old_fs = get_fs();
 		    set_fs(KERNEL_DS);
 		    filp = filp_open(parm[1],O_RDWR|O_CREAT,0666);
 		    if(IS_ERR(filp)){
 			printk(KERN_ERR"create %s error.\n",parm[1]);
-			return;
+			return len;
 			}
 
 		    buf = phys_to_virt(devp->mem.start);
 		    vfs_write(filp,buf,devp->mem.size,&pos);
-		    pr_info("write buffer %2d of %2u  .\n",i,devp->mem.size,parm[1]);
-		    pr_info("devp->mem.start   %x  .\n",devp->mem.start);
+		    pr_info("write buffer %2d of %s.\n",devp->mem.size,parm[1]);
+		    pr_info("devp->mem.start   %x .\n",devp->mem.start);
 		    vfs_fsync(filp,0);
 		    filp_close(filp,NULL);
 		    set_fs(old_fs);
 		}
 	}
+	return len;
 
 }
 
@@ -348,17 +350,18 @@ param:void
  static int tvafe_callmaster_det(enum tvin_port_e port,struct tvin_frontend_s *fe)
 {
 	int ret = 0;
+	struct tvafe_pin_mux_s *pinmux = NULL;
 	struct tvafe_dev_s *devp = container_of(fe,struct tvafe_dev_s,frontend);
 	if(!devp || !(devp->pinmux)){
 		pr_err("[tvafe]%s:devp/pinmux is NULL\n",__func__);
 		return -1;
 	}
-	struct tvafe_pin_mux_s *pinmux = devp->pinmux;
+	pinmux = devp->pinmux;
 	switch(port)
 	{
 		case TVIN_PORT_VGA0:
 			if (pinmux->pin[VGA0_SOG] >= TVAFE_ADC_PIN_SOG_0){
-			    if(ret=(int)READ_APB_REG_BITS(ADC_REG_34,4,1))
+			    if(ret==(int)READ_APB_REG_BITS(ADC_REG_34,4,1))
 				     ret=(int)READ_APB_REG_BITS(ADC_REG_34,7,1);
 			    else
 				ret=0;
@@ -761,23 +764,6 @@ enum tvin_sig_fmt_e tvafe_get_fmt(struct tvin_frontend_s *fe)
 	return fmt;
 }
 
-#ifdef TVAFE_SET_CVBS_MANUAL_FMT_POS
-/*
- * tvafe cvbs video position setting by mode detection
- */
-enum tvin_cvbs_pos_ctl_e tvafe_set_cvbs_fmt_pos(struct tvin_frontend_s *fe)
-{
-	/* Get the per-device structure that contains this frontend */
-	struct tvafe_dev_s *devp = container_of(fe, struct tvafe_dev_s, frontend);
-	struct tvafe_info_s *tvafe = &devp->tvafe;
-	enum tvin_cvbs_pos_ctl_e cvbs_pos_ctl = TVIN_CVBS_POS_NULL;
-
-	cvbs_pos_ctl = tvafe_cvd2_set_pos(&tvafe->cvd2);
-
-	return (cvbs_pos_ctl);
-}
-#endif
-
 /*
  * tvafe signal property: 2D/3D, color format, aspect ratio, pixel repeat
  */
@@ -789,12 +775,19 @@ void tvafe_get_sig_property(struct tvin_frontend_s *fe, struct tvin_sig_property
 
 	prop->trans_fmt = TVIN_TFMT_2D;
 	if ((port >= TVIN_PORT_VGA0) &&
-			(port <= TVIN_PORT_VGA7))
+			(port <= TVIN_PORT_VGA7)) {
 		prop->color_format = TVIN_RGB444;
-	else
+		if(vga_yuv422_enable){
+			prop->dest_cfmt = TVIN_YUV422;
+		}else{
+		prop->dest_cfmt = TVIN_YUV444;
+		}
+	}else {
 		prop->color_format = TVIN_YUV444;
+		prop->dest_cfmt = TVIN_YUV422;
+	}
 	prop->aspect_ratio = TVIN_ASPECT_NULL;
-	prop->pixel_repeat = 0;
+	prop->decimation_ratio = 0;
 	prop->dvi_info = 0;
 }
 /*
@@ -934,9 +927,6 @@ static struct tvin_state_machine_ops_s tvafe_sm_ops = {
 	.adc_cal          = tvafe_cal,
 	.pll_lock         = tvafe_pll_lock,
 	.get_sig_propery  = tvafe_get_sig_property,
-#ifdef TVAFE_SET_CVBS_MANUAL_FMT_POS
-	.set_cvbs_fmt_pos = tvafe_set_cvbs_fmt_pos,
-#endif
 	.vga_set_param    = tvafe_vga_set_parm,
 	.vga_get_param    = tvafe_vga_get_parm,
 	.check_frame_skip = tvafe_check_frame_skip,
@@ -976,7 +966,7 @@ static int tvafe_release(struct inode *inode, struct file *file)
 static long tvafe_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	long ret = 0;
-	unsigned char i,j;
+	unsigned char i;
 	void __user *argp = (void __user *)arg;
 	struct tvafe_dev_s *devp = file->private_data;
 	struct tvafe_info_s *tvafe = &devp->tvafe;
@@ -1467,7 +1457,7 @@ static int tvafe_drv_probe(struct platform_device *pdev)
 {
 	int ret = 0;
 	struct tvafe_dev_s *tdevp;
-	struct resource *res;
+	//struct resource *res;
 	//struct tvin_frontend_s * frontend;
 
 	/* allocate memory for the per-device structure */
@@ -1559,6 +1549,14 @@ static int tvafe_drv_probe(struct platform_device *pdev)
 		pr_err("tvafe: no platform data!\n");
 		ret = -ENODEV;
 	}
+#ifdef CONFIG_USE_OF
+	if(of_get_property(pdev->dev.of_node, "pinctrl-names", NULL)){
+		struct pinctrl *p=devm_pinctrl_get_select_default(&pdev->dev);
+		if (IS_ERR(p)){
+			printk(KERN_ERR"tvafe request pinmux error!\n");
+		}
+	}
+#endif
 
 	/* frontend */
 	tvin_frontend_init(&tdevp->frontend, &tvafe_dec_ops, &tvafe_sm_ops, tdevp ->index);

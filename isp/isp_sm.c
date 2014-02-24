@@ -75,14 +75,13 @@ static inline int find_step(cam_function_t *func, unsigned int low, unsigned int
 {
 	unsigned int mid = 0;
 	unsigned int rate = 0;
-	unsigned int ret = 0;
 	while(hign >= low)
 	{
 		mid = (hign + low)/2;
 		if(func&&func->get_aet_gain_by_step)
 			rate = func->get_aet_gain_by_step(func->priv_data,mid);
 		if(0)
-			printk("mid = %d,rate = %d, gain = %d,%d,%d,%d,%d\n",mid,rate,gain,hign,low,func,func->get_aet_gain_by_step);
+			printk("mid = %u,rate = %u, gain = %u,%u,%u,%u\n",mid,rate,gain,hign,low,func->get_aet_gain_by_step);
 		if(gain < rate)
 			hign = mid - 1;
 		else if(gain > rate)
@@ -208,11 +207,12 @@ void af_sm_init(isp_dev_t *devp)
 		func->set_af_new_step(func->priv_data,devp->af_info.cur_step);
 	}
 }
-void isp_ae_low_gain()
+/*
+static void isp_ae_low_gain()
 {
 	sm_state.isp_ae_parm.isp_ae_state = AE_LOW_GAIN;
 }
-
+*/
 int isp_ae_save_current_para(isp_dev_t *devp)
 {
     struct cam_function_s *func = &devp->cam_param->cam_function;
@@ -253,21 +253,21 @@ void isp_ae_sm(isp_dev_t *devp)
 	u8  sub_avg[16] = {0};
 	unsigned int avg_sum = 0;
 	unsigned int avg_env_sum = 0;
-	unsigned int avg_env;
-	unsigned int avg_envo;
-	int avg, avgo;
+	unsigned int avg_env = 0;
+	unsigned int avg_envo = 0;
+	int avg = 0, avgo = 0;
 	static short temp;
 	int i;
 	static int k = 0;
 	static int h = 0;
 	static int sum = 0;
 	int step = 0;
-	unsigned int targrate;
-	unsigned int targstep;
+	unsigned int targrate = 0;
+	unsigned int targstep = 0;
 	static unsigned int newstep;
-	u8 lpfcoef;
-	u8 radium_outer;
-	u8 radium_inner;
+	u8 lpfcoef = 0;
+	u8 radium_outer = 0;
+	u8 radium_inner = 0;
 
     	switch(sm_state.isp_ae_parm.isp_ae_state){
 		case AE_IDLE:
@@ -973,8 +973,8 @@ static bool is_lost_focus(isp_af_info_t *af_info,xml_algorithm_af_t *af_alg)
 {
 	unsigned long long *v_dc,sum_vdc=0,ave_vdc=0,delta_dc=0,tmp_vdc=0;
 	unsigned int i=0,dc0,dc1,dc2,dc3,static_cnt;
-	bool ret=false,is_move=false,is_static=false;
-	v_dc = af_info->v_dc;
+	bool is_move=false,is_static=false;
+	v_dc = (unsigned long long *)af_info->v_dc;
 	/*calc v dc*/
 	dc0 = af_info->last_blnr.dc[0];
 	dc1 = af_info->last_blnr.dc[1];
@@ -1092,8 +1092,7 @@ static unsigned int check_hillside(isp_af_info_t *af_info,xml_algorithm_af_t *af
 static unsigned int get_fine_step(isp_af_info_t *af_info,xml_algorithm_af_t *af_alg)
 {
         unsigned int i = 0, j = 0,cur_grid = 0, max_grid = 0, best_step = 0;
-        unsigned long long delta_fv,sum_ac = 0, mul_ac = 0, fv[FOCUS_GRIDS], max_fv = 0, min_fv = 0xffffffffffffffff, sum_fv = 0,moment = 0;
-	unsigned long long fv_ave=0,fv_sum=0,diff_fv_parm;
+        unsigned long long delta_fv, fv[FOCUS_GRIDS], max_fv = 0, min_fv = 0xffffffffffffffff, sum_fv = 0,moment = 0;
 	isp_af_fine_tune_t af_fine_data_ex;
 	for(i = 0; i < af_info->valid_step_cnt; i++){
 		for(j = i+1; j < af_info->valid_step_cnt; j++ ){
@@ -1164,7 +1163,6 @@ void isp_af_fine_tune(isp_dev_t *devp)
 	static unsigned int af_delay=0;
 	struct xml_algorithm_af_s *af_alg = devp->isp_af_parm;
 	struct isp_af_info_s *af_info = &devp->af_info;
-	struct isp_af_sm_s *sm = &sm_state.af_sm;
 	af_delay++;
 
 	switch(sm_state.af_state){
@@ -1360,7 +1358,7 @@ void capture_sm_init(isp_dev_t *devp)
 	} else {
 		cap_sm->capture_state = CAPTURE_TUNE_3A;
 		if(parm->af_mode){
-			devp->flag |= ISP_FLAG_AF;
+			devp->flag |= ISP_FLAG_AF;
 		}else{
 			devp->flag &= (~ISP_FLAG_AF);
 		}
@@ -1397,7 +1395,7 @@ int isp_capture_sm(isp_dev_t *devp)
 			}
 			break;
 		case CAPTURE_PRE_WAIT:
-			if(time_after(jiffies,start_jf+parm->pretime)){
+			if(time_after((unsigned long)jiffies,(unsigned long)(start_jf+parm->pretime))){
 				cap_sm->capture_state = CAPTURE_FLASH_ON;
 				start_jf = 0;
 				if(capture_debug)
@@ -1427,7 +1425,7 @@ int isp_capture_sm(isp_dev_t *devp)
 			}
 			break;
 		case CAPTURE_TR_WAIT:
-			if(time_after(jiffies,cap_sm->tr_time)){
+			if(time_after((unsigned long)jiffies,(unsigned long)(cap_sm->tr_time))){
 				cap_sm->capture_state = CAPTURE_TUNE_3A;
 				if(capture_debug)
 				        pr_info("[cap_sm]%u:torch rising wait->tune 3a wait.\n",__LINE__);
@@ -1459,7 +1457,7 @@ int isp_capture_sm(isp_dev_t *devp)
 			}
 			break;
 		case CAPTURE_EYE_WAIT:
-			if(time_after(jiffies,start_jf+parm->eyetime)){
+			if(time_after((unsigned long)jiffies,(unsigned long)(start_jf+parm->eyetime))){
 				isp_set_flash(devp,FLASH_TORCH,0);
 				start_jf = 0;
 				cap_sm->capture_state = CAPTURE_POS_WAIT;
@@ -1468,7 +1466,7 @@ int isp_capture_sm(isp_dev_t *devp)
 			}
 			break;
 		case CAPTURE_POS_WAIT:
-			if(time_after(jiffies,start_jf+parm->postime)){
+			if(time_after((unsigned long)jiffies,(unsigned long)(start_jf+parm->postime))){
 				cap_sm->capture_state = CAPTURE_FLASHW;
 				isp_set_flash(devp,FLASH_ON,0);
 				start_jf = 0;
@@ -1477,7 +1475,7 @@ int isp_capture_sm(isp_dev_t *devp)
 			}
 			break;
 		case CAPTURE_FLASHW:
-			if(time_after(jiffies,start_jf+cap_sm->fr_time)){
+			if(time_after((unsigned long)jiffies,(unsigned long)(start_jf+cap_sm->fr_time))){
 				isp_set_flash(devp,FLASH_TORCH,0);
 				ret = TVIN_BUF_NULL;
 				if(capture_debug)

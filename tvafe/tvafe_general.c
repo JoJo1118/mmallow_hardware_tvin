@@ -17,7 +17,7 @@
 // #define TVAFE_ADC_CAL_VALIDATION
 
 /* edid config reg value */
-#define TVAFE_EDID_CONFIG           0x03800050
+#define TVAFE_EDID_CONFIG           0x03804050//0x03800050
 
 /* calibration defines */
 #define TVAFE_ADC_CAL_STEP_GAIN     1
@@ -547,7 +547,11 @@ const static unsigned int cvbs_top_reg_default[][2] = {
 	{TVFE_OGO_OFFSET3                       ,0x00000000,}, // TVFE_OGO_OFFSET3
 	{TVFE_VAFE_CTRL                         ,0x00000000,}, // TVFE_VAFE_CTRL
 	{TVFE_VAFE_STATUS                       ,0x00000000,}, // TVFE_VAFE_STATUS
-	{TVFE_TOP_CTRL                          ,0xc4f64 /*0x00004B60*/,}, // TVFE_TOP_CTRL
+#ifdef CRYSTAL_25M
+	{TVFE_TOP_CTRL                          ,0x30c4e6c/*0xc4f64 0x00004B60*/,}, // TVFE_TOP_CTRL
+#else
+	{TVFE_TOP_CTRL                          ,0x30c4f64/*0xc4f64 0x00004B60*/,}, // TVFE_TOP_CTRL
+#endif
 	{TVFE_CLAMP_INTF                        ,0x00008666,}, // TVFE_CLAMP_INTF
 	{TVFE_RST_CTRL                          ,0x00000000,}, // TVFE_RST_CTRL
 	{TVFE_EXT_VIDEO_AFE_CTRL_MUX1           ,0x00000000,}, // TVFE_EXT_VIDEO_AFE_CTRL_MUX1
@@ -580,11 +584,19 @@ const static unsigned int cvbs_top_reg_default[][2] = {
 	{TVFE_SOG_MON_CTRL1            ,   0x00000000,},//TVFE_SOG_MON_CTRL1
 	{TVFE_ADC_READBACK_CTRL1,   0x00000000,},//TVFE_ADC_READBACK_CTRL1
 	{TVFE_ADC_READBACK_CTRL2,   0x00000000,},//TVFE_ADC_READBACK_CTRL2
+#ifdef CRYSTAL_25M
+	{TVFE_AFC_CTRL1 		     ,	 0x85730459,},//TVFE_AFC_CTRL1
+	{TVFE_AFC_CTRL2 		     ,	 0x342fa9ed,},//TVFE_AFC_CTRL2
+	{TVFE_AFC_CTRL3 		     ,	 0x2a02396,},//TVFE_AFC_CTRL3
+	{TVFE_AFC_CTRL4 		     ,	 0xfefbff14,},//TVFE_AFC_CTRL4
+	{TVFE_AFC_CTRL5 		     ,		0x0,},//TVFE_AFC_CTRL5
+#else
 	{TVFE_AFC_CTRL1                      ,   0x893904d2,},//TVFE_AFC_CTRL1
 	{TVFE_AFC_CTRL2                      ,   0xf4b9ac9,},//TVFE_AFC_CTRL2
 	{TVFE_AFC_CTRL3                      ,   0x1fd8c36,},//TVFE_AFC_CTRL3
 	{TVFE_AFC_CTRL4                      ,   0x2de6d04f,},//TVFE_AFC_CTRL4
 	{TVFE_AFC_CTRL5                      ,          0x4,},//TVFE_AFC_CTRL5
+#endif
 	{0xFFFFFFFF                             ,0x00000000,}
 };
 
@@ -2077,7 +2089,6 @@ void tvafe_adjust_cal_value(struct tvafe_adc_cal_s *para,bool iscomponent)
 void tvafe_set_regmap(struct am_regs_s *p)
 {
     unsigned short i;
-    unsigned int temp = 0;
 
     for (i=0; i<p->length; i++) {
         switch (p->am_reg[i].type)
@@ -2497,6 +2508,16 @@ bool tvafe_adc_cal(struct tvin_parm_s *parm, struct tvafe_cal_s *cal)
 			//  operand->lpf_a     = READ_APB_REG_BITS(ADC_REG_19, ENLPFA_BIT,    ENLPFA_WID   );
 			//  operand->lpf_b     = READ_APB_REG_BITS(ADC_REG_1A, ENLPFB_BIT,    ENLPFB_WID   );
 			//  operand->lpf_c     = READ_APB_REG_BITS(ADC_REG_1B, ENLPFC_BIT,    ENLPFC_WID   );
+#ifdef CONFIG_ADC_CAL_SIGNALED
+			operand->pin_a_mux = READ_APB_REG_BITS(ADC_REG_17, 
+			        INMUXA_BIT, INMUXA_WID);
+			operand->pin_b_mux = READ_APB_REG_BITS(ADC_REG_17, 
+			        INMUXB_BIT, INMUXB_WID);
+			operand->pin_c_mux = READ_APB_REG_BITS(ADC_REG_18, 
+					INMUXC_BIT, INMUXC_WID);
+			//operand->sog_mux   = READ_APB_REG_BITS(ADC_REG_24,
+			//		INMUXSOG_BIT, INMUXSOG_WID);	
+#endif		
 			operand->clk_ext   = READ_APB_REG_BITS(ADC_REG_58,
 					EXTCLKSEL_BIT, EXTCLKSEL_WID);
 			operand->clk_ctl   = READ_CBUS_REG(HHI_VAFE_CLKIN_CNTL);
@@ -2506,6 +2527,13 @@ bool tvafe_adc_cal(struct tvin_parm_s *parm, struct tvafe_cal_s *cal)
 			//  WRITE_APB_REG_BITS(ADC_REG_19, 0, ENLPFA_BIT, ENLPFA_WID);
 			//  WRITE_APB_REG_BITS(ADC_REG_1A, 0, ENLPFB_BIT, ENLPFB_WID);
 			//  WRITE_APB_REG_BITS(ADC_REG_1B, 0, ENLPFC_BIT, ENLPFC_WID);
+#ifdef CONFIG_ADC_CAL_SIGNALED
+			// change the pinmux
+			WRITE_APB_REG_BITS(ADC_REG_17, 1, INMUXA_BIT, INMUXA_WID);
+			WRITE_APB_REG_BITS(ADC_REG_17, 1, INMUXB_BIT, INMUXB_WID);
+			WRITE_APB_REG_BITS(ADC_REG_18, 1, INMUXC_BIT, INMUXC_WID);
+			//WRITE_APB_REG_BITS(ADC_REG_24, 1, INMUXSOG_BIT, INMUXSOG_WID);
+#endif	
 			// set clk_ext & clk_ctl
 			WRITE_APB_REG_BITS(ADC_REG_58, 1, EXTCLKSEL_BIT, EXTCLKSEL_WID);
 			if (!is_component){
@@ -2660,6 +2688,9 @@ bool tvafe_adc_cal(struct tvin_parm_s *parm, struct tvafe_cal_s *cal)
 #endif
 
 				// disable gain calibration
+#ifdef CONFIG_ADC_CAL_SIGNALED
+				WRITE_APB_REG(TVFE_VAFE_CTRL, operand->vafe_ctl);
+#endif
 				WRITE_APB_REG_BITS(TVFE_VAFE_CTRL, 0, VAFE_ENGAINCAL_BIT, VAFE_ENGAINCAL_WID);
 				// set bpg_h, bpg_v, bpg_m, clamp_inv, clamp_ext
 				WRITE_APB_REG(TVFE_BPG_BACKP_H, 1);
@@ -2668,6 +2699,14 @@ bool tvafe_adc_cal(struct tvin_parm_s *parm, struct tvafe_cal_s *cal)
 				//WRITE_APB_REG_BITS(TVFE_DVSS_MUXCTRL, 1, DVSS_CLAMP_INV_BIT,      DVSS_CLAMP_INV_WID     );
 				WRITE_APB_REG_BITS(ADC_REG_2F, 1, CLAMPEXT_BIT, CLAMPEXT_WID);
 				WRITE_APB_REG_BITS(ADC_REG_58, 1, EXTCLKSEL_BIT, EXTCLKSEL_WID);
+#ifdef CONFIG_ADC_CAL_SIGNALED
+				// recover pinmux
+				WRITE_APB_REG_BITS(ADC_REG_17, operand->pin_a_mux, INMUXA_BIT, INMUXA_WID);
+				WRITE_APB_REG_BITS(ADC_REG_17, operand->pin_b_mux, INMUXB_BIT, INMUXB_WID);
+				WRITE_APB_REG_BITS(ADC_REG_18, operand->pin_c_mux, INMUXC_BIT, INMUXC_WID);
+				WRITE_CBUS_REG(HHI_VAFE_CLKIN_CNTL, operand->clk_ctl);
+				WRITE_APB_REG_BITS(ADC_REG_39, operand->sync_mux, INSYNCMUXCTRL_BIT,INSYNCMUXCTRL_WID);
+#endif
 			}
 			break;
 		case TVAFE_ADC_CAL_STEP_STAGE + TVAFE_ADC_CAL_STEP_CLAMP*1:
@@ -2803,8 +2842,10 @@ bool tvafe_adc_cal(struct tvin_parm_s *parm, struct tvafe_cal_s *cal)
 				// WRITE_APB_REG_BITS(ADC_REG_1A, operand->lpf_b, ENLPFB_BIT,    ENLPFB_WID   );
 				// WRITE_APB_REG_BITS(ADC_REG_1B, operand->lpf_c, ENLPFC_BIT,    ENLPFC_WID   );
 				WRITE_APB_REG_BITS(ADC_REG_58, operand->clk_ext, EXTCLKSEL_BIT, EXTCLKSEL_WID);
+#ifndef CONFIG_ADC_CAL_SIGNALED
 				WRITE_APB_REG_BITS(ADC_REG_39, operand->sync_mux, INSYNCMUXCTRL_BIT,INSYNCMUXCTRL_WID);
 				WRITE_CBUS_REG(HHI_VAFE_CLKIN_CNTL, operand->clk_ctl);
+#endif
 				WRITE_APB_REG(TVFE_VAFE_CTRL, operand->vafe_ctl);
 				// validate result
 				// adc_cal->reserved |= TVAFE_ADC_CAL_VALID;
@@ -3193,6 +3234,9 @@ void tvafe_init_reg(struct tvafe_cvd2_s *cvd2, struct tvafe_cvd2_mem_s *mem, enu
 	}
 	else if ((port >= TVIN_PORT_CVBS0) && (port <= TVIN_PORT_SVIDEO7))
 	{
+#ifdef CRYSTAL_25M
+                WRITE_CBUS_REG(HHI_VAFE_CLKIN_CNTL, 0x703);
+#endif
 		tvafe_set_cvbs_default(cvd2, mem, port, pinmux);
 		/*turn on/off av out*/
 		tvafe_enable_avout(enableavout);

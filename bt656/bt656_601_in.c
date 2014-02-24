@@ -28,13 +28,7 @@
 #include <asm/atomic.h>
 #include <linux/module.h>
 #include <linux/fs.h>
-#include <linux/platform_device.h>
 
-#include <linux/amlogic/amports/amstream.h>
-#include <linux/amlogic/amports/ptsserv.h>
-#include <linux/amlogic/amports/canvas.h>
-#include <linux/amlogic/amports/vframe.h>
-#include <linux/amlogic/amports/vframe_provider.h>
 #include <mach/am_regs.h>
 #include <mach/mod_gate.h>
 
@@ -544,7 +538,7 @@ static void am656in_get_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_
 	struct am656in_dev_s *devp = container_of(fe, am656in_dev_t, frontend);
 	prop->color_format = devp->para.cfmt;
 	prop->dest_cfmt    = devp->para.dfmt;
-	prop->pixel_repeat = 0;
+	prop->decimation_ratio = 0;
 }
 
 /*as use the spin_lock,
@@ -628,9 +622,6 @@ static struct tvin_state_machine_ops_s am656_machine_ops = {
 	.adc_cal             = NULL,
 	.pll_lock            = NULL,
 	.get_sig_propery     = am656in_get_sig_propery,
-#ifdef TVAFE_SET_CVBS_MANUAL_FMT_POS
-	.set_cvbs_fmt_pos    = NULL,
-#endif
 	.vga_set_param       = NULL,
 	.vga_get_param       = NULL,
 	.check_frame_skip    = am656_check_skip_frame,

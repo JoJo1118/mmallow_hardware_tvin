@@ -1353,14 +1353,14 @@ inline void vdin_set_default_regmap(unsigned int offset)
 	// [    4]         hsc.nearest_en       = 0
 	// [    3]         hsc.phase0_always    = 1
 	// [ 2: 0]         hsc.filt_dep         = 0/(DEPTH4,DEPTH1, DEPTH2, DEPTH3)
-	WR(VDIN_SC_MISC_CTRL, 0x00000028);
+	//WR(VDIN_SC_MISC_CTRL, 0x00000028);
 	// [28:24]         hsc.phase_step_int   = 0 <u5.0>
 	// [23: 0]         hsc.phase_step_fra   = 0 <u0.24>
-	WR(VDIN_HSC_PHASE_STEP, 0x00000000);
+	//WR(VDIN_HSC_PHASE_STEP, 0x00000000);
 	// [30:29]         hsc.repeat_pix0_num  = 1 // ? to confirm pix0 is always used
 	// [28:24]         hsc.ini_receive_num  = 4 // ? to confirm pix0 is always used
 	// [23: 0]         hsc.ini_phase        = 0
-	WR(VDIN_HSC_INI_CTRL, 0x24000000);
+	//WR(VDIN_HSC_INI_CTRL, 0x24000000);
 
 
 	// [   25]  decimation.rst              = 0
@@ -1847,7 +1847,7 @@ inline void vdin_set_hscale(unsigned int offset, unsigned int src_w, unsigned in
 			(0 << PRE_HSCL_EN_BIT) |//pre_hscale_en
 			(1 << HSCL_EN_BIT) |//hsc_en
 			(1 << SHORT_LN_OUT_EN_BIT) |//short_lineo_en
-			(0 << HSCL_NEAREST_EN_BIT) |//nearest_en
+			(1 << HSCL_NEAREST_EN_BIT) |//nearest_en
 			(0 << PHASE0_ALWAYS_EN_BIT) |//phase0_always_en
 			(4 << HSCL_BANK_LEN_BIT)//hsc_bank_length
 		      );

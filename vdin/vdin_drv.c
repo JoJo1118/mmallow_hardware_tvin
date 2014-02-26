@@ -1343,7 +1343,7 @@ irqreturn_t vdin_v4l2_isr(int irq, void *dev_id)
 
 	if (!next_wr_vfe) {
                 /*add for force vdin buffer recycle*/
-                if(devp->flags && VDIN_FLAG_FORCE_RECYCLE) {
+                if(devp->flags & VDIN_FLAG_FORCE_RECYCLE) {
                         next_wr_vfe = receiver_vf_get(devp->vfp);
                         if(next_wr_vfe)
                                 receiver_vf_put(&next_wr_vfe->vf,devp->vfp);

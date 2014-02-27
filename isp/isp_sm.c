@@ -71,29 +71,23 @@ static unsigned int af_sm_dg = 0;
 volatile struct isp_ae_to_sensor_s ae_sens;
 
 
-static inline int find_step(cam_function_t *func, unsigned int low, unsigned int hign, unsigned int gain)
+static inline int isp_ae_find_step(cam_function_t *func, unsigned int low, unsigned int hign, unsigned int gain)
 {
 	unsigned int mid = 0;
 	unsigned int rate = 0;
-	while(hign >= low)
-	{
+	while(hign >= low){
 		mid = (hign + low)/2;
 		if(func&&func->get_aet_gain_by_step)
 			rate = func->get_aet_gain_by_step(func->priv_data,mid);
-		if(0)
-			printk("mid = %u,rate = %u, gain = %u,%u,%u,%u\n",mid,rate,gain,hign,low,func->get_aet_gain_by_step);
 		if(gain < rate)
 			hign = mid - 1;
 		else if(gain > rate)
 			low = mid + 1;
 		else {
-		    //pr_info("[isp] %s step:%d found ...................\n", __func__, mid);
 			return mid;
 		}
 	}
-	//pr_info("[isp] %s step:%d set default .\n", __func__, (mid + 1));
 	if((mid + 1) > hign){
-		//pr_info("[isp]find_step,warning mid:%d,hign:%d\n",mid,hign);
 		return hign;
 	}
 	return (mid + 1);
@@ -115,7 +109,7 @@ static unsigned int isp_ae_cal_new_para(isp_dev_t *devp)
                 aet_gain_pre, format_gain_pre);
         return 0;
     }
-    ae_sens.new_step = find_step(func, 0, aepa->max_step, aet_gain_new);
+    ae_sens.new_step = isp_ae_find_step(func, 0, aepa->max_step, aet_gain_new);
     ae_sens.shutter = 1;
     ae_sens.gain = 1;
     pr_info("[isp] %s: format_gain_new:%d, aet_gain_new:%d new_step:%d... ...\n", __func__, \
@@ -190,7 +184,7 @@ void isp_set_manual_exposure(isp_dev_t *devp)
     if(aepa->targ > aep->targethigh)
 		aepa->targ = aep->targethigh;
     if(aepa->targ < aep->targetlow)
-		aepa->targ = aep->targetlow;	
+		aepa->targ = aep->targetlow;
 	pr_info("devp->ae_info.manul_level=%d,targ=%d\n",devp->ae_info.manul_level,aepa->targ);
 }
 
@@ -207,12 +201,6 @@ void af_sm_init(isp_dev_t *devp)
 		func->set_af_new_step(func->priv_data,devp->af_info.cur_step);
 	}
 }
-/*
-static void isp_ae_low_gain()
-{
-	sm_state.isp_ae_parm.isp_ae_state = AE_LOW_GAIN;
-}
-*/
 int isp_ae_save_current_para(isp_dev_t *devp)
 {
     struct cam_function_s *func = &devp->cam_param->cam_function;
@@ -238,7 +226,7 @@ unsigned int isp_tune_exposure(isp_dev_t *devp)
 	if(func&&func->get_aet_current_gain)
 	gain_cur = func->get_aet_current_gain(func->priv_data);
 	gain_target = (gain_cur*exposure_extra + 512) >> 10;
-	new_step = find_step(func, 0, aepa->max_step, gain_target);
+	new_step = isp_ae_find_step(func, 0, aepa->max_step, gain_target);
 	return new_step;
 }
 void isp_ae_sm(isp_dev_t *devp)
@@ -250,68 +238,135 @@ void isp_ae_sm(isp_dev_t *devp)
 	struct cam_function_s *func = &devp->cam_param->cam_function;
 	struct vframe_prop_s *ph = devp->frontend.private_data;
 	struct isp_ae_info_s *ae_info = &devp->ae_info;
-	u8  sub_avg[16] = {0};
+	unsigned int targrate,targstep,avg,avgo,i,radium_delta,lpfcoef,sub_avg[16] = {0};
+	static unsigned int newstep,delay_vs,sum,targ_ag_adjust_dir;
 	unsigned int avg_sum = 0;
-	unsigned int avg_env_sum = 0;
-	unsigned int avg_env = 0;
-	unsigned int avg_envo = 0;
-	int avg = 0, avgo = 0;
-	static short temp;
-	int i;
-	static int k = 0;
-	static int h = 0;
-	static int sum = 0;
-	int step = 0;
-	unsigned int targrate = 0;
-	unsigned int targstep = 0;
-	static unsigned int newstep;
-	u8 lpfcoef = 0;
-	u8 radium_outer = 0;
-	u8 radium_inner = 0;
 
     	switch(sm_state.isp_ae_parm.isp_ae_state){
-		case AE_IDLE:
-			break;
 		case AE_INIT:
-			k = 0;
-			h = 0;
+			delay_vs = 0;
 			aepa->win_l = (parm->h_active * aep->ratio_winl) >> 10;
 			aepa->win_r = ((parm->h_active * aep->ratio_winr) >> 10) - 1;
 			aepa->win_t = (parm->v_active * aep->ratio_wint) >> 10;
 			aepa->win_b = ((parm->v_active * aep->ratio_winb) >> 10) - 1;
 			isp_set_ae_win(aepa->win_l, aepa->win_r, aepa->win_t, aepa->win_b);
-			isp_set_ae_thrlpf(aep->thr_r_mid, aep->thr_g_mid, aep->thr_b_mid, aep->lpftype_mid);
 			aepa->pixel_sum = parm->h_active * parm->v_active;
 			aepa->sub_pixel_sum = aepa->pixel_sum >> 4;
 			aepa->max_lumasum1 = ((aepa->pixel_sum >> 4) * aep->ae_ratio_low) >> 7;
 			aepa->max_lumasum2 = ((aepa->pixel_sum >> 4) * aep->ae_ratio_low2mid) >> 7;
 			aepa->max_lumasum3 = ((aepa->pixel_sum >> 4) * aep->ae_ratio_mid2high) >> 7;
 			aepa->max_lumasum4 = ((aepa->pixel_sum >> 4) * aep->ae_ratio_high) >> 7;
-			aepa->pre_gain = 400;
 			if(devp->ae_info.manul_level==0)
-			aepa->targ = aep->targetmid;
-			temp = 1;
-			aepa->alert_r = ((aepa->pixel_sum >> 4) * aep->ratio_r) >> 8;
-			aepa->alert_g = ((aepa->pixel_sum >> 4) * aep->ratio_g) >> 7;	 //grgb
-			aepa->alert_b = ((aepa->pixel_sum >> 4) * aep->ratio_b) >> 8;
-			aepa->change_step = 0;
-			if(func&&func->get_aet_max_gain)
+				aepa->targ = aep->targetmid;
+			targ_ag_adjust_dir = 1;/*0:up; 2:down; 1:stable*/
+			if((func == NULL)||(func->get_aet_max_gain == NULL)||(func->get_aet_min_gain == NULL)||(func->get_aet_max_step == NULL)){
+				pr_info("[tvin isp error][AE_INIT]%s:AE FUNC POINT TO NULL!\n",__func__);
+				break;
+			}
+			else{
 				aepa->max_gain = func->get_aet_max_gain(func->priv_data);
-			if(func&&func->get_aet_min_gain)
 				aepa->min_gain = func->get_aet_min_gain(func->priv_data);
-			if(func&&func->get_aet_max_step)
 				aepa->max_step = func->get_aet_max_step(func->priv_data);
+			}
 			pr_info("ae,win_l=%d,win_r=%d,win_t=%d,win_b=%d\n",aepa->win_l,aepa->win_r,aepa->win_t,aepa->win_b);
 			pr_info("aepa->max_lumasum1=%d,max_lumasum2=%d,=%d,=%d",aepa->max_lumasum1,aepa->max_lumasum2,aepa->max_lumasum3,aepa->max_lumasum4);
 			pr_info("aepa->alert_r=%d,g=%d,b=%d\n",aepa->alert_r,aepa->alert_g,aepa->alert_b);
-			pr_info("aepa->sub_pixel_sum=%d\n",aepa->sub_pixel_sum);
-			pr_info("aepa->max_gain=%d\n",aepa->max_gain);
-			pr_info("aepa->min_gain=%d\n",aepa->min_gain);
-			pr_info("aepa->max_step=%d\n",aepa->max_step);
+			pr_info("aepa->sub_pixel_sum=%d,aepa->max_gain=%d,aepa->min_gain=%d,aepa->max_step=%d\n",
+				aepa->sub_pixel_sum,aepa->max_gain,aepa->min_gain,aepa->max_step);
 			sm_state.isp_ae_parm.isp_ae_state = AE_SHUTTER_ADJUST;
 			break;
-		case AE_ORI_SET:
-			newstep = find_step(func,0,aepa->max_step,aepa->pre_gain);
+		case AE_SHUTTER_ADJUST:
+			if((func == NULL)||(func->get_aet_current_gain == NULL)||(func->get_aet_current_step == NULL)){
+				pr_info("[tvin isp error][AE_SHUTTER_ADJUST]%s:AE FUNC POINT TO NULL!\n",__func__);
+				break;
+			}
+			else{
+				aepa->cur_gain = func->get_aet_current_gain(func->priv_data);
+				aepa->pre_gain = aepa->cur_gain;
+				aepa->cur_step = func->get_aet_current_step(func->priv_data);
+			}
+			if(ae_sm_dg&AE_SHUTTER_ADJUST_DG)
+				pr_info("cur_gain = %d,cur_step = %d\n",aepa->cur_gain,aepa->cur_step);
+			if(aepa->cur_gain == 0)
+				break;
+			/*calculate luma avg*/
+			for(i=0;i<16;i++){
+				sub_avg[i] = ae->luma_win[i]/aepa->sub_pixel_sum;
+			    	avg_sum += sub_avg[i] * aep->coef_cur[i];
+				if((i == ae_step)&&(ae_sm_dg&AE_CALCULATE_LUMA_AVG_DG))
+					pr_info("sub_avg[%d]=%d,ae->luma_win=%d,aep->coef_cur=%d,aep->coef_env=%d,avg_sum=%d \n",i,sub_avg[i],ae->luma_win[i],aep->coef_cur[i],aep->coef_env[i],avg_sum);
+			}
+			avg = avg_sum >> 10;
+			if(devp->flag & ISP_FLAG_CAPTURE){
+				avgo = avg/aepa->cur_gain;
+				if(avgo < aep->flash_thr)
+					sm_state.flash = ISP_FLASH_STATUS_ON;
+				else
+					sm_state.flash = ISP_FLASH_STATUS_OFF;
+			}
+			/*calculate luma targ*/
+			sum = (ph->hist.gamma[58]+ph->hist.gamma[57]) << ph->hist.hist_pow;
+			if(ae_sm_dg&AE_CALCULATE_LUMA_TARG_DG){
+				pr_info("avg=%d,aepa->cur_gain=%d,avg_sum=%d,luma_win[9]=%d,sub[9]=%d\n",avg,aepa->cur_gain,avg_sum,ae->luma_win[9],sub_avg[9]);
+				pr_info("ph->hist.gamma[58]=%d,%d,%d\n",ph->hist.gamma[58],sum,ph->hist.hist_pow);
+			}
+			if((devp->ae_info.manul_level==0)&&((ae_sm_dg&AE_DYNAMIC_ADJUST_DG)==0)){
+				if((sum > aepa->max_lumasum4)||((sum > aepa->max_lumasum3)&&(targ_ag_adjust_dir==2))){
+					targ_ag_adjust_dir = 2;
+					aepa->targ-=2;
+					if(aepa->targ<(aep->targetmid-aep->ae_min_diff))
+						aepa->targ = aep->targetmid-aep->ae_min_diff;
+				}
+				else if((sum < aepa->max_lumasum1)||((sum < aepa->max_lumasum2)&&(targ_ag_adjust_dir==0))){
+					targ_ag_adjust_dir = 0;
+					aepa->targ++;
+					if(aepa->targ>(aep->targetmid+aep->ae_max_diff))
+						aepa->targ = aep->targetmid+aep->ae_max_diff;
+				}
+				else{
+					targ_ag_adjust_dir = 1;
+				}
+			}
+			radium_delta = (avg > aepa->targ) ? (avg - aepa->targ):(aepa->targ - avg);
+			sm_state.env = ENV_LOW;
+			//isp_set_ae_thrlpf(aep->thr_r_low, aep->thr_g_low, aep->thr_b_low, aep->lpftype_low);
+			if(ae_sm_dg&AE_CALCULATE_LUMA_TARG_DG)
+				pr_info("avg=%d,targ=%d,targ_ag_adjust_dir=%d\n",avg,aepa->targ,targ_ag_adjust_dir);
+			/*luma avg check*/
+			if(((sm_state.status == ISP_AE_STATUS_UNSTABLE)&&(radium_delta > aep->radium_inner_l))
+				||(radium_delta > aep->radium_outer_l)){
+				sm_state.status = ISP_AE_STATUS_UNSTABLE;
+			}
+			else{
+				if(ae_sm_dg&AE_STATUS_DG)
+					pr_info("ISP_AE_STATUS_STABLE\n");
+				sm_state.status = ISP_AE_STATUS_STABLE;
+				sm_state.isp_ae_parm.isp_ae_state = AE_SHUTTER_ADJUST;
+				break;
+			}
+			/*exposure adjust*/
+			if(avg == 0)
+				break;
+			targrate = (aepa->targ * aepa->cur_gain)/avg;
+			if(targrate > aepa->max_gain)
+				targrate = aepa->max_gain;
+			if(targrate < aepa->min_gain)
+				targrate = aepa->min_gain;
+			targstep = isp_ae_find_step(func,0,aepa->max_step,targrate);
+			if(targstep > aepa->max_step)
+				targstep = aepa->max_step;
+			lpfcoef = (devp->flag & ISP_FLAG_CAPTURE)?aep->fast_lpfcoef:aep->slow_lpfcoef;
+			newstep = (aepa->cur_step*lpfcoef + targstep*(256-lpfcoef))>>8;
+			if(ae_sm_dg&AE_EXPOSURE_ADJUST_DG)
+				pr_info("targstep = %d,targrate =%d,newstep =%d,lpf =%d,cur_step =%d\n",
+				targstep,targrate,newstep,lpfcoef,aepa->cur_step);
+			if((newstep >= aepa->max_step - 1)||(newstep == aepa->cur_step)||(newstep == 0)){
+				sm_state.status = ISP_AE_STATUS_STABLE;
+				if(ae_sm_dg&AE_STATUS_DG)
+					pr_info("ISP_AE_STATUS_STABLE2\n");
+				break;
+			}
+			/*set newstep*/
 			if(aep->ae_skip[0] == 0x1){
 				if(atomic_read(&ae_info->writeable) <= 0){
 					ae_sens.new_step = newstep;
@@ -319,11 +374,15 @@ void isp_ae_sm(isp_dev_t *devp)
 					ae_sens.gain = 1;
 					atomic_set(&ae_info->writeable,1);
 					sm_state.status = ISP_AE_STATUS_UNSTABLE;
-					if(ae_sm_dg&AE_ORI_SET_DG)
+					if(ae_sm_dg&AE_STATUS_DG)
 						pr_info("ISP_AE_STATUS_UNSTABLE1\n");
 					sm_state.ae_down = false;
 				}
-				sm_state.isp_ae_parm.isp_ae_state = AE_SHUTTER_ADJUST;
+				if(ae_sm_dg&AE_GAIN_ADJUST_SEL)
+					sm_state.isp_ae_parm.isp_ae_state = AE_GAIN_ADJUST;
+				else
+					sm_state.isp_ae_parm.isp_ae_state = AE_SHUTTER_ADJUST;
+				break;
 			}
 			else if(aep->ae_skip[1] == 0x1){
 				ae_sens.new_step = newstep;
@@ -331,10 +390,11 @@ void isp_ae_sm(isp_dev_t *devp)
 				ae_sens.gain = 1;
 				atomic_set(&ae_info->writeable,1);
 				sm_state.status = ISP_AE_STATUS_UNSTABLE;
-				if(ae_sm_dg&AE_ORI_SET_DG)
+				if(ae_sm_dg&AE_STATUS_DG)
 					pr_info("ISP_AE_STATUS_UNSTABLE\n");
 				sm_state.ae_down = false;
 				sm_state.isp_ae_parm.isp_ae_state = AE_REST;
+				break;
 			}
 			else{
 				ae_sens.new_step = newstep;
@@ -342,216 +402,11 @@ void isp_ae_sm(isp_dev_t *devp)
 				ae_sens.gain = 0;
 				atomic_set(&ae_info->writeable,1);
 				sm_state.status = ISP_AE_STATUS_UNSTABLE;
-				if(ae_sm_dg&AE_ORI_SET_DG)
+				if(ae_sm_dg&AE_STATUS_DG)
 					pr_info("ISP_AE_STATUS_UNSTABLE\n");
 				sm_state.ae_down = false;
 				sm_state.isp_ae_parm.isp_ae_state = AE_GAIN_ADJUST;//AE_REST;
-			}
-			break;
-		case AE_LOW_GAIN:
-			aepa->cur_gain = func->get_aet_current_gain(func->priv_data);
-			targrate = (aepa->cur_gain << 10)/aepa->tf_ratio;
-			newstep = find_step(func,0,aepa->max_step,targrate);
-			if(aep->ae_skip[1] == 0x1){
-				ae_sens.new_step = newstep;
-				ae_sens.shutter = 1;
-				ae_sens.gain = 1;
-				atomic_set(&ae_info->writeable,1);
-				sm_state.ae_down = false;
-				sm_state.isp_ae_parm.isp_ae_state = AE_REST;
-			}
-			else{
-				ae_sens.new_step = newstep;
-				ae_sens.shutter = 1;
-				ae_sens.gain = 0;
-				atomic_set(&ae_info->writeable,1);
-				sm_state.ae_down = false;
-				sm_state.isp_ae_parm.isp_ae_state = AE_GAIN_ADJUST;
-			}
-			break;
-		case AE_SHUTTER_ADJUST:
-			if(func&&func->get_aet_current_gain)
-				aepa->cur_gain = func->get_aet_current_gain(func->priv_data);
-			aepa->pre_gain = aepa->cur_gain;
-			if(func&&func->get_aet_current_gain)
-				aepa->cur_step = func->get_aet_current_step(func->priv_data);
-			if(ae_sm_dg&AE_SHUTTER_ADJUST_DG)
-				pr_info("cur_gain = %d,cur_step = %d\n",aepa->cur_gain,aepa->cur_step);
-			if(aepa->cur_gain == 0)
 				break;
-			while(step != AE_SUCCESS){
-				switch(step){
-					case AE_START:
-						step = AE_CALCULATE_LUMA_AVG;
-						break;
-					case AE_CALCULATE_LUMA_AVG:
-						for(i=0;i<16;i++){
-							sub_avg[i] = ae->luma_win[i]/aepa->sub_pixel_sum;
-						    	avg_sum += sub_avg[i] * aep->coef_cur[i];
-							avg_env_sum += sub_avg[i] * aep->coef_env[i];
-							if((i == ae_step)&&(ae_sm_dg&AE_CALCULATE_LUMA_AVG_DG))
-								pr_info("sub_avg[%d]=%d,ae->luma_win=%d,aep->coef_cur=%d,aep->coef_env=%d,avg_env_sum=%d,avg_sum=%d \n",i,sub_avg[i],ae->luma_win[i],aep->coef_cur[i],aep->coef_env[i],avg_env_sum,avg_sum);
-						}
-						avg = avg_sum >> 10;
-						if(devp->flag & ISP_FLAG_CAPTURE){
-							avgo = avg/aepa->cur_gain;
-							if(avgo < aep->flash_thr)
-								sm_state.flash = ISP_FLASH_STATUS_ON;
-							else
-								sm_state.flash = ISP_FLASH_STATUS_OFF;
-						}
-						avg_env = avg_env_sum >> 10;
-						step = AE_CALCULATE_LUMA_TARG;
-						break;
-					case AE_CALCULATE_LUMA_TARG:
-						if(aepa->cur_gain == 0)
-							printk("[AE_CALCULATE_LUMA_TARG]:error,aepa->cur_gain = 0\n");
-						avg_envo = (avg_env << 10)/aepa->cur_gain;
-						sum = (ph->hist.gamma[58]+ph->hist.gamma[57]) << ph->hist.hist_pow;
-						if(ae_sm_dg&AE_CALCULATE_LUMA_TARG_DG){
-							pr_info("avg=%d,avg_envo=%d,aepa->cur_gain=%d,avg_env=%d,avg_env_sum=%d,avg_sum=%d,luma_win[9]=%d,sub[9]=%d\n",avg,avg_envo,aepa->cur_gain,avg_env,avg_env_sum,avg_sum,ae->luma_win[9],sub_avg[9]);
-							pr_info("ph->hist.gamma[58]=%d,%d,%d\n",ph->hist.gamma[58],sum,ph->hist.hist_pow);
-						}
-						if((devp->ae_info.manul_level==0)&&((ae_sm_dg&AE_DYNAMIC_ADJUST_DG)==0)){//(avg_envo <= aep->env_low)||((avg_envo <= aep->env_low2mid)&&targ == (aep->targetlow)))
-							//targ = aep->targetlow;
-							if((sum > aepa->max_lumasum4)||((sum > aepa->max_lumasum3)&&(temp==2))){
-								temp = 2;
-								aepa->targ-=2;
-								if(aepa->targ<(aep->targetmid-aep->ae_min_diff))
-									aepa->targ = aep->targetmid-aep->ae_min_diff;
-							}
-							else if((sum < aepa->max_lumasum1)||((sum < aepa->max_lumasum2)&&(temp==0))){
-								temp = 0;
-								aepa->targ++;
-								if(aepa->targ>(aep->targetmid+aep->ae_max_diff))
-									aepa->targ = aep->targetmid+aep->ae_max_diff;
-							}
-							else{
-								temp = 1;
-							}
-						}
-						radium_inner = aep->radium_inner_l;
-						radium_outer = aep->radium_outer_l;
-						sm_state.env = ENV_LOW;
-						isp_set_ae_thrlpf(aep->thr_r_low, aep->thr_g_low, aep->thr_b_low, aep->lpftype_low);
-						/*
-						else if((avg_envo >= aep->env_hign)||((avg_envo >= aep->env_hign2mid)&&targ == (aep->targethigh)))
-						{
-							targ = aep->targethigh;
-							radium_inner = aep->radium_inner_h;
-							radium_outer = aep->radium_outer_h;
-							sm_state.env = ENV_HIGH;
-							isp_set_ae_thrlpf(aep->thr_r_high, aep->thr_g_high, aep->thr_b_high, aep->lpftype_high);
-						}
-						else
-						{
-							targ = aep->targetmid;
-							radium_inner = aep->radium_inner_m;
-							radium_outer = aep->radium_outer_m;
-							sm_state.env = ENV_MID;
-							isp_set_ae_thrlpf(aep->thr_r_mid, aep->thr_g_mid, aep->thr_b_mid, aep->lpftype_mid);
-						}*/
-						if(ae_sm_dg&AE_CALCULATE_LUMA_TARG_DG)
-							pr_info("targ=%d,temp=%d\n",aepa->targ,temp);
-						step = AE_LUMA_AVG_CHECK;
-						break;
-					case AE_LUMA_AVG_CHECK:
-						if(ae_sm_dg&AE_LUMA_AVG_CHECK_DG)
-							pr_info("avg=%d,targ=%d,radium_inner=%d,radium_outer=%d\n",avg,aepa->targ,radium_inner,radium_outer);
-						if(((sm_state.status == ISP_AE_STATUS_UNSTABLE)&&(((avg - aepa->targ) > radium_inner)||((aepa->targ - avg) > radium_inner)))
-							||(((avg - aepa->targ) > radium_outer)||((aepa->targ - avg) > radium_outer))
-							){
-							step = AE_EXPOSURE_ADJUST;
-						}
-						else{
-							if(ae_sm_dg&AE_STATUS_DG)
-								pr_info("ISP_AE_STATUS_STABLE\n");
-							sm_state.status = ISP_AE_STATUS_STABLE;
-							step = AE_SUCCESS;
-							//if(func->check_mains_freq)
-								//sm_state.isp_ae_parm.isp_ae_state = AE_ORI_SET;
-							//else
-								sm_state.isp_ae_parm.isp_ae_state = AE_SHUTTER_ADJUST;
-						}
-						break;
-					case AE_EXPOSURE_ADJUST:
-						if(avg == 0){
-							step = AE_SUCCESS;
-							break;
-						}
-						targrate = (aepa->targ * aepa->cur_gain)/avg;
-						if(ae_sm_dg&AE_EXPOSURE_ADJUST_DG)
-							pr_info("targrate = %d\n",targrate);
-						if(targrate > aepa->max_gain)
-							targrate = aepa->max_gain;
-						if(targrate < aepa->min_gain)
-							targrate = aepa->min_gain;
-						targstep = find_step(func,0,aepa->max_step,targrate);
-						if(targstep > aepa->max_step)
-							targstep = aepa->max_step;
-						if(ae_sm_dg&AE_EXPOSURE_ADJUST_DG)
-							pr_info("targstep = %d,%d\n",targstep,targrate);
-						lpfcoef = (devp->flag & ISP_FLAG_CAPTURE)?aep->fast_lpfcoef:aep->slow_lpfcoef;
-						newstep = (aepa->cur_step*lpfcoef + targstep*(256-lpfcoef))>>8;
-						if(ae_sm_dg&AE_EXPOSURE_ADJUST_DG)
-							pr_info("newstep =%d,lpf =%d,%d\n",newstep,lpfcoef,aepa->cur_step);
-						if((newstep >= aepa->max_step - 1)||(newstep == aepa->cur_step)||(newstep == 0)){
-							sm_state.status = ISP_AE_STATUS_STABLE;
-							if(ae_sm_dg&AE_STATUS_DG)
-								pr_info("ISP_AE_STATUS_STABLE2\n");
-							step = AE_SUCCESS;
-						}
-						else
-							step = AE_SET_NEWSTEP;
-						break;
-					case AE_SET_NEWSTEP:
-						if(aep->ae_skip[0] == 0x1){
-							if(atomic_read(&ae_info->writeable) <= 0){
-								ae_sens.new_step = newstep;
-								ae_sens.shutter = 0;
-								ae_sens.gain = 1;
-								atomic_set(&ae_info->writeable,1);
-								sm_state.status = ISP_AE_STATUS_UNSTABLE;
-								if(ae_sm_dg&AE_STATUS_DG)
-									pr_info("ISP_AE_STATUS_UNSTABLE1\n");
-								sm_state.ae_down = false;
-							}
-							if(ae_sm_dg&AE_GAIN_ADJUST_SEL)
-								sm_state.isp_ae_parm.isp_ae_state = AE_GAIN_ADJUST;
-							else
-								sm_state.isp_ae_parm.isp_ae_state = AE_SHUTTER_ADJUST;
-							step = AE_SUCCESS;
-						}
-						else if(aep->ae_skip[1] == 0x1){
-							ae_sens.new_step = newstep;
-							ae_sens.shutter = 1;
-							ae_sens.gain = 1;
-							atomic_set(&ae_info->writeable,1);
-							sm_state.status = ISP_AE_STATUS_UNSTABLE;
-							if(ae_sm_dg&AE_STATUS_DG)
-								pr_info("ISP_AE_STATUS_UNSTABLE\n");
-							sm_state.ae_down = false;
-							sm_state.isp_ae_parm.isp_ae_state = AE_REST;
-							step = AE_SUCCESS;
-						}
-						else{
-							ae_sens.new_step = newstep;
-							ae_sens.shutter = 1;
-							ae_sens.gain = 0;
-							atomic_set(&ae_info->writeable,1);
-							sm_state.status = ISP_AE_STATUS_UNSTABLE;
-							if(ae_sm_dg&AE_STATUS_DG)
-								pr_info("ISP_AE_STATUS_UNSTABLE\n");
-							sm_state.ae_down = false;
-							sm_state.isp_ae_parm.isp_ae_state = AE_GAIN_ADJUST;//AE_REST;
-							step = AE_SUCCESS;
-						}
-						break;
-					case AE_SUCCESS:
-					default:
-						step = 0;
-						break;
-				};
 			}
 			break;
 		case AE_GAIN_ADJUST:
@@ -566,17 +421,15 @@ void isp_ae_sm(isp_dev_t *devp)
 		case AE_REST:
 			sm_state.ae_down = true;
 			if(atomic_read(&ae_info->writeable) <= 0)
-				k++;
-			//printk("func->check_mains_freq =%x\n",func->check_mains_freq);
-			//if(func->check_mains_freq)
-			//	sm_state.isp_ae_parm.isp_ae_state = AE_ORI_SET;
-			//else
-			if(k > ae_step){
-				k = 0;
+				delay_vs++;
+			if(delay_vs > ae_step){
+				delay_vs = 0;
 				sm_state.isp_ae_parm.isp_ae_state = AE_SHUTTER_ADJUST;
 			}
 			break;
-    		}
+		default:
+			break;
+    	}
 }
 
 // VDIN_MATRIX_YUV601_RGB
@@ -636,258 +489,131 @@ void isp_awb_sm(isp_dev_t *devp)
 	struct xml_algorithm_awb_s *awbp = devp->isp_awb_parm;
 	struct isp_info_s *parm = &devp->info;
 	struct isp_awb_sm_s *awba = &sm_state.isp_awb_parm;
-	int step = 0;
-
+	unsigned int rg,bg,target_r,target_b,i,yy,countlimity,cnt,u,v;
+	awb_yuv_stat_t yuv_ex[4];
 	u16 r[5] = {0};      //0,rgb;1,ym;2,yh;3,yl;4,final.
 	u16 g[5] = {0};
 	u16 b[5] = {0};
-	u32 count[3] = {0};   //0,mid;1,hign;2,low.
-	int u[3] = {0};
-	int v[3] = {0};
-	u16 rg = 0;
-	u16 bg = 0;
-	u16 target_r;
-	u16 target_b;
-	//printk("sm_state.isp_awb_parm.isp_awb_state=%d\n",sm_state.isp_awb_parm.isp_awb_state);
 
 	switch(sm_state.isp_awb_parm.isp_awb_state){
-		case AWB_IDLE:
-			break;
 		case AWB_INIT:
 			awba->win_l = (parm->h_active * awbp->ratio_winl) >> 10;
 			awba->win_r = ((parm->h_active * awbp->ratio_winr) >> 10) - 1;
 			awba->win_t = (parm->v_active * awbp->ratio_wint) >> 10;
 			awba->win_b = ((parm->v_active * awbp->ratio_winb) >> 10) - 1;
-			printk("awb,win_l=%d,win_r=%d,win_t=%d,win_b=%d\n",awba->win_l,awba->win_r,awba->win_t,awba->win_b);
+			pr_info("awb,win_l=%d,win_r=%d,win_t=%d,win_b=%d\n",awba->win_l,awba->win_r,awba->win_t,awba->win_b);
 			isp_set_awb_win(awba->win_l, awba->win_r, awba->win_t, awba->win_b);
+			if(sm_state.env == ENV_HIGH){
+				isp_set_awb_yuv_thr(awbp->thr_yh_h, awbp->thr_yl_h, awbp->thr_du_h, awbp->thr_dv_h);
+				isp_set_awb_rgb_thr(awbp->thr_gb_h, awbp->thr_gr_h, awbp->thr_br_h);
+			}
+			else if(sm_state.env == ENV_MID){
+				isp_set_awb_yuv_thr(awbp->thr_yh_m, awbp->thr_yl_m, awbp->thr_du_m, awbp->thr_dv_m);
+				isp_set_awb_rgb_thr(awbp->thr_gb_m, awbp->thr_gr_m, awbp->thr_br_m);
+			}
+			else{/*sm_state.env == ENV_LOW or ENV_NULL*/
+				isp_set_awb_yuv_thr(awbp->thr_yh_l, awbp->thr_yl_l, awbp->thr_du_l, awbp->thr_dv_l);
+				isp_set_awb_rgb_thr(awbp->thr_gb_l, awbp->thr_gr_l, awbp->thr_br_l);
+			}
 			awba->pixel_sum = parm->h_active * parm->v_active;
 			awba->countlimitrgb = ((awba->pixel_sum >> 2) * awbp->ratio_rgb) >> 6;
-			awba->countlimityh	= ((awba->pixel_sum >> 2) * awbp->ratio_yh) >> 6;
-			awba->countlimitym	= ((awba->pixel_sum >> 2) * awbp->ratio_ym) >> 6;
-			awba->countlimityl	= ((awba->pixel_sum >> 2) * awbp->ratio_yl) >> 6;
+			awba->countlimityh = ((awba->pixel_sum >> 2) * awbp->ratio_yh) >> 6;
+			awba->countlimitym = ((awba->pixel_sum >> 2) * awbp->ratio_ym) >> 6;
+			awba->countlimityl = ((awba->pixel_sum >> 2) * awbp->ratio_yl) >> 6;
 			awba->status = ISP_AWB_STATUS_STABLE;
-			    sm_state.isp_awb_parm.isp_awb_state = AWB_CHECK;
+			sm_state.isp_awb_parm.isp_awb_state = AWB_CHECK;
 			break;
 		case AWB_CHECK:
-			while(step != AWB_SUCCESS)
-			{
-				//printk("step = %d\n",step);
-				switch(step){
-					case AWB_START:
-						step = AWB_RGB_COUNT_CHECK;
-						//printk("step1 = %d\n",step);
-						break;
-					case AWB_RGB_COUNT_CHECK:
-						if(awb_sm_dg&AWB_RGB_COUNT_CHECK_DG)
-							pr_info("awb->rgb.rgb_count=%d\n",awb->rgb.rgb_count);
-						if(awb->rgb.rgb_count >= awba->countlimitrgb)
-							step = AWB_CALCULATE_RGB;
-						else
-						{
-							r[0] = 0;
-							g[0] = 0;
-							b[0] = 0;
-							step = AWB_YUVM_COUNT_CHECK;
-						}
-						//printk("step55 = %d\n",step);
-					    break;
-					case AWB_CALCULATE_RGB:
-						if(awb->rgb.rgb_count <= 0)
-						{
-							step = AWB_SUCCESS;
-							break;
-						}
-						r[0] = awb->rgb.rgb_sum[0]/awb->rgb.rgb_count;
-						g[0] = awb->rgb.rgb_sum[1]/awb->rgb.rgb_count;
-						b[0] = awb->rgb.rgb_sum[2]/awb->rgb.rgb_count;
-						step = AWB_YUVM_COUNT_CHECK;
-						break;
-					case AWB_YUVM_COUNT_CHECK:
-						count[0] = awb->yuv_mid[0].count + awb->yuv_mid[1].count;
-						if(count[0] >= awba->countlimitym)
-							step = AWB_CALCULATE_YUVM;
-						else
-						{
-							r[1] = 0;
-							g[1] = 0;
-							b[1] = 0;
-							step = AWB_YUVH_COUNT_CHECK;
-						}
-						break;
-					case AWB_CALCULATE_YUVM:
-						if(count[0] <= 0)
-						{
-							step = AWB_SUCCESS;
-							break;
-						}
-						u[0] = (awb->yuv_mid[1].sum - awb->yuv_mid[0].sum)/count[0];
-						v[0] = (awb->yuv_mid[3].sum - awb->yuv_mid[2].sum)/count[0];
-
-						if(parm->v_active >= 720)
-						{
-							r[1] = matrix_yuv709_rgb_r(awbp->yym,u[0]+128,v[0]+128);
-							g[1] = matrix_yuv709_rgb_g(awbp->yym,u[0]+128,v[0]+128);
-							b[1] = matrix_yuv709_rgb_b(awbp->yym,u[0]+128,v[0]+128);
-						}
-						else
-						{
-							r[1] = matrix_yuv601_rgb_r(awbp->yym,u[0]+128,v[0]+128);
-							g[1] = matrix_yuv601_rgb_g(awbp->yym,u[0]+128,v[0]+128);
-							b[1] = matrix_yuv601_rgb_b(awbp->yym,u[0]+128,v[0]+128);
-						}
-						step = AWB_YUVH_COUNT_CHECK;
-						break;
-					case AWB_YUVH_COUNT_CHECK:
-						count[1] = awb->yuv_high[0].count + awb->yuv_high[1].count;
-						if(count[1] >= awba->countlimityh)
-							step = AWB_CALCULATE_YUVH;
-						else
-						{
-							r[2] = 0;
-							g[2] = 0;
-							b[2] = 0;
-							step = AWB_YUVL_COUNT_CHECK;
-						}
-						break;
-					case AWB_CALCULATE_YUVH:
-						if(count[1] <= 0)
-						{
-							step = AWB_SUCCESS;
-							break;
-						}
-						u[1] = (awb->yuv_high[1].sum - awb->yuv_high[0].sum)/count[1];
-						v[1] = (awb->yuv_high[3].sum - awb->yuv_high[2].sum)/count[1];
-
-						if(parm->v_active >= 720)
-						{
-							r[2] = matrix_yuv709_rgb_r(awbp->yyh,u[1]+128,v[1]+128);
-							g[2] = matrix_yuv709_rgb_g(awbp->yyh,u[1]+128,v[1]+128);
-							b[2] = matrix_yuv709_rgb_b(awbp->yyh,u[1]+128,v[1]+128);
-						}
-						else
-						{
-							r[2] = matrix_yuv601_rgb_r(awbp->yyh,u[1]+128,v[1]+128);
-							g[2] = matrix_yuv601_rgb_g(awbp->yyh,u[1]+128,v[1]+128);
-							b[2] = matrix_yuv601_rgb_b(awbp->yyh,u[1]+128,v[1]+128);
-						}
-						step = AWB_YUVL_COUNT_CHECK;
-						break;
-					case AWB_YUVL_COUNT_CHECK:
-						count[2] = awb->yuv_low[0].count + awb->yuv_low[1].count;
-						if(count[2] >= awba->countlimityl)
-							step = AWB_CALCULATE_YUVL;
-						else
-						{
-							r[3] = 0;
-							g[3] = 0;
-							b[3] = 0;
-							step = AWB_RGB_BLEND;
-						}
-						break;
-					case AWB_CALCULATE_YUVL:
-						if(count[2] <= 0)
-						{
-							step = AWB_SUCCESS;
-							break;
-						}
-						u[2] = (awb->yuv_low[1].sum - awb->yuv_low[0].sum)/count[2];
-						v[2] = (awb->yuv_low[3].sum - awb->yuv_low[2].sum)/count[2];
-
-						if(parm->v_active >= 720)
-						{
-							r[3] = matrix_yuv709_rgb_r(awbp->yyl,u[2]+128,v[2]+128);
-							g[3] = matrix_yuv709_rgb_g(awbp->yyl,u[2]+128,v[2]+128);
-							b[3] = matrix_yuv709_rgb_b(awbp->yyl,u[2]+128,v[2]+128);
-						}
-						else
-						{
-							r[3] = matrix_yuv601_rgb_r(awbp->yyl,u[2]+128,v[2]+128);
-							g[3] = matrix_yuv601_rgb_g(awbp->yyl,u[2]+128,v[2]+128);
-							b[3] = matrix_yuv601_rgb_b(awbp->yyl,u[2]+128,v[2]+128);
-						}
-						step = AWB_RGB_BLEND;
-						break;
-			        case AWB_RGB_BLEND:
-						r[4] = (r[0]*awbp->coef_r[0]+r[1]*awbp->coef_r[1]+r[2]*awbp->coef_r[2]+r[3]*awbp->coef_r[3])>>8;
-						g[4] = (g[0]*awbp->coef_g[0]+g[1]*awbp->coef_g[1]+g[2]*awbp->coef_g[2]+g[3]*awbp->coef_g[3])>>8;
-						b[4] = (b[0]*awbp->coef_b[0]+b[1]*awbp->coef_b[1]+b[2]*awbp->coef_b[2]+b[3]*awbp->coef_b[3])>>8;
-						if(awb_sm_dg&AWB_RGB_BLEND_DG)
-							pr_info("r=%d,%d,%d,%d,%d,g=%d,%d,%d,%d,%d,b=%d,%d,%d,%d,%d\n",r[0],r[1],r[2],r[3],r[4],g[0],g[1],g[2],g[3],g[4],b[0],b[1],b[2],b[3],b[4]);
-						if(sm_state.env == ENV_HIGH)
-						{
-							isp_set_awb_yuv_thr(awbp->thr_yh_h, awbp->thr_yl_h, awbp->thr_du_h, awbp->thr_dv_h);
-							isp_set_awb_rgb_thr(awbp->thr_gb_h, awbp->thr_gr_h, awbp->thr_br_h);
-						}
-						else if(sm_state.env == ENV_MID)
-						{
-							isp_set_awb_yuv_thr(awbp->thr_yh_m, awbp->thr_yl_m, awbp->thr_du_m, awbp->thr_dv_m);
-							isp_set_awb_rgb_thr(awbp->thr_gb_m, awbp->thr_gr_m, awbp->thr_br_m);
-						}
-						else if(sm_state.env == ENV_LOW)
-						{
-							isp_set_awb_yuv_thr(awbp->thr_yh_l, awbp->thr_yl_l, awbp->thr_du_l, awbp->thr_dv_l);
-							isp_set_awb_rgb_thr(awbp->thr_gb_l, awbp->thr_gr_l, awbp->thr_br_l);
-						}
-						step = AWB_TEMP_CHECK;
-						break;
-					case AWB_TEMP_CHECK:
-						if((g[4] == 0)||(r[4] == 0)||(b[4] == 0))
-						{
-							step = AWB_SUCCESS;
-							break;
-						}
-						rg = (r[4] << 10)/g[4];
-						bg = (b[4] << 10)/g[4];
-						if(awb_sm_dg&AWB_TEMP_CHECK_DG)
-							pr_info("rg=%d,bg=%d\n",rg,bg);
-						if(((awba->status == ISP_AWB_STATUS_UNSTABLE) && ((rg > 1024 + awbp->inner_rg)||(rg < 1024 - awbp->inner_rg)))
-							||((rg > 1024 + awbp->outer_rg)||(rg < 1024 - awbp->outer_rg))
-							||((awba->status == ISP_AWB_STATUS_UNSTABLE) && ((bg > 1024 + awbp->inner_bg)||(bg < 1024 - awbp->inner_bg)))
-							||((bg > 1024 + awbp->outer_bg)||(bg < 1024 - awbp->outer_bg))
-							)
-							step = AWB_TEMP_ADJUST;
-						else
-						{
-							awba->status = ISP_AWB_STATUS_STABLE;
-							step = AWB_SUCCESS;
-						}
-						break;
-					case AWB_TEMP_ADJUST:
-						awba->status = ISP_AWB_STATUS_UNSTABLE;
-						isp_awb_get_gain(&awb_gain);
-						if(awb_sm_dg&AWB_TEMP_ADJUST_DG)
-							pr_info("r_val=%d,b_val=%d\n",awb_gain.r_val,awb_gain.b_val);
-						target_r = (awb_gain.r_val<<10)/rg;
-						target_b = (awb_gain.b_val<<10)/bg;
-						//awbp->r_max = 282;
-						//awbp->g_max = 512;
-						//awbp->b_max = 282;
-						//awbp->r_min = 200;
-						//awbp->g_min = 128;
-						//awbp->b_min = 200;
-
-						if(awb_sm_dg&AWB_TEMP_ADJUST_DG)
-							pr_info("target_r=%d,target_b=%d\n",target_r,target_b);
-						if(target_r > awbp->r_max)
-							target_r = awbp->r_max;
-						if(target_r < awbp->r_min)
-							target_r = awbp->r_min;
-						if(target_b > awbp->b_max)
-							target_b = awbp->b_max;
-						if(target_b < awbp->b_min)
-							target_b = awbp->b_min;
-						if(awb_sm_dg&AWB_GAIN_SET_DG)
-							isp_awb_set_gain(target_r,awb_gain.g_val,target_b);
-						//r_val = target_r;
-						//b_val = target_b;
-						step = AWB_SUCCESS;
-						break;
-					case AWB_SUCCESS:
-					default:
-						step = 0;
-						break;
+			if(awb_sm_dg&AWB_RGB_COUNT_CHECK_DG)
+				pr_info("awb->rgb.rgb_count=%d\n",awb->rgb.rgb_count);
+			/*AWB_RGB_COUNT_CHECK & CAL*/
+			if(awb->rgb.rgb_count >= awba->countlimitrgb){
+				r[0] = awb->rgb.rgb_sum[0]/awb->rgb.rgb_count;
+				g[0] = awb->rgb.rgb_sum[1]/awb->rgb.rgb_count;
+				b[0] = awb->rgb.rgb_sum[2]/awb->rgb.rgb_count;
+			}
+			else{
+				r[0] = 0;
+				g[0] = 0;
+				b[0] = 0;
+			}
+			/*AWB_YUV_COUNT_CHECK & CAL*/
+			for(i = 0;i < 3;i++){
+				if(i == 0){
+					yy = awbp->yym;
+					countlimity = awba->countlimitym;
+					memcpy(yuv_ex,awb->yuv_mid,4*sizeof(awb_yuv_stat_t));
+				}
+				else if(i == 1){
+					yy = awbp->yyh;
+					countlimity = awba->countlimityh;
+					memcpy(yuv_ex,awb->yuv_high,4*sizeof(awb_yuv_stat_t));
+				}
+				else if(i == 2){
+					yy = awbp->yyl;
+					countlimity = awba->countlimityl;
+					memcpy(yuv_ex,awb->yuv_low,4*sizeof(awb_yuv_stat_t));
+				}
+				cnt = yuv_ex[0].count + yuv_ex[1].count;
+				if(cnt >= countlimity){
+					u = (yuv_ex[1].sum - yuv_ex[0].sum)/cnt;
+					v = (yuv_ex[3].sum - yuv_ex[2].sum)/cnt;
+					if(parm->v_active >= 720){
+						r[i+1] = matrix_yuv709_rgb_r(yy,u+128,v+128);
+						g[i+1] = matrix_yuv709_rgb_g(yy,u+128,v+128);
+						b[i+1] = matrix_yuv709_rgb_b(yy,u+128,v+128);
+					}
+					else{
+						r[i+1] = matrix_yuv601_rgb_r(yy,u+128,v+128);
+						g[i+1] = matrix_yuv601_rgb_g(yy,u+128,v+128);
+						b[i+1] = matrix_yuv601_rgb_b(yy,u+128,v+128);
+					}
+				}
+				else{
+					r[i+1] = 0;
+					g[i+1] = 0;
+					b[i+1] = 0;
 				}
 			}
+			/*AWB_RGB_BLEND*/
+			r[4] = (r[0]*awbp->coef_r[0]+r[1]*awbp->coef_r[1]+r[2]*awbp->coef_r[2]+r[3]*awbp->coef_r[3])>>8;
+			g[4] = (g[0]*awbp->coef_g[0]+g[1]*awbp->coef_g[1]+g[2]*awbp->coef_g[2]+g[3]*awbp->coef_g[3])>>8;
+			b[4] = (b[0]*awbp->coef_b[0]+b[1]*awbp->coef_b[1]+b[2]*awbp->coef_b[2]+b[3]*awbp->coef_b[3])>>8;
+			if(awb_sm_dg&AWB_RGB_BLEND_DG)
+				pr_info("r=%d,%d,%d,%d,%d,g=%d,%d,%d,%d,%d,b=%d,%d,%d,%d,%d\n",r[0],r[1],r[2],r[3],r[4],g[0],g[1],g[2],g[3],g[4],b[0],b[1],b[2],b[3],b[4]);
+			/*check & adjust*/
+			if((g[4] == 0)||(r[4] == 0)||(b[4] == 0)){
+				break;
+			}
+			rg = (r[4] << 10)/g[4];
+			bg = (b[4] << 10)/g[4];
+			if(awb_sm_dg&AWB_TEMP_CHECK_DG)
+				pr_info("rg=%d,bg=%d\n",rg,bg);
+			if(((awba->status == ISP_AWB_STATUS_UNSTABLE) && ((rg > 1024 + awbp->inner_rg)||(rg < 1024 - awbp->inner_rg)))
+				||((rg > 1024 + awbp->outer_rg)||(rg < 1024 - awbp->outer_rg))
+				||((awba->status == ISP_AWB_STATUS_UNSTABLE) && ((bg > 1024 + awbp->inner_bg)||(bg < 1024 - awbp->inner_bg)))
+				||((bg > 1024 + awbp->outer_bg)||(bg < 1024 - awbp->outer_bg))
+				){
+				awba->status = ISP_AWB_STATUS_UNSTABLE;
+				isp_awb_get_gain(&awb_gain);
+				target_r = (awb_gain.r_val<<10)/rg;
+				target_b = (awb_gain.b_val<<10)/bg;
+				if(awb_sm_dg&AWB_TEMP_ADJUST_DG)
+					pr_info("cur_r_val=%d,cur_b_val=%d,target_r=%d,target_b=%d\n",
+					awb_gain.r_val,awb_gain.b_val,target_r,target_b);
+				target_r = (target_r > awbp->r_max) ? awbp->r_max : target_r;
+				target_r = (target_r < awbp->r_min) ? awbp->r_min : target_r;
+				target_b = (target_b > awbp->b_max) ? awbp->b_max : target_b;
+				target_b = (target_b < awbp->b_min) ? awbp->b_min : target_b;
+				if(awb_sm_dg&AWB_GAIN_SET_DG)
+					isp_awb_set_gain(target_r,awb_gain.g_val,target_b);
+			}
+			else{
+				awba->status = ISP_AWB_STATUS_STABLE;
+				break;
+			}
+			break;
+		default:
 			break;
 	}
 }
@@ -959,17 +685,8 @@ static unsigned long long get_fv_base_blnr(isp_blnr_stat_t *blnr)
 	sum_ac = (unsigned long long)blnr->af_ac[0];
 	return sum_ac;
 	//return div64(mul_ac,sum_dc);
-
 }
-static unsigned int jitter = 5;
-module_param(jitter,uint,0664);
-MODULE_PARM_DESC(jitter,"\n debug flag for ae.\n");
-
-static unsigned int delta = 9;
-module_param(delta,uint,0664);
-MODULE_PARM_DESC(delta,"\n debug flag for ae.\n");
-
-static bool is_lost_focus(isp_af_info_t *af_info,xml_algorithm_af_t *af_alg)
+static bool isp_af_is_lost_focus(isp_af_info_t *af_info,xml_algorithm_af_t *af_alg)
 {
 	unsigned long long *v_dc,sum_vdc=0,ave_vdc=0,delta_dc=0,tmp_vdc=0;
 	unsigned int i=0,dc0,dc1,dc2,dc3,static_cnt;
@@ -1046,7 +763,7 @@ void isp_af_detect(isp_dev_t *devp)
 			}
 			break;
 		case AF_GET_STATUS:
-			if(is_lost_focus(af_info,af_alg)){
+			if(isp_af_is_lost_focus(af_info,af_alg)){
 				sm_state.af_state = AF_SCAN_INIT;
 				if(af_sm_dg&AF_DETECT)
 					pr_info("[af_sm]:lost focus.\n");
@@ -1089,10 +806,10 @@ static unsigned int check_hillside(isp_af_info_t *af_info,xml_algorithm_af_t *af
 	return ret;
 
 }
-static unsigned int get_fine_step(isp_af_info_t *af_info,xml_algorithm_af_t *af_alg)
+static unsigned int isp_af_get_fine_step(isp_af_info_t *af_info,xml_algorithm_af_t *af_alg)
 {
         unsigned int i = 0, j = 0,cur_grid = 0, max_grid = 0, best_step = 0;
-        unsigned long long delta_fv, fv[FOCUS_GRIDS], max_fv = 0, min_fv = 0xffffffffffffffff, sum_fv = 0,moment = 0;
+        unsigned long long delta_fv,fv[FOCUS_GRIDS], max_fv = 0, min_fv = 0xffffffffffffffff, sum_fv = 0,moment = 0;
 	isp_af_fine_tune_t af_fine_data_ex;
 	for(i = 0; i < af_info->valid_step_cnt; i++){
 		for(j = i+1; j < af_info->valid_step_cnt; j++ ){
@@ -1203,7 +920,7 @@ void isp_af_fine_tune(isp_dev_t *devp)
 				memcpy(&af_info->af_fine_data[af_info->valid_step_cnt - 1].af_data,&af_info->isr_af_data,sizeof(isp_blnr_stat_t));
 				if((af_info->cur_index == 0)||(check_hillside(af_info,af_alg) == 1)){
 				        sm_state.af_state = AF_GET_FINE_INFO;
-					af_info->great_step = get_fine_step(af_info,af_alg);
+					af_info->great_step = isp_af_get_fine_step(af_info,af_alg);
 				}else{
 					af_info->cur_index--;
 					af_info->cur_step = af_alg->step[af_info->cur_index];
@@ -1234,7 +951,7 @@ void isp_af_fine_tune(isp_dev_t *devp)
 				memcpy(&af_info->af_fine_data[af_info->valid_step_cnt - 1].af_data,&af_info->isr_af_data,sizeof(isp_blnr_stat_t));
 				if((++af_info->cur_index >= af_alg->valid_step_cnt)||(check_hillside(af_info,af_alg) == 1)){
 				        sm_state.af_state = AF_GET_FINE_INFO;
-					af_info->great_step = get_fine_step(af_info,af_alg);
+					af_info->great_step = isp_af_get_fine_step(af_info,af_alg);
 				}else{
 					af_info->cur_step = af_alg->step[af_info->cur_index];
 				        atomic_set(&af_info->writeable,1);
@@ -1244,7 +961,7 @@ void isp_af_fine_tune(isp_dev_t *devp)
 			break;
 		case AF_CALC_GREAT:
 			if(atomic_read(&af_info->writeable) <= 0){
-				af_info->great_step = get_fine_step(af_info,af_alg);
+				af_info->great_step = isp_af_get_fine_step(af_info,af_alg);
 				if((af_info->cur_step - af_alg->jump_offset) > af_info->great_step){
 					af_info->cur_step = af_info->cur_step - af_alg->jump_offset;
 					sm_state.af_state = AF_GET_FINE_INFO;

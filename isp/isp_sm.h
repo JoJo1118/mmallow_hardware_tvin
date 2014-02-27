@@ -14,41 +14,11 @@
 #define __ISP_STATE_MACHINE_H
 #include "isp_drv.h"
 
-typedef enum isp_auto_exposure_step_e {
-	AE_START = 0,
-	AE_CALCULATE_LUMA_AVG,
-	AE_CALCULATE_LUMA_TARG,
-	AE_LUMA_AVG_CHECK,
-	AE_EXPOSURE_ADJUST,
-	AE_SET_NEWSTEP,
-	AE_SUCCESS,
-} isp_auto_exposure_step_t;
-
-typedef enum isp_auto_whiteblance_step_e {
-	AWB_START = 0,
-	AWB_RGB_COUNT_CHECK,
-	AWB_CALCULATE_RGB,
-	AWB_YUVH_COUNT_CHECK,
-	AWB_CALCULATE_YUVH,
-	AWB_YUVM_COUNT_CHECK,
-	AWB_CALCULATE_YUVM,
-	AWB_YUVL_COUNT_CHECK,
-	AWB_CALCULATE_YUVL,
-	AWB_RGB_BLEND,
-	AWB_TEMP_CHECK,
-	AWB_TEMP_ADJUST,
-	AWB_SUCCESS,
-} isp_auto_whiteblance_step_t;
-
-
 typedef enum isp_auto_exposure_state_e {
-	AE_IDLE,
 	AE_INIT,
 	AE_SHUTTER_ADJUST,
 	AE_GAIN_ADJUST,
 	AE_REST,
-	AE_ORI_SET,
-	AE_LOW_GAIN,
 } isp_auto_exposure_state_t;
 
 typedef enum isp_auto_white_balance_state_e {
@@ -89,7 +59,7 @@ typedef enum isp_capture_state_e {
 
 typedef enum isp_ae_status_s {
 	ISP_AE_STATUS_NULL = 0,
-	ISP_AE_STATUS_UNSTABLE,	
+	ISP_AE_STATUS_UNSTABLE,
 	ISP_AE_STATUS_STABLE,
 	ISP_AE_STATUS_UNTUNEABLE,
 }isp_ae_status_t;
@@ -110,7 +80,7 @@ typedef struct isp_ae_sm_s {
 	unsigned int min_gain;
 	unsigned int max_step;
 	unsigned int cur_step;
-	unsigned int countlimit_r;	
+	unsigned int countlimit_r;
 	unsigned int countlimit_g;
 	unsigned int countlimit_b;
 	unsigned int tf_ratio;
@@ -126,7 +96,7 @@ typedef struct isp_ae_sm_s {
 
 typedef enum isp_awb_status_s {
 	ISP_AWB_STATUS_NULL = 0,
-	ISP_AWB_STATUS_UNSTABLE,	
+	ISP_AWB_STATUS_UNSTABLE,
 	ISP_AWB_STATUS_STABLE,
 }isp_awb_status_t;
 
@@ -140,13 +110,13 @@ typedef struct isp_awb_sm_s {
 	unsigned int countlimitrgb;
 	unsigned int countlimityh;
 	unsigned int countlimitym;
-	unsigned int countlimityl;	
+	unsigned int countlimityl;
 
 	unsigned int countlimityuv;
 	unsigned char y;
 	unsigned char w;
 	unsigned char coun;
-	
+
 	isp_auto_white_balance_state_t isp_awb_state;
 
 }isp_awb_sm_t;
@@ -170,11 +140,11 @@ typedef struct isp_af_sm_s {
 typedef struct isp_capture_sm_s {
 	unsigned int adj_cnt;
 	unsigned int max_ac_sum;
-	unsigned int tr_time; 
+	unsigned int tr_time;
 	unsigned int fr_time;
 	unsigned char flash_on;
 	flash_mode_t  flash_mode;
-	isp_capture_state_t capture_state;	
+	isp_capture_state_t capture_state;
 } isp_capture_sm_t;
 
 typedef struct isp_sm_s {

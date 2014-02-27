@@ -677,12 +677,12 @@ static ssize_t ls_show(struct device *dev, struct device_attribute *attr, char *
 static ssize_t ls_store(struct device *dev,struct device_attribute *attr,const char *buf, size_t len)
 {
 	char *buf_orig, *parm[10]={NULL};
-	unsigned int psize_v2h=0,hactive=0,vactive=0,ocenter_c2l=0,ocenter_c2t=0,gain_0db=0,curvature_gr=0,curvature_r=0;
+	unsigned int psize_v2h=0,ocenter_c2l=0,ocenter_c2t=0,gain_0db=0,curvature_gr=0,curvature_r=0;
         unsigned int curvature_b=0,curvature_gb=0;
         isp_dev_t *devp;
 	devp = dev_get_drvdata(dev);
 	isp_info_t *info = &devp->info;
-       
+
         bool force_enable=false;
 
 	/* to avoid the bellow warning message while compiling:
@@ -729,7 +729,7 @@ static ssize_t aet_show(struct device *dev, struct device_attribute *attr, char 
         ssize_t len = 0;
 	struct cam_function_s *cam_func;
 	isp_dev_t *devp = dev_get_drvdata(dev);
-    
+
         if(!buf)
                 return len;
 	if(devp->cam_param)
@@ -750,21 +750,21 @@ static ssize_t aet_store(struct device *dev,struct device_attribute *attr,const 
 	char *buf_orig,*parm[4]={NULL};
 	struct cam_function_s *cam_func;
         isp_dev_t *devp=dev_get_drvdata(dev);
-    
+
         if(!buf)
-                return len;	
+                return len;
 	buf_orig = kstrdup(buf, GFP_KERNEL);
 	parse_param(buf_orig,(char **)&parm);
 	if(devp->cam_param)
 		cam_func = &(devp->cam_param->cam_function);
 	else
 		return len;
-	
+
 	if(parm[0]){
 		unsigned int step = simple_strtol(parm[0],NULL,10);
 		cam_func->set_aet_new_step(cam_func->priv_data,step,1,1);
 	}
-	
+
 	kfree(buf_orig);
 
 	return len;
@@ -1169,8 +1169,8 @@ static int isp_fe_isr(struct tvin_frontend_s *fe, unsigned int hcnt64)
 		ret = max(isp_capture_sm(devp),ret);
 	if(isr_debug&&ret)
 		pr_info("%s isp %d buf.\n",__func__,ret);
-	
-	
+
+
 #ifndef USE_WORK_QUEUE
 	if(!(devp->flag & ISP_FLAG_TEST_WB))
 	    tasklet_schedule(&devp->isp_task);
@@ -1256,13 +1256,13 @@ static struct tvin_decoder_ops_s isp_dec_ops ={
 static void isp_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_property_s *prop)
 {
 	isp_dev_t *devp = container_of(fe,isp_dev_t,frontend);
-        
+
         prop->color_format = devp->info.cfmt;
 	prop->dest_cfmt = devp->info.dfmt;
-	
+
         prop->scaling4w = devp->info.dest_hactive;
 	prop->scaling4h = devp->info.dest_vactive;
-	
+
 	prop->vs = 0;
 	prop->ve = 0;
 	prop->hs = 0;

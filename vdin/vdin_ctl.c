@@ -1375,7 +1375,7 @@ inline void vdin_set_default_regmap(unsigned int offset)
 	// [    2] asfifo_dvin.rst_on_vs        = 1
 	// [    1] asfifo_dvin.clr_ov_flag      = 0
 	// [    0] asfifo_dvin.rst              = 0
-	//WR(VDIN_ASFIFO_CTRL2, 0x00000000);
+	WR(VDIN_ASFIFO_CTRL2, 0x00000000);
         //Bit 15:8 vdi7 asfifo_ctrl
 	//Bit 7:0 vdi6 asfifo_ctrl
 	//WR(VDIN_ASFIFO_CTRL3, 0x00000000);

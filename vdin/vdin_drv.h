@@ -36,7 +36,7 @@
 #include "vdin_vf.h"
 #include "vdin_regs.h"
 
-#define VDIN_VER "Ref.2014/2/17a"
+#define VDIN_VER "Ref.2014/3/25a"
 
 /*the counter of vdin*/
 #define VDIN_MAX_DEVS			2
@@ -69,7 +69,7 @@
 #define VDIN_FLAG_BLACK_SCREEN_ON	1
 #define VDIN_FLAG_BLACK_SCREEN_OFF	0
 
-//#define VDIN_DEBUG                      
+//#define VDIN_DEBUG
 
 static inline const char *vdin_fmt_convert_str(enum vdin_format_convert_e fmt_cvt)
 {
@@ -179,13 +179,13 @@ typedef struct vdin_dev_s {
 	unsigned int			unstable_flag;
 	unsigned int			dec_enable;
 	unsigned int			abnormal_cnt;
-        //bool                        stamp_valid; use vfe replace tell the first frame  
+        //bool                        stamp_valid; use vfe replace tell the first frame
 	unsigned int			stamp;
 	unsigned int			hcnt64;
 	unsigned int			cycle;
 	unsigned int			hcnt64_tag;
 	unsigned int			cycle_tag;
-        unsigned int                    start_time;//ms vdin start time    
+        unsigned int                    start_time;//ms vdin start time
         vdin_debug_t                    debug;
 } vdin_dev_t;
 

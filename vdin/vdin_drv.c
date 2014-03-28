@@ -523,7 +523,7 @@ void vdin_start_dec(struct vdin_dev_s *devp)
         if(devp->frontend && devp->frontend->sm_ops){
 	        sm_ops = devp->frontend->sm_ops;
 	        sm_ops->get_sig_propery(devp->frontend, &devp->prop);
-			
+
 		devp->parm.info.cfmt = devp->prop.color_format;
 		if((devp->parm.dest_width!=0)||(devp->parm.dest_height!=0)){
 			devp->prop.scaling4w = devp->parm.dest_width;
@@ -601,10 +601,17 @@ void vdin_start_dec(struct vdin_dev_s *devp)
 	udelay(start_provider_delay);
 	vf_reg_provider(&devp->vprov);
 	vf_notify_receiver(devp->name,VFRAME_EVENT_PROVIDER_START,NULL);
+	#if defined(VDIN_V2)
 	if(devp->parm.port != TVIN_PORT_VIU){
 		/*enable irq */
 		enable_irq(devp->irq);
+		printk("****[%s]enable_irq ifdef VDIN_V2****\n",__func__);
 	}
+	#else
+	enable_irq(devp->irq);
+	printk("****[%s]enable_irq ifudef VDIN_V2****\n",__func__);
+	#endif
+	printk("****[%s]ok!****\n",__func__);
 	#ifdef CONFIG_AM_TIMESYNC
 	/*disable audio&video sync used for libplayer*/
 	tsync_set_enable(0);
@@ -655,6 +662,9 @@ int start_tvin_service(int no ,vdin_parm_t *para)
 		printk(KERN_ERR "[vdin..]%s vdin%d has't registered,please register.\n",__func__,no);
 		return -1;
 	}
+	printk("****[%s]para:cfmt:%d;dfmt:%d;dest_hactive:%d;dest_vactive:%d;frame_rate:%d;h_active:%d,v_active:%d;scan_mode:%d****\n",__func__,
+	para->cfmt,para->dfmt,para->dest_hactive,para->dest_vactive,
+	para->frame_rate,para->h_active,para->v_active,para->scan_mode);
 	devp->start_time = jiffies_to_msecs(jiffies);
 	if (devp->flags & VDIN_FLAG_DEC_STARTED) {
 	        pr_err("%s: port 0x%x, decode started already.\n",__func__,para->port);
@@ -750,10 +760,14 @@ int stop_tvin_service(int no)
 #endif
 	devp->flags &= (~VDIN_FLAG_DEC_OPENED);
 	devp->flags &= (~VDIN_FLAG_DEC_STARTED);
+#if defined(VDIN_V2)
 	if(devp->parm.port!= TVIN_PORT_VIU){
 		/* free irq */
 		free_irq(devp->irq,(void *)devp);
 	}
+#else
+	free_irq(devp->irq,(void *)devp);
+#endif
 	end_time = jiffies_to_msecs(jiffies);
 	pr_info("[vdin]:vdin start time:%ums,stop time:%ums,run time:%u.\n",devp->start_time,end_time,end_time-devp->start_time);
 	return 0;
@@ -1501,6 +1515,7 @@ static long vdin_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 				pr_err("TVIN_IOC_START_DEC(%d) port 0x%x, decode started already\n", parm.index, parm.port);
 				ret = -EBUSY;
 				mutex_unlock(&devp->fe_lock);
+				break;
 			}
 			if ((devp->parm.info.status != TVIN_SIG_STATUS_STABLE) ||
 					(devp->parm.info.fmt == TVIN_SIG_FMT_NULL))

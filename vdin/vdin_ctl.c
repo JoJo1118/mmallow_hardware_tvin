@@ -351,19 +351,23 @@ inline void vdin_get_format_convert(struct vdin_dev_s *devp)
 					devp->format_convert = VDIN_FORMAT_CONVERT_YUV_NV21;
 				else if(devp->prop.dest_cfmt == TVIN_NV12)
 					devp->format_convert = VDIN_FORMAT_CONVERT_YUV_NV12;
-				else 
+				else
 					devp->format_convert = VDIN_FORMAT_CONVERT_YUV_YUV422;
 				break;
 			case TVIN_YUV444:
 				if(devp->prop.dest_cfmt == TVIN_YUV444)
 					devp->format_convert = VDIN_FORMAT_CONVERT_YUV_YUV444;
-				else 
+				else
 					devp->format_convert = VDIN_FORMAT_CONVERT_YUV_YUV422;
 				break;
 			case TVIN_RGB444:
 				if(devp->prop.dest_cfmt == TVIN_YUV444)
 					devp->format_convert = VDIN_FORMAT_CONVERT_RGB_YUV444;
-				else 
+				else if(devp->prop.dest_cfmt == TVIN_NV21)
+					devp->format_convert = VDIN_FORMAT_CONVERT_RGB_NV21;
+				else if(devp->prop.dest_cfmt == TVIN_NV12)
+					devp->format_convert = VDIN_FORMAT_CONVERT_RGB_NV12;
+				else
 					devp->format_convert = VDIN_FORMAT_CONVERT_RGB_YUV422;
 				break;
 			default:

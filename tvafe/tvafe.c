@@ -1457,6 +1457,9 @@ static int tvafe_drv_probe(struct platform_device *pdev)
 {
 	int ret = 0;
 	struct tvafe_dev_s *tdevp;
+	struct device_node *of_node = pdev->dev.of_node;
+	const void *name;
+	int offset,size;
 	//struct resource *res;
 	//struct tvin_frontend_s * frontend;
 
@@ -1517,12 +1520,44 @@ static int tvafe_drv_probe(struct platform_device *pdev)
 	/* get device memory */
 #ifdef CONFIG_USE_OF
 	ret = find_reserve_block(pdev->dev.of_node->name,0);
-	if(ret < 0){
-	    pr_err("\ntvafe memory resource undefined.\n");
-	    goto fail_get_resource_mem;
+	if(ret < 0) {
+		name = of_get_property(of_node, "share-memory-name", NULL);
+		if(!name){
+		        pr_err("\ntvafe memory resource undefined1.\n");
+		        ret = -EFAULT;
+		        goto fail_get_resource_mem;
+		}else {
+		        ret= find_reserve_block_by_name(name);
+		        if(ret<0) {
+		                pr_err("\ntvafe memory resource undefined2.\n");
+		                ret = -EFAULT;
+		                goto fail_get_resource_mem;
+		        }
+		        name = of_get_property(of_node, "share-memory-offset", NULL);
+		        if(name)
+		                offset = of_read_ulong(name,1);
+		        else {
+		                pr_err("\ntvafe memory resource undefined3.\n");
+		                ret = -EFAULT;
+		                goto fail_get_resource_mem;
+		        }
+		        name = of_get_property(of_node, "share-memory-size", NULL);
+		        if(name)
+		                size = of_read_ulong(name,1);
+		        else {
+		                pr_err("\ntvafe memory resource undefined4.\n");
+		                ret = -EFAULT;
+		                goto fail_get_resource_mem;
+		        }
+		
+		        tdevp->mem.start = (phys_addr_t)get_reserve_block_addr(ret)+offset;
+		        tdevp->mem.size = size;
+		}
 	}
-	tdevp->mem.start = (phys_addr_t)get_reserve_block_addr(ret);
-	tdevp->mem.size = (phys_addr_t)get_reserve_block_size(ret);
+	else {
+		tdevp->mem.start = (phys_addr_t)get_reserve_block_addr(ret);
+		tdevp->mem.size = (phys_addr_t)get_reserve_block_size(ret);
+	}
 #else
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!res) {

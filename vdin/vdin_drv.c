@@ -1847,6 +1847,9 @@ static int vdin_drv_probe(struct platform_device *pdev)
 	int ret = 0;
 	struct vdin_dev_s *vdevp;
 	struct resource *res;
+	const void *name;
+	int offset,size;
+	struct device_node *of_node = pdev->dev.of_node;
 
 	/* malloc vdev */
 	vdevp = kmalloc(sizeof(struct vdin_dev_s), GFP_KERNEL);
@@ -1888,14 +1891,48 @@ static int vdin_drv_probe(struct platform_device *pdev)
 #if 0
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 #else
-        res = &memobj;
-        ret = find_reserve_block(pdev->dev.of_node->name,0);
-        if(ret < 0){
-                pr_err("\nvdin memory resource undefined.\n");
-                return -EFAULT;
+	res = &memobj;
+	ret = find_reserve_block(pdev->dev.of_node->name,0);
+	if(ret < 0) {
+	        name = of_get_property(of_node, "share-memory-name", NULL);
+	        if(!name) {
+	                pr_err("\nvdin memory resource undefined1.\n");
+	                ret = -EFAULT;
+	                goto fail_get_resource_mem;
+	        }
+	        else {
+	                ret= find_reserve_block_by_name(name);
+	                if(ret<0) {
+	                        pr_err("\nvdin memory resource undefined2.\n");
+	                        ret = -EFAULT;
+	                        goto fail_get_resource_mem;
+	                }
+	                name = of_get_property(of_node, "share-memory-offset", NULL);
+	                if(name)
+	                        offset = of_read_ulong(name,1);
+	                else {
+	                        pr_err("\nvdin memory resource undefined3.\n");
+	                        ret = -EFAULT;
+	                        goto fail_get_resource_mem;
+	                }
+	                        name = of_get_property(of_node, "share-memory-size", NULL);
+	                if(name)
+	                        size = of_read_ulong(name,1);
+	                else {
+	                        pr_err("\nvdin memory resource undefined4.\n");
+	                        ret = -EFAULT;
+	                        goto fail_get_resource_mem;
+	                }
+
+	                res->start = (phys_addr_t)get_reserve_block_addr(ret)+offset;
+	                res->end = res->start+ size-1;
+		
+	        }
+	}
+	else {
+	        res->start = (phys_addr_t)get_reserve_block_addr(ret);
+	        res->end = res->start+ (phys_addr_t)get_reserve_block_size(ret)-1;
         }
-        res->start = (phys_addr_t)get_reserve_block_addr(ret);
-        res->end = res->start+ (phys_addr_t)get_reserve_block_size(ret)-1;
 #endif
 	if (!res) {
 		pr_err("%s: can't get mem resource\n", __func__);

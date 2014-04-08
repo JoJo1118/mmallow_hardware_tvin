@@ -84,6 +84,9 @@ static ssize_t vdin_attr_show(struct device *dev, struct device_attribute *attr,
         len += sprintf(buf+len,"\n0 HDMI0\t1 HDMI1\t2 HDMI2\t3 Component0\t4 Component1"
                                "\n5 CVBS0\t6 CVBS1\t7 Vga0\t8 CVBS2\n");
         len += sprintf(buf+len,"echo tvstart/v4l2start port fmt_id/resolution >/sys/class/vdin/vdinx/attr.\n");
+	len += sprintf(buf+len,"echo v4l2start bt656/viuin/isp h_actve v_active frame_rate cfmt dfmt scan_fmt >/sys/class/vdin/vdinx/attr.\n");
+	len += sprintf(buf+len,"cfmt/dfmt:\t0: RGB44\t1 YUV422\t2 YUV444\t7 NV12\t8 NV21\n");
+	len += sprintf(buf+len,"scan_fmt:\t1: PROGRESSIVE\t2 INTERLACE\n");
         return len;
 }
 static void vdin_dump_mem(char *path, vdin_dev_t *devp)
@@ -185,7 +188,7 @@ extern int stop_tvin_service(int no);
 static ssize_t vdin_attr_store(struct device *dev,struct device_attribute *attr,const char *buf, size_t len)
 {
         unsigned int fps=0;
-        char ret=0,*buf_orig,*parm[6] = {NULL};
+        char ret=0,*buf_orig,*parm[8] = {NULL};
         struct vdin_dev_s *devp;
 
         if(!buf)
@@ -301,8 +304,16 @@ static ssize_t vdin_attr_store(struct device *dev,struct device_attribute *attr,
 			param.cfmt = TVIN_YUV422;
 		else
 		        param.cfmt = simple_strtol(parm[5],NULL,10);
+		if(!parm[6])
+			param.dfmt = TVIN_YUV422;
+		else
+		        param.dfmt = simple_strtol(parm[6],NULL,10);
+		if(!parm[7])
+			param.scan_mode = TVIN_SCAN_MODE_PROGRESSIVE;
+		else
+		        param.scan_mode = simple_strtol(parm[7],NULL,10);
                 param.fmt = TVIN_SIG_FMT_MAX;
-                param.scan_mode = TVIN_SCAN_MODE_PROGRESSIVE;
+                //param.scan_mode = TVIN_SCAN_MODE_PROGRESSIVE;
                 /*start the vdin hardware*/
                 start_tvin_service(devp->index, &param);
         }

@@ -73,7 +73,6 @@ static bool cm_enable = 1;
 module_param(cm_enable, bool, 0644);
 MODULE_PARM_DESC(cm_enable,"cm_enable");
 
-
 /***************************Local defines**********************************/
 #define BBAR_BLOCK_THR_FACTOR           3
 #define BBAR_LINE_THR_FACTOR            7
@@ -1452,6 +1451,11 @@ inline void vdin_set_default_regmap(unsigned int offset)
 	//[20:25] interger = 0
 	//[0:19] fraction = 0
 	WR(VDIN_VSC_PHASE_STEP, 0x0000000);
+
+	//disable hscale&pre hscale
+	WR_BITS(VDIN_SC_MISC_CTRL, 0, PRE_HSCL_EN_BIT, PRE_HSCL_EN_WID);
+	WR_BITS(VDIN_SC_MISC_CTRL, 0, HSCL_EN_BIT, HSCL_EN_WID);
+
 	//Bit 23, vsc_en, vertical scaler enable
 	//Bit 21 vsc_phase0_always_en, when scale up, you have to set it to 1
 	//Bit 20:16 ini skip_line_num
@@ -1857,7 +1861,6 @@ inline void vdin_set_hscale(unsigned int offset, unsigned int src_w, unsigned in
 		      );
 }
 
-
 /*
  *just for veritical scale src_w is origin height,dst_h is the height after scale
  */
@@ -1902,7 +1905,6 @@ inline void vdin_set_vscale(unsigned int offset, unsigned int src_h,  unsigned i
 inline void vdin_set_hvscale(struct vdin_dev_s *devp)
 {
         unsigned int offset = devp->addr_offset;
-
         if((devp->prop.scaling4w < devp->h_active) && (devp->prop.scaling4w > 0)) {
 	        vdin_set_hscale(offset,devp->h_active,devp->prop.scaling4w);
                 devp->h_active = devp->prop.scaling4w;

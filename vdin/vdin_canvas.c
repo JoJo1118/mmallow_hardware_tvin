@@ -26,13 +26,11 @@ MODULE_PARM_DESC(max_buf_num, "vdin max buf num.\n");
 
 const unsigned int vdin_canvas_ids[2][VDIN_CANVAS_MAX_CNT] = {
 	{
-		24, 25, 26, 27, 28, 29,
-		30, 31, 32, 33, 34, 35,
-		36, 37, 38, 39, 40, 41,
+		38, 39, 40, 41,42,
+		43, 44, 45, 46, 47, 48,
 	},
 	{
-		42, 43, 44, 45, 46, 47,
-		48, 49, 50, 51, 52, 53,
+		49, 50, 51, 52, 53,
 		54, 55, 56, 57, 58, 59,
 	},
 };
@@ -47,13 +45,13 @@ inline void vdin_canvas_init(struct vdin_dev_s *devp)
 	devp->canvas_max_num  = devp->mem_size / devp->canvas_max_size;
 	if (devp->canvas_max_num > VDIN_CANVAS_MAX_CNT)
 		devp->canvas_max_num = VDIN_CANVAS_MAX_CNT;
-        
+
 	devp->mem_start = roundup(devp->mem_start,32);
 	pr_info("vdin.%d cnavas initial table:\n", devp->index);
 	for ( i = 0; i < devp->canvas_max_num; i++){
 		canvas_id = vdin_canvas_ids[devp->index][i];
 		canvas_addr = devp->mem_start + devp->canvas_max_size * i;
-                
+
 		canvas_config(canvas_id, canvas_addr, canvas_max_w, canvas_max_h,
 				CANVAS_ADDR_NOWRAP, CANVAS_BLKMODE_LINEAR);
 		pr_info("\t%d: 0x%x-0x%x  %dx%d (%d KB)\n",
@@ -104,7 +102,7 @@ inline void vdin_canvas_start_config(struct vdin_dev_s *devp)
 	devp->canvas_max_num = min(devp->canvas_max_num,max_buf_num);
 	devp->canvas_w = roundup(devp->canvas_w,32);
 	devp->mem_start = roundup(devp->mem_start,32);
-#ifdef VDIN_DEBUG	
+#ifdef VDIN_DEBUG
 	pr_info("vdin.%d cnavas configuration table:\n", devp->index);
 #endif
 	for (i = 0; i < devp->canvas_max_num; i++){

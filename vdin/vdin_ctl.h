@@ -165,6 +165,8 @@ extern void vdin_wr_reverse(unsigned int offset, bool hreverse, bool vreverse);
 extern void vdin_set_hvscale(struct vdin_dev_s *devp);
 extern void vdin_set_cm2(unsigned int offset,unsigned int w,unsigned int h,unsigned int *data);
 extern void vdin_bypass_isp(unsigned int offset);
+extern void vdin_set_mpegin(struct vdin_dev_s *devp);
+extern void vdin_force_gofiled(struct vdin_dev_s *devp);
 
 #endif
 

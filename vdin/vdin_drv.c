@@ -133,6 +133,7 @@ module_param(irq_cnt,uint,0664);
 MODULE_PARM_DESC(irq_cnt,"counter of irq");
 
 static int irq_max_count = 0;
+static void vdin_backup_histgram(struct vframe_s *vf, struct vdin_dev_s *devp);
 
 static u32 vdin_get_curr_field_type(struct vdin_dev_s *devp)
 {
@@ -808,16 +809,19 @@ static int vdin_func(int no, vdin_arg_t *arg)
 	struct vdin_dev_s *devp = vdin_devp[no];
 	int ret = 0;
 	struct vdin_arg_s *parm = NULL;
+	struct vframe_s *vf = NULL;
+	parm = arg;
         if(IS_ERR_OR_NULL(devp)){
 		if(vdin_dbg_en)
 		        pr_err("[vdin..]%s vdin%d has't registered,please register.\n",__func__,no);
                 return -1;
-        }else if(!(devp->flags&VDIN_FLAG_DEC_STARTED)){
+        }else if(!(devp->flags&VDIN_FLAG_DEC_STARTED)&&(parm->cmd != VDIN_CMD_MPEGIN_START)){
         	if(vdin_dbg_en)
 			pr_err("[vdin..]%s vdin%d has't started.\n",__func__,no);
-		return -1;
+			return -1;
 	}
-	parm = arg;
+	if(vdin_dbg_en)
+		pr_info("[vdin_drv]%s:parm->cmd : %d \n",__func__,parm->cmd);
 	switch(parm->cmd){
                 /*ajust vdin1 matrix1 & matrix2 for isp to get histogram information*/
 		case VDIN_CMD_SET_CSC:
@@ -830,6 +834,38 @@ static int vdin_func(int no, vdin_arg_t *arg)
 			break;
 		case VDIN_CMD_ISR:
 			vdin_rdma_isr(devp);
+			break;
+		case VDIN_CMD_MPEGIN_START:
+			devp->h_active = parm->h_active;
+			devp->v_active = parm->v_active;
+			vdin_set_mpegin(devp);
+			if(!(devp->flags & VDIN_FLAG_DEC_STARTED)){
+				devp->curr_wr_vfe = kmalloc(sizeof(vf_entry_t),GFP_KERNEL);
+				devp->flags |= VDIN_FLAG_DEC_STARTED;
+			}
+			break;
+		case VDIN_CMD_GET_HISTGRAM:
+			if (!devp->curr_wr_vfe) {
+				if(vdin_dbg_en)
+					pr_info("[warning!!!]VDIN_CMD_GET_HISTGRAM:devp->curr_wr_vfe is NULL\n");
+				break;
+			}
+			vdin_set_vframe_prop_info(&devp->curr_wr_vfe->vf, devp);
+			vdin_backup_histgram(&devp->curr_wr_vfe->vf, devp);
+			vf = parm->private;
+			if(vf && devp->curr_wr_vfe)
+				memcpy(&vf->prop,&devp->curr_wr_vfe->vf.prop,sizeof(vframe_prop_t));
+			break;
+		case VDIN_CMD_MPEGIN_STOP:
+			if(devp->flags & VDIN_FLAG_DEC_STARTED){
+				vdin_hw_disable(devp->addr_offset);
+				kfree(devp->curr_wr_vfe);
+				devp->curr_wr_vfe = NULL;
+				devp->flags &= (~VDIN_FLAG_DEC_STARTED);
+			}
+			break;
+		case VDIN_CMD_FORCE_GO_FIELD:
+			vdin_force_gofiled(devp);
 			break;
 		default:
 			break;
@@ -1926,7 +1962,7 @@ static int vdin_drv_probe(struct platform_device *pdev)
 
 	                res->start = (phys_addr_t)get_reserve_block_addr(ret)+offset;
 	                res->end = res->start+ size-1;
-		
+
 	        }
 	}
 	else {

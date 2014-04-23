@@ -168,6 +168,16 @@ static void vdin_dump_state(vdin_dev_t *devp)
 
 	pr_info("Vdin driver version: %s\n",VDIN_VER);
 }
+static void vdin_dump_histgram(vdin_dev_t *devp)
+{
+	uint i;
+	printk("%s:\n",__func__);
+	for(i=0;i<64;i++){
+		printk("0x%-8x\t",devp->parm.histgram[i]);
+		if((i+1)%8==0)
+			printk("\n");
+	}
+}
 /*
 * 1.show the current frame rate
 * echo fps >/sys/class/vdin/vdinx/attr
@@ -190,7 +200,6 @@ static ssize_t vdin_attr_store(struct device *dev,struct device_attribute *attr,
         unsigned int fps=0;
         char ret=0,*buf_orig,*parm[8] = {NULL};
         struct vdin_dev_s *devp;
-
         if(!buf)
 		return len;
         buf_orig = kstrdup(buf, GFP_KERNEL);
@@ -349,6 +358,9 @@ static ssize_t vdin_attr_store(struct device *dev,struct device_attribute *attr,
         }
         else if(!strcmp(parm[0],"state")){
 		vdin_dump_state(devp);
+	}
+	else if(!strcmp(parm[0],"histgram")){
+		vdin_dump_histgram(devp);
 	}
         else if(!strcmp(parm[0],"force_recycle")) {
                 devp->flags |= VDIN_FLAG_FORCE_RECYCLE;

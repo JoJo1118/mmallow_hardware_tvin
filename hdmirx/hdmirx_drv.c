@@ -50,6 +50,8 @@
 #define TVHDMI_DEVICE_NAME        "hdmirx"
 #define TVHDMI_CLASS_NAME         "hdmirx"
 #define INIT_FLAG_NOT_LOAD 0x80
+#define HDMI_DE_REPEAT_DONE_FLAG 0xF0
+
 
 /* 50ms timer for hdmirx main loop (HDMI_STATE_CHECK_FREQ is 20) */
 #define TIMER_STATE_CHECK              (1*HZ/HDMI_STATE_CHECK_FREQ)
@@ -67,6 +69,7 @@ int resume_flag = 0;
 static int force_colorspace = 0;
 int cur_colorspace = 0xff;
 static int hdmi_yuv444_enable = 1;
+int hdmirx_de_repeat_enable = 1;
 
 MODULE_PARM_DESC(resume_flag, "\n resume_flag \n");
 module_param(resume_flag, int, 0664);
@@ -79,6 +82,9 @@ module_param(cur_colorspace, int, 0664);
 
 module_param(hdmi_yuv444_enable, int, 0664);
 MODULE_PARM_DESC(hdmi_yuv444_enable, "hdmi_yuv444_enable");
+
+module_param(hdmirx_de_repeat_enable, int, 0664);
+MODULE_PARM_DESC(hdmirx_de_repeat_enable, "hdmirx_do_de_repeat_enable");
 
 typedef struct hdmirx_dev_s {
 	int                         index;
@@ -404,14 +410,17 @@ void hdmirx_get_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_property
 		prop->trans_fmt = TVIN_TFMT_3D_LA;
 	}
 	/* 1: no repeat; 2: repeat 1 times; 3: repeat two; ... */
-	prop->decimation_ratio = hdmirx_hw_get_pixel_repeat() - 1;
+	prop->decimation_ratio = (hdmirx_hw_get_pixel_repeat() - 1) | HDMI_DE_REPEAT_DONE_FLAG;
 
-	//patch for 4096*2160 fmt buffer limit
+	//patch for 4k*2k fmt buffer limit
 	if(TVIN_SIG_FMT_HDMI_4096_2160_00HZ == sig_fmt) {
 		prop->hs = 64;
 		prop->he = 64;
 		prop->vs = 0;
 		prop->ve = 0;
+		prop->scaling4h = 1080;
+	} else if(TVIN_SIG_FMT_HDMI_3840_2160_00HZ == sig_fmt) {
+		prop->scaling4h = 1080;
 	}
 }
 

@@ -533,19 +533,27 @@ static inline void vdin_set_top(unsigned int offset, enum tvin_port_e port, enum
    1.h_active
    2.v_active
  */
+#define HDMI_DE_REPEAT_DONE_FLAG	0xF0
+#define DECIMATION_REAL_RANGE		0x0F
 void vdin_set_decimation(struct vdin_dev_s *devp)
 {
 	unsigned int offset = devp->addr_offset;
 	unsigned int new_clk = 0;
+	bool decimation_in_frontend = false;
+
+	if(devp->prop.decimation_ratio & HDMI_DE_REPEAT_DONE_FLAG) {
+		decimation_in_frontend = true;
+		pr_info("decimation_in_frontend\n");
+	}
+	devp->prop.decimation_ratio = devp->prop.decimation_ratio & DECIMATION_REAL_RANGE;
 
 	new_clk = devp->fmt_info_p->pixel_clk / (devp->prop.decimation_ratio + 1);
-
 	pr_info("%s decimation_ratio=%u,new_clk=%u.\n",__func__, devp->prop.decimation_ratio,new_clk);
 
 	devp->h_active = devp->fmt_info_p->h_active / (devp->prop.decimation_ratio + 1);
 	devp->v_active = devp->fmt_info_p->v_active;
 
-	if (devp->prop.decimation_ratio)
+	if ((devp->prop.decimation_ratio)&&(!decimation_in_frontend))
 	{
 		// ratio
 		WR_BITS(VDIN_ASFIFO_CTRL2,
@@ -1918,9 +1926,9 @@ inline void vdin_set_hvscale(struct vdin_dev_s *devp)
 
 #if defined(VDIN_V1)
         if((devp->prop.scaling4h < devp->v_active) && (devp->prop.scaling4h > 0)) {
-		vdin_set_vscale(offset, devp->v_active, devp->prop.scaling4h);
+			vdin_set_vscale(offset, devp->v_active, devp->prop.scaling4h);
                 devp->v_active = devp->prop.scaling4h;
-	}
+        }
         pr_info(" dst vactive:%u.\n",devp->v_active);
 #endif
 

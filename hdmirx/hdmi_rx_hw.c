@@ -574,7 +574,10 @@ static void control_init_more(void)
 
     data32  = 0;
     data32 |= 0                 << 1;   // [4:1]    man_vid_derepeat
-    data32 |= 1                 << 0;   // [0]      auto_derepeat
+  	if(hdmirx_de_repeat_enable)
+		data32 |= 1             << 0;   // [0]      auto_derepeat
+	else
+		data32 |= 0				<< 0;	// disable auto de repeat
     hdmirx_wr_dwc( RA_HDMI_RESMPL_CTRL,   data32); // DEFAULT: {27'd0, 4'd0, 1'b1}
 }
 
@@ -1025,7 +1028,7 @@ int hdmirx_get_video_info(struct hdmi_rx_ctrl *ctx, struct hdmi_rx_ctrl_video *p
 
 		/* refresh rate */
 	tmp = hdmirx_rd_bits_dwc( RA_MD_VTC, VTOT_CLK);
-	tmp = (tmp == 0)? 0: (ctx->md_clk * 100000) / tmp;
+	//tmp = (tmp == 0)? 0: (ctx->md_clk * 100000) / tmp;
 	if((params->vtotal == 0) || (params->htotal == 0))
 		params->refresh_rate = (tmp == 0)? 0: (ctx->md_clk * 100000) / tmp;
 	else {
@@ -1076,10 +1079,13 @@ void hdmirx_config_video(struct hdmi_rx_ctrl_video *video_params)
 {
 	int data32=0;
 
-	if ((video_params->sw_vic >= HDMI_3840_2160p) && (video_params->sw_vic <= HDMI_4096_2160p))
+	if ((video_params->sw_vic >= HDMI_3840_2160p) && (video_params->sw_vic <= HDMI_4096_2160p)) {
 	    data32 |= 1 << 23; //video_params.pixel_repetition << 23;  // [23]     hscale_half: 1=Horizontally scale down by half
-	else
+	    data32 |= 1 << 29;  //clk_half  297-148.5
+	} else {
 	    data32 |= 0 << 23; //video_params.pixel_repetition << 23;  // [23]     hscale_half: 1=Horizontally scale down by half
+	    data32 |= 0 << 29;  //clk_half  297-148.5
+	}
 
     data32 |= 0                             << 22;  // [22]     force_vid_rate: 1=Force video output sample rate
     data32 |= 0                             << 19;  // [21:19]  force_vid_rate_chroma_cfg : 0=Bypass, not rate change. Applicable only if force_vid_rate=1

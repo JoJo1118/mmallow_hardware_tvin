@@ -18,7 +18,8 @@
 #if ((MESON_CPU_TYPE == MESON_CPU_TYPE_MESON6TV)|| \
      (MESON_CPU_TYPE == MESON_CPU_TYPE_MESON6TVD))
     #define VDIN_V1  //for m6tv
-#elif (MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8)
+#elif (MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8)|| \
+	(MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8B)
     #define VDIN_V1  //for m6tv
     #define VDIN_V2  //for m8
 #else

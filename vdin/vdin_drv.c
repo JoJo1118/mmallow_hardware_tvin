@@ -47,7 +47,7 @@
 #include <linux/amlogic/aml_common.h>
 #include <mach/irqs.h>
 #include <mach/mod_gate.h>
-#if MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8
+#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
 #include <mach/vpu.h>
 #endif
 /* Local Headers */
@@ -585,7 +585,7 @@ void vdin_start_dec(struct vdin_dev_s *devp)
         devp->curr_field_type = vdin_get_curr_field_type(devp);
 	//pr_info("start clean_counter is %d\n",clean_counter);
 	/* configure regs and enable hw */
-	#ifdef CONFIG_ARCH_MESON8
+	#if ((defined CONFIG_ARCH_MESON8)||(defined CONFIG_ARCH_MESON8B))
 	switch_vpu_mem_pd_vmod(devp->addr_offset?VPU_VIU_VDIN1:VPU_VIU_VDIN0,VPU_MEM_POWER_ON);
 	#endif
 	vdin_hw_enable(devp->addr_offset);
@@ -644,7 +644,7 @@ void vdin_stop_dec(struct vdin_dev_s *devp)
 	disable_irq_nosync(devp->irq);
 	/* reset default canvas  */
 	vdin_set_def_wr_canvas(devp);
-	#ifdef CONFIG_ARCH_MESON8
+	#if ((defined CONFIG_ARCH_MESON8)||(defined CONFIG_ARCH_MESON8B))
 	switch_vpu_mem_pd_vmod(devp->addr_offset?VPU_VIU_VDIN1:VPU_VIU_VDIN0,VPU_MEM_POWER_DOWN);
 	#endif
 	memset(&devp->prop, 0, sizeof(struct tvin_sig_property_s));

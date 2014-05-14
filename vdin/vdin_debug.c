@@ -27,7 +27,7 @@
 #include <linux/amlogic/tvin/tvin_v4l2.h>
 #include <mach/mod_gate.h>
 #include <mach/cpu.h>
-#if MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8
+#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
 #include <mach/vpu.h>
 #endif
 /* Local Headers */
@@ -733,12 +733,14 @@ static void memp_set(int type)
 	case MEMP_VDIN_WITH_3D:
 
 #if defined(VDIN_V1)
+#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESON8B)
 		aml_set_reg32_mask(P_MMC_QOS7_CTRL0, 1<<25);	// set audio to urgent
                 aml_write_reg32(P_MMC_CHAN_CTRL0, 0xf);		// set ch1-7 arbiter weight to 0
 		aml_clr_reg32_mask(P_MMC_CHAN_CTRL1, 0xf<<20);	// set ch8 arbiter weight to 0
                 // echo 0 > /sys/module/di/parameters/pre_urgent     //           disable urgent for DI pre
                 // echo 0 > /sys/module/di/parameters/input2pre      //           disable input2pre
                 aml_set_reg32_mask(P_MMC_PARB_CTRL, 1<<16);          //           enable A9 urgent for better CPU performance
+#endif
                 aml_set_reg32_mask(P_VPU_VD1_MMC_CTRL, 1<<12);       //           arb0
                 aml_set_reg32_mask(P_VPU_VD2_MMC_CTRL, 1<<12);       //           arb0
                 aml_set_reg32_mask(P_VPU_DI_IF1_MMC_CTRL, 1<<12);    //           arb0
@@ -754,11 +756,13 @@ static void memp_set(int type)
 	case MEMP_DCDR_WITHOUT_3D:
 	case MEMP_DCDR_WITH_3D:
 #if defined(VDIN_V1)
+#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESON8B)
 		aml_set_reg32_mask(P_MMC_QOS7_CTRL0, 1<<25);		// set audio to urgent
                 aml_write_reg32(P_MMC_CHAN_CTRL0, 0xf);			// set ch1-7 arbiter weight to 0
 		aml_clr_reg32_mask(P_MMC_CHAN_CTRL1, 0xf<<20);		// set ch8 arbiter weight to 0
                 // echo 0 > /sys/module/di/parameters/pre_urgent     //           disable urgent for DI pre
                 aml_clr_reg32_mask(P_MMC_PARB_CTRL, 1<<16);          //           enable A9 urgent for better CPU performance
+#endif
                 aml_set_reg32_mask(P_VPU_VD1_MMC_CTRL, 1<<12);       //           arb0
                 aml_set_reg32_mask(P_VPU_VD2_MMC_CTRL, 1<<12);       //           arb0
                 aml_set_reg32_mask(P_VPU_DI_IF1_MMC_CTRL, 1<<12);    //           arb0
@@ -775,12 +779,14 @@ static void memp_set(int type)
 	case MEMP_ATV_WITHOUT_3D:
 	case MEMP_ATV_WITH_3D:
 #if defined(VDIN_V1)
+#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESON8B)
 		aml_set_reg32_mask(P_MMC_QOS7_CTRL0, 1<<25);		// set audio to urgent
                 aml_write_reg32(P_MMC_CHAN_CTRL0, 0xf);			// set ch1-7 arbiter weight to 0
 		aml_clr_reg32_mask(P_MMC_CHAN_CTRL1, 0xf<<20);		// set ch8 arbiter weight to 0
                 // echo 0 > /sys/module/di/parameters/pre_urgent     //           disable urgent for DI pre
                 // echo 0 > /sys/module/di/parameters/input2pre      //           disable input2pre
                 aml_clr_reg32_mask(P_MMC_PARB_CTRL, 1<<16);          //           enable A9 urgent for better CPU performance
+#endif
                 aml_set_reg32_mask(P_VPU_VD1_MMC_CTRL, 1<<12);       //           arb0
                 aml_set_reg32_mask(P_VPU_VD2_MMC_CTRL, 1<<12);       //           arb0
                 aml_set_reg32_mask(P_VPU_DI_IF1_MMC_CTRL, 1<<12);    //           arb0

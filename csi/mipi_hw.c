@@ -151,14 +151,9 @@ static void powerdown_csi_analog(void)
 //mipi phy run by 200MHZ ---1 cycle = 1/200000000.  timing= (reg value+1)*cycle*1000000000 ns
 static void init_am_mipi_phy(csi_parm_t* info)
 {
-        u32 cycle_time = 5;//5 ns
-        u32 settle = (85 + 145 + (16*info->ui_val))/2;
-        settle = settle/cycle_time;
-        DPRINT("(85 + 145 + (16*%d))/2/5.4945 == settle=%d\n", info->ui_val, settle);
-        DPRINT("%s, %d\n", __func__, __LINE__);
-        DPRINT("settle=%d\n", settle);
-        settle = 25;
-        //mipi_dbg("[mipi_hw]:init_am_mipi_phy ---- mipi cycle:%d ns, hs settle:%d ns,\n",cycle_time,(settle*cycle_time));
+        if( 0 == info->settle)
+                info->settle = 25;
+        DPRINT("settle=%d\n", info->settle);
 
         //if(info->clock_lane_mode==1){
         //    //use always on mode
@@ -166,6 +161,7 @@ static void init_am_mipi_phy(csi_parm_t* info)
         WRITE_CSI_PHY_REG_BITS(MIPI_PHY_CTRL,   1, 31, 1); //soft reset bit
         WRITE_CSI_PHY_REG_BITS(MIPI_PHY_CTRL,   0, 31, 1); //release soft reset bit
 
+        CLR_CSI_PHY_REG_MASK(MIPI_PHY_CTRL,   (1<<MIPI_PHY_CFG_SHTDWN_CLK_LANE));
         CLR_CSI_PHY_REG_MASK(MIPI_PHY_CTRL,   info->lane_mask); //soft reset bit
 #if MESON_CPU_TYPE == MESON_CPU_TYPE_MESON6
         CLR_CSI_PHY_REG_MASK(MIPI_PHY_CTRL,   info->lane_mask << MIPI_PHY_CFG_CHPU_TO_ANALOG); //soft reset bit
@@ -176,7 +172,7 @@ static void init_am_mipi_phy(csi_parm_t* info)
         WRITE_CSI_PHY_REG(MIPI_PHY_TCLK_SETTLE ,0x1c);  // clck settle = 160 ns --(95ns< x < 300 ns)
         WRITE_CSI_PHY_REG(MIPI_PHY_THS_EXIT ,0x1c);   // hs exit = 160 ns --(x>100ns)
         WRITE_CSI_PHY_REG(MIPI_PHY_THS_SKIP ,0x9);   // hs skip = 55 ns --(40ns<x<55ns+4*UI)
-        WRITE_CSI_PHY_REG(MIPI_PHY_THS_SETTLE ,settle);   // hs settle = 160 ns --(85 ns + 6*UI<x<145 ns + 10*UI)
+        WRITE_CSI_PHY_REG(MIPI_PHY_THS_SETTLE ,info->settle); // hs settle = 160 ns --(85 ns + 6*UI<x<145 ns + 10*UI)
         WRITE_CSI_PHY_REG(MIPI_PHY_TINIT ,0x4e20);  // >100us
         WRITE_CSI_PHY_REG(MIPI_PHY_TMBIAS ,0x100);
         WRITE_CSI_PHY_REG(MIPI_PHY_TULPS_C ,0x1000);
@@ -245,10 +241,12 @@ void am_mipi_csi2_uninit(void)
 void cal_csi_para(csi_parm_t* info)
 {
         info->lane_mask = (1 << info->lanes) - 1;
+#if 0
         if (info->clk_channel){
                 info->lane_mask =  info->lane_mask << MIPI_PHY_CFG_CLK_CHNLB_SHIFT;
         }
         info->lane_mask = info->lane_mask | (1<<MIPI_PHY_CFG_SHTDWN_CLK_LANE);
         printk("info->lane_mask=0x%x, info->lanes=%d\n",
                         info->lane_mask, info->lanes);
+#endif
 }

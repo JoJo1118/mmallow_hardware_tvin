@@ -200,11 +200,10 @@ static void amcsi_stop(struct tvin_frontend_s * fe, enum tvin_port_e port)
 static void amcsi_get_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_property_s *prop)
 {
         struct amcsi_dev_s *devp = container_of(fe, amcsi_dev_t, frontend);
-        prop->color_format = devp->para.cfmt;//devp->csi_parm.csi_ofmt;
+        prop->color_format = devp->para.cfmt;
         prop->dest_cfmt = devp->para.dfmt;
         printk("TVIN_NV21=%d, TVIN_YUV422=%d, devp->para.cfmt=%d, devp->para.dfmt=%d\n",
                         TVIN_NV21, TVIN_YUV422, devp->para.cfmt, devp->para.dfmt);
-        prop->dest_cfmt =TVIN_NV21;
         prop->decimation_ratio = 0;
 }
 

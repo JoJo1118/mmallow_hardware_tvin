@@ -670,6 +670,7 @@ int start_tvin_service(int no ,vdin_parm_t *para)
 	if (devp->flags & VDIN_FLAG_DEC_STARTED) {
 	        pr_err("%s: port 0x%x, decode started already.\n",__func__,para->port);
 		ret = -EBUSY;
+		return ret;
 	}
 #if defined(VDIN_V2)
 	if(para->port != TVIN_PORT_VIU){

@@ -950,17 +950,20 @@ static void isp_fe_start(struct tvin_frontend_s *fe, enum tvin_sig_fmt_e fmt)
 }
 static void isp_fe_stop(struct tvin_frontend_s *fe, enum tvin_port_e port)
 {
-
         isp_dev_t *devp = container_of(fe,isp_dev_t,frontend);
 	if(devp->isp_fe)
 	        devp->isp_fe->dec_ops->stop(devp->isp_fe,devp->info.fe_port);
 #ifndef USE_WORK_QUEUE
 	tasklet_disable_nosync(&devp->isp_task);
+#else
+	cancel_work_sync(&devp->isp_wq);
+	printk("[isp]:cancel work queue\n");
 #endif
-	if(devp->cam_param->cam_mode != CAMERA_CAPTURE)
+	if(devp->cam_param->cam_mode != CAMERA_CAPTURE){
 #ifndef USE_WORK_QUEUE
 		stop_isp_thread(devp);
 #endif
+	}
 	devp->flag &= (~ISP_FLAG_AF);
 	devp->flag &= (~ISP_FLAG_TOUCH_AF);
 	isp_sm_uninit(devp);
@@ -1204,7 +1207,10 @@ static void  isp_do_work(struct work_struct *work)
 
 	unsigned newstep = 0;
 	struct cam_function_s *func = &devp->cam_param->cam_function;
-
+	if(!(devp->flag & ISP_FLAG_START)){
+		printk("[isp]%s:isp has stop\n",__func__);
+		return;
+	}
 	if(!(devp->flag & ISP_FLAG_TEST_WB)){
 		if((devp->flag & ISP_FLAG_AE)&&(ae_enable)){
 			isp_ae_sm(devp);

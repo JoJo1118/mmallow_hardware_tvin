@@ -614,10 +614,12 @@ void vdin_start_dec(struct vdin_dev_s *devp)
 	#endif
 	printk("****[%s]ok!****\n",__func__);
 	#ifdef CONFIG_AM_TIMESYNC
+	if(devp->parm.port != TVIN_PORT_VIU){
 	/*disable audio&video sync used for libplayer*/
 	tsync_set_enable(0);
 	/* enable system_time */
 	timestamp_pcrscr_enable(1);
+	}
 	#endif
 }
 

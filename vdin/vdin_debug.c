@@ -23,8 +23,6 @@
 
 /* Amlogic Headers */
 #include <mach/am_regs.h>
-#include <linux/amlogic/amports/vframe.h>
-#include <linux/amlogic/tvin/tvin_v4l2.h>
 #include <mach/mod_gate.h>
 #include <mach/cpu.h>
 #if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
@@ -177,6 +175,38 @@ static void vdin_dump_histgram(vdin_dev_t *devp)
 		if((i+1)%8==0)
 			printk("\n");
 	}
+}
+static void vdin_write_mem(vdin_dev_t *devp,char *path)
+{
+	unsigned int real_size=0, size=0;
+        struct file *filp = NULL;
+        loff_t pos = 0;
+        mm_segment_t old_fs;
+
+        old_fs = get_fs();
+	set_fs(KERNEL_DS);
+	printk("bin file path =%s\n",path);
+	filp = filp_open(path,O_RDONLY,0);
+        if(IS_ERR(filp)){
+                printk(KERN_ERR"read %s error.\n",path);
+                return;
+        }
+        if(!devp->curr_wr_vfe){
+	        devp->curr_wr_vfe = provider_vf_get(devp->vfp);
+        }
+        real_size = (devp->curr_wr_vfe->vf.width*devp->curr_wr_vfe->vf.height<<1);
+        devp->curr_wr_vfe->vf.type = VIDTYPE_VIU_SINGLE_PLANE|VIDTYPE_VIU_FIELD|VIDTYPE_VIU_422;
+        size = vfs_read(filp,phys_to_virt(canvas_get_addr(devp->curr_wr_vfe->vf.canvas0Addr)),real_size,&pos);
+        if(size < real_size){
+	        pr_info("%s read %u < %u error.\n",__func__,size,real_size);
+                return;
+        }
+        vfs_fsync(filp,0);
+        filp_close(filp,NULL);
+        set_fs(old_fs);
+	provider_vf_put(devp->curr_wr_vfe, devp->vfp);
+        devp->curr_wr_vfe = NULL;
+	vf_notify_receiver(devp->name,VFRAME_EVENT_PROVIDER_VFRAME_READY,NULL);
 }
 /*
 * 1.show the current frame rate
@@ -364,7 +394,9 @@ static ssize_t vdin_attr_store(struct device *dev,struct device_attribute *attr,
 	}
         else if(!strcmp(parm[0],"force_recycle")) {
                 devp->flags |= VDIN_FLAG_FORCE_RECYCLE;
-        }
+        }else if(!strcmp(parm[0],"read_pic")){
+        	vdin_write_mem(devp,parm[1]);
+}
 
 
         kfree(buf_orig);

@@ -26,7 +26,9 @@
 #include <linux/device.h>
 
 /* Amlogic Headers */
+#include <linux/amlogic/amports/canvas.h>
 #include <linux/amlogic/amports/vframe.h>
+#include <linux/amlogic/amports/vframe_receiver.h>
 #include <linux/amlogic/amports/vframe_provider.h>
 #include <linux/amlogic/tvin/tvin_v4l2.h>
 
@@ -36,7 +38,7 @@
 #include "vdin_vf.h"
 #include "vdin_regs.h"
 
-#define VDIN_VER "Ref.2014/05/07"
+#define VDIN_VER "Ref.2014/07/03"
 
 /*the counter of vdin*/
 #define VDIN_MAX_DEVS			2

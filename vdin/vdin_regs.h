@@ -19,10 +19,13 @@
      (MESON_CPU_TYPE == MESON_CPU_TYPE_MESON6TVD))
     #define VDIN_V1  //for m6tv
 #elif (MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8)|| \
-	(MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8B)
+	(MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8B) || \
+	(MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8M2)
     #define VDIN_V1  //for m6tv
     #define VDIN_V2  //for m8
 #else
+    #define VDIN_V1
+    #define VDIN_V2
 #endif
 //#define VDIN_SCALE_COEF_IDX                        0x1200
 //#define VDIN_SCALE_COEF                            0x1201

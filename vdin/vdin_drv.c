@@ -439,10 +439,10 @@ static void vdin_vf_init(struct vdin_dev_s *devp)
 	struct vframe_s *vf;
 	struct vf_pool *p = devp->vfp;
 	//const struct tvin_format_s *fmt_info = tvin_get_fmt_info(fmt);
-	#ifdef VDIN_DEBUG
-	pr_info("vdin.%d vframe initial infomation table: (%d of %d)\n",
+	if(vdin_dbg_en)
+		pr_info("vdin.%d vframe initial infomation table: (%d of %d)\n",
 	 		 devp->index, p->size, p->max_size);
-	#endif
+
 	for (i = 0; i < p->size; ++i)
 	{
 		master = vf_get_master(p, i);
@@ -495,10 +495,9 @@ static void vdin_vf_init(struct vdin_dev_s *devp)
 		/* set slave vf source type & mode */
 		slave->vf.source_type = vf->source_type;
 		slave->vf.source_mode = vf->source_mode;
-		#ifdef VDIN_DEBUG
-		pr_info("\t%2d: 0x%2x %ux%u, duration = %u\n", vf->index,
-			vf->canvas0Addr, vf->width, vf->height, vf->duration);
-		#endif
+		if(vdin_dbg_en)
+			pr_info("\t%2d: 0x%2x %ux%u, duration = %u\n", vf->index,
+				vf->canvas0Addr, vf->width, vf->height, vf->duration);
 	}
 }
 
@@ -606,13 +605,16 @@ void vdin_start_dec(struct vdin_dev_s *devp)
 	if(devp->parm.port != TVIN_PORT_VIU){
 		/*enable irq */
 		enable_irq(devp->irq);
-		printk("****[%s]enable_irq ifdef VDIN_V2****\n",__func__);
+		if(vdin_dbg_en)
+			pr_info("****[%s]enable_irq ifdef VDIN_V2****\n",__func__);
 	}
 	#else
 	enable_irq(devp->irq);
-	printk("****[%s]enable_irq ifudef VDIN_V2****\n",__func__);
+	if(vdin_dbg_en)
+		pr_info("****[%s]enable_irq ifudef VDIN_V2****\n",__func__);
 	#endif
-	printk("****[%s]ok!****\n",__func__);
+	if(vdin_dbg_en)
+		pr_info("****[%s]ok!****\n",__func__);
 	#ifdef CONFIG_AM_TIMESYNC
 	if(devp->parm.port != TVIN_PORT_VIU){
 	/*disable audio&video sync used for libplayer*/
@@ -652,7 +654,8 @@ void vdin_stop_dec(struct vdin_dev_s *devp)
 	memset(&devp->prop, 0, sizeof(struct tvin_sig_property_s));
 	ignore_frames = 0;
 	devp->cycle = 0;
-	pr_info("%s ok\n", __func__);
+	if(vdin_dbg_en)
+		pr_info("%s ok\n", __func__);
 }
 //@todo
 
@@ -662,10 +665,11 @@ int start_tvin_service(int no ,vdin_parm_t *para)
 	int ret = 0;
 	struct vdin_dev_s *devp = vdin_devp[no];
 	if(IS_ERR(devp)){
-		printk(KERN_ERR "[vdin..]%s vdin%d has't registered,please register.\n",__func__,no);
+		pr_err(KERN_ERR "[vdin..]%s vdin%d has't registered,please register.\n",__func__,no);
 		return -1;
 	}
-	printk("****[%s]para:cfmt:%d;dfmt:%d;dest_hactive:%d;dest_vactive:%d;frame_rate:%d;h_active:%d,v_active:%d;scan_mode:%d****\n",__func__,
+	if(vdin_dbg_en)
+		pr_info("****[%s]para:cfmt:%d;dfmt:%d;dest_hactive:%d;dest_vactive:%d;frame_rate:%d;h_active:%d,v_active:%d;scan_mode:%d****\n",__func__,
 	para->cfmt,para->dfmt,para->dest_hactive,para->dest_vactive,
 	para->frame_rate,para->h_active,para->v_active,para->scan_mode);
 	devp->start_time = jiffies_to_msecs(jiffies);
@@ -694,7 +698,7 @@ int start_tvin_service(int no ,vdin_parm_t *para)
 	if(para->fmt >= TVIN_SIG_FMT_MAX){
                 devp->fmt_info_p = kmalloc(sizeof(tvin_format_t),GFP_KERNEL);
                 if(!devp->fmt_info_p){
-                        printk("[vdin..]%s kmalloc error.\n",__func__);
+                        pr_err("[vdin..]%s kmalloc error.\n",__func__);
                         return -ENOMEM;
                 }
                 devp->fmt_info_p->hs_bp     = para->hs_bp;
@@ -773,7 +777,8 @@ int stop_tvin_service(int no)
 	free_irq(devp->irq,(void *)devp);
 #endif
 	end_time = jiffies_to_msecs(jiffies);
-	pr_info("[vdin]:vdin start time:%ums,stop time:%ums,run time:%u.\n",devp->start_time,end_time,end_time-devp->start_time);
+	if(vdin_dbg_en)
+		pr_info("[vdin]:vdin start time:%ums,stop time:%ums,run time:%u.\n",devp->start_time,end_time,end_time-devp->start_time);
 	return 0;
 }
 EXPORT_SYMBOL(stop_tvin_service);
@@ -1035,7 +1040,8 @@ irqreturn_t vdin_isr_simple(int irq, void *dev_id)
 	/* set canvas address */
 
 	vdin_set_canvas_id(devp->addr_offset, vdin_canvas_ids[devp->index][irq_max_count]);
-	pr_info("%2d: canvas id %d, field type %s\n", irq_max_count,
+	if(vdin_dbg_en)
+		pr_info("%2d: canvas id %d, field type %s\n", irq_max_count,
 			vdin_canvas_ids[devp->index][irq_max_count],
 			((last_field_type & VIDTYPE_TYPEMASK)== VIDTYPE_INTERLACE_TOP ? "top":"buttom"));
 
@@ -1448,7 +1454,8 @@ static int vdin_open(struct inode *inode, struct file *file)
 		return -ENXIO;
 
 	if (devp->flags &= VDIN_FLAG_FS_OPENED) {
-		pr_info("%s, device %s opened already\n", __func__, dev_name(devp->dev));
+		if(vdin_dbg_en)
+			pr_info("%s, device %s opened already\n", __func__, dev_name(devp->dev));
 		return 0;
 	}
 
@@ -1456,11 +1463,13 @@ static int vdin_open(struct inode *inode, struct file *file)
 
 	/* request irq */
 	if (work_mode_simple) {
-		pr_info("vdin.%d work in simple mode.\n",devp->index);
+		if(vdin_dbg_en)
+			pr_info("vdin.%d work in simple mode.\n",devp->index);
 		ret = request_irq(devp->irq, vdin_isr_simple, IRQF_SHARED, devp->irq_name, (void *)devp);
 	}
 	else {
-		pr_info("vdin.%d work in normal mode.\n",devp->index);
+		if(vdin_dbg_en)
+			pr_info("vdin.%d work in normal mode.\n",devp->index);
 		ret = request_irq(devp->irq, vdin_isr, IRQF_SHARED, devp->irq_name, (void *)devp);
 	}
         /*disable irq untill vdin is configured completely*/
@@ -1468,7 +1477,8 @@ static int vdin_open(struct inode *inode, struct file *file)
 
 	/* remove the hardware limit to vertical [0-max]*/
         WRITE_VCBUS_REG(VPP_PREBLEND_VD1_V_START_END, 0x00000fff);
-	pr_info("open device %s ok\n", dev_name(devp->dev));
+	if(vdin_dbg_en)
+		pr_info("open device %s ok\n", dev_name(devp->dev));
 	return ret;
 }
 
@@ -1477,7 +1487,8 @@ static int vdin_release(struct inode *inode, struct file *file)
 	vdin_dev_t *devp = file->private_data;
 
 	if (!(devp->flags &= VDIN_FLAG_FS_OPENED)) {
-		pr_info("%s, device %s not opened\n", __func__, dev_name(devp->dev));
+		if(vdin_dbg_en)
+			pr_info("%s, device %s not opened\n", __func__, dev_name(devp->dev));
 		return 0;
 	}
 
@@ -1490,7 +1501,8 @@ static int vdin_release(struct inode *inode, struct file *file)
 
 	/* reset the hardware limit to vertical [0-1079]  */
         WRITE_VCBUS_REG(VPP_PREBLEND_VD1_V_START_END, 0x00000437);
-	pr_info("close device %s ok\n", dev_name(devp->dev));
+	if(vdin_dbg_en)
+		pr_info("close device %s ok\n", dev_name(devp->dev));
 	return 0;
 }
 
@@ -1542,7 +1554,8 @@ static long vdin_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 			}
 
 			devp->flags |= VDIN_FLAG_DEC_OPENED;
-			pr_info("TVIN_IOC_OPEN(%d) port %s opened ok\n\n", parm.index,
+			if(vdin_dbg_en)
+				pr_info("TVIN_IOC_OPEN(%d) port %s opened ok\n\n", parm.index,
 					tvin_port_str(devp->parm.port));
 			mutex_unlock(&devp->fe_lock);
 			break;
@@ -1587,7 +1600,8 @@ static long vdin_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
                         }
 			vdin_start_dec(devp);
 			devp->flags |= VDIN_FLAG_DEC_STARTED;
-			pr_info("TVIN_IOC_START_DEC port %s, decode started ok\n\n",
+			if(vdin_dbg_en)
+				pr_info("TVIN_IOC_START_DEC port %s, decode started ok\n\n",
 					tvin_port_str(devp->parm.port));
 			mutex_unlock(&devp->fe_lock);
 			break;
@@ -1627,7 +1641,8 @@ static long vdin_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 			devp->flags &= ~VDIN_FLAG_FORCE_UNSTABLE;
 			/* clear the flag of decode started */
 			devp->flags &= (~VDIN_FLAG_DEC_STARTED);
-			pr_info("TVIN_IOC_STOP_DEC(%d) port %s, decode stop ok\n\n",
+			if(vdin_dbg_en)
+				pr_info("TVIN_IOC_STOP_DEC(%d) port %s, decode stop ok\n\n",
 					parm->index, tvin_port_str(parm->port));
 			mutex_unlock(&devp->fe_lock);
 			break;
@@ -1640,7 +1655,8 @@ static long vdin_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 			}
 			devp->flags |= VDIN_FLAG_DEC_REGED;
 			vdin_vf_reg(devp);
-			pr_info("TVIN_IOC_VF_REG(%d) ok\n\n", devp->index);
+			if(vdin_dbg_en)
+				pr_info("TVIN_IOC_VF_REG(%d) ok\n\n", devp->index);
 			break;
 		case TVIN_IOC_VF_UNREG:
 			if ((devp->flags & VDIN_FLAG_DEC_REGED) != VDIN_FLAG_DEC_REGED) {
@@ -1650,7 +1666,8 @@ static long vdin_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 			}
 			devp->flags &= (~VDIN_FLAG_DEC_REGED);
 			vdin_vf_unreg(devp);
-			pr_info("TVIN_IOC_VF_REG(%d) ok\n\n", devp->index);
+			if(vdin_dbg_en)
+				pr_info("TVIN_IOC_VF_REG(%d) ok\n\n", devp->index);
 			break;
 		case TVIN_IOC_CLOSE: {
 			struct tvin_parm_s *parm = &devp->parm;
@@ -1664,7 +1681,8 @@ static long vdin_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 			}
 			vdin_close_fe(devp);
 			devp->flags &= (~VDIN_FLAG_DEC_OPENED);
-			pr_info("TVIN_IOC_CLOSE(%d) port %s closed ok\n\n", parm->index,
+			if(vdin_dbg_en)
+				pr_info("TVIN_IOC_CLOSE(%d) port %s closed ok\n\n", parm->index,
 					tvin_port_str(port));
 			mutex_unlock(&devp->fe_lock);
 			break;
@@ -1795,7 +1813,7 @@ static long vdin_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 				callmaster_status = frontend->dec_ops->callmaster_det(port_call,frontend);
 			}
 			if(vdin_dbg_en)
-				printk("[vdin.%d]:%s callmaster_status=%d,port_call=[%s]\n",devp->index,__func__,callmaster_status,tvin_port_str(port_call));
+				pr_info("[vdin.%d]:%s callmaster_status=%d,port_call=[%s]\n",devp->index,__func__,callmaster_status,tvin_port_str(port_call));
 			break;
 		}
 		case TVIN_IOC_CALLMASTER_GET: {

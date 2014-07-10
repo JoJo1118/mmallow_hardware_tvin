@@ -19,6 +19,9 @@
 #include "../tvin_format_table.h"
 #include "vdin_drv.h"
 #include "vdin_canvas.h"
+#ifndef VDIN_DEBUG
+#define pr_info(fmt, ...)
+#endif
 
 static unsigned int max_buf_num = 4;
 module_param(max_buf_num, uint, 0664);
@@ -102,9 +105,7 @@ inline void vdin_canvas_start_config(struct vdin_dev_s *devp)
 	devp->canvas_max_num = min(devp->canvas_max_num,max_buf_num);
 	devp->canvas_w = roundup(devp->canvas_w,32);
 	devp->mem_start = roundup(devp->mem_start,32);
-#ifdef VDIN_DEBUG
 	pr_info("vdin.%d cnavas configuration table:\n", devp->index);
-#endif
 	for (i = 0; i < devp->canvas_max_num; i++){
 		canvas_id = vdin_canvas_ids[devp->index][i*canvas_step];
 		//canvas_addr = canvas_get_addr(canvas_id);
@@ -115,10 +116,8 @@ inline void vdin_canvas_start_config(struct vdin_dev_s *devp)
 		if(chroma_size)
 			canvas_config(canvas_id+1, canvas_addr+devp->canvas_w*devp->canvas_h, devp->canvas_w, devp->canvas_h/2,
 					CANVAS_ADDR_NOWRAP, CANVAS_BLKMODE_LINEAR);
-#ifdef VDIN_DEBUG
 		pr_info("\t0x%2x: 0x%lx-0x%lx %ux%u\n",
 				canvas_id, canvas_addr, canvas_addr + devp->canvas_max_size, devp->canvas_w, devp->canvas_h);
-#endif
 	}
 }
 /*

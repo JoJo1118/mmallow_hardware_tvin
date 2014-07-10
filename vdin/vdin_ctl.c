@@ -109,6 +109,9 @@ MODULE_PARM_DESC(cm_enable,"cm_enable");
 #define VDIN_MEAS_HSCNT_DIFF    0x50  // the diff value between normal/bad data
 #define VDIN_MEAS_VSCNT_DIFF    0x50  // the diff value between normal/bad data
 
+#ifndef VDIN_DEBUG
+#define pr_info(fmt, ...)
+#endif
 
 /***************************Local Structures**********************************/
 static struct vdin_matrix_lup_s vdin_matrix_lup[] =

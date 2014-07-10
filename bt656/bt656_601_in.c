@@ -280,7 +280,13 @@ static void reinit_camera_dec(struct am656in_dev_s *devp)
 	unsigned char vsync_enable = devp->para.vsync_phase;
         unsigned short hs_bp       = devp->para.hs_bp;
         unsigned short vs_bp       = devp->para.vs_bp;
-	//disable 656,reset
+
+        #ifdef MESON_CPU_TYPE_MESON8B
+	//top reset for bt656
+        WRITE_CBUS_REG_BITS(RESET1_REGISTER,1,5,1);
+        WRITE_CBUS_REG_BITS(RESET1_REGISTER,0,5,1);
+        #endif
+        //disable 656,reset
 	WR(BT_CTRL, 1<<31);
 
 	/*WR(BT_VIDEOSTART, 1 | (1 << 16));   //Line number of the first video start line in field 0/1.there is a blank

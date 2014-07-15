@@ -1333,12 +1333,13 @@ irqreturn_t vdin_v4l2_isr(int irq, void *dev_id)
 		devp->stamp = stamp;
 		goto irq_handled;
 	}
-
-        if(!vdin_write_done_check(devp->addr_offset, devp)){
-		if(vdin_dbg_en)
-			pr_info("[vdin.%u] write undone skiped.\n",devp->index);
-                goto irq_handled;
-        }
+	if(devp->parm.port == TVIN_PORT_VIU){
+	        if(!vdin_write_done_check(devp->addr_offset, devp)){
+			if(vdin_dbg_en)
+				pr_info("[vdin.%u] write undone skiped.\n",devp->index);
+	                goto irq_handled;
+	        }
+	}
 
 
 	if(devp->last_wr_vfe){

@@ -1849,9 +1849,13 @@ inline void vdin_set_hscale(unsigned int offset, unsigned int src_w, unsigned in
 	{
 		WR(VDIN_SCALE_COEF, filt_coef0[i]); //bicubic
 	}
-
-	horz_phase_step = (src_w << 20) / dst_w;
-	horz_phase_step = (horz_phase_step << 4);
+	if(src_w >> 12){//for src_w >= 4096, avoid data overflow.
+		horz_phase_step = (src_w << 18) / dst_w;
+		horz_phase_step = (horz_phase_step << 6);
+	}else{
+		horz_phase_step = (src_w << 20) / dst_w;
+		horz_phase_step = (horz_phase_step << 4);
+	}
 
 	WR(VDIN_WIDTHM1I_WIDTHM1O, ((src_w - 1) << WIDTHM1I_BIT) |
 			(dst_w  - 1)

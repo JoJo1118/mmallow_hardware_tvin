@@ -1343,12 +1343,16 @@ irqreturn_t vdin_v4l2_isr(int irq, void *dev_id)
 
 
 	if(devp->last_wr_vfe){
+		struct timeval ts;
+		do_gettimeofday(&ts);
+		devp->last_wr_vfe->vf.pts_us64 = ts.tv_sec;
+		devp->last_wr_vfe->vf.pts = ts.tv_usec;
 		provider_vf_put(devp->last_wr_vfe, devp->vfp);
-	        devp->last_wr_vfe = NULL;
+		devp->last_wr_vfe = NULL;
 		vf_notify_receiver(devp->name,VFRAME_EVENT_PROVIDER_VFRAME_READY,NULL);
 	}
 	/*check vs is valid base on the time during continuous vs*/
-        vdin_check_cycle(devp);
+	vdin_check_cycle(devp);
 
 /* remove for m6&m8 camera function, may cause hardware disable bug on kernel 3.10 */
 //#if MESON_CPU_TYPE < MESON_CPU_TYPE_MESON8
@@ -1371,10 +1375,10 @@ irqreturn_t vdin_v4l2_isr(int irq, void *dev_id)
 	vdin_set_vframe_prop_info(curr_wr_vf, devp);
 	vdin_backup_histgram(curr_wr_vf, devp);
 
-        if(devp->frontend && devp->frontend->dec_ops){
+	if(devp->frontend && devp->frontend->dec_ops){
 		decops = devp->frontend->dec_ops;
                 /*pass the histogram information to viuin frontend*/
-                devp->frontend->private_data = &curr_wr_vf->prop;
+		devp->frontend->private_data = &curr_wr_vf->prop;
           	ret = decops->decode_isr(devp->frontend, devp->hcnt64);
 		if (ret == TVIN_BUF_SKIP) {
 			if(vdin_dbg_en)
@@ -1387,19 +1391,19 @@ irqreturn_t vdin_v4l2_isr(int irq, void *dev_id)
 			curr_wr_vfe = NULL;
                 /*function of capture end,the reserved is the best*/
 		} else if(ret == TVIN_BUF_RECYCLE_TMP) {
-                        tmp_to_rd(devp->vfp);
+			tmp_to_rd(devp->vfp);
 			goto irq_handled;
-                }
+		}
 	}
 	/*check the skip frame*/
-        if(devp->frontend && devp->frontend->sm_ops){
-    	        sm_ops = devp->frontend->sm_ops;
-                if(sm_ops->check_frame_skip &&
-        	        sm_ops->check_frame_skip(devp->frontend)) {
-            	        goto irq_handled;
-                }
-        }
-        next_wr_vfe = provider_vf_peek(devp->vfp);
+	if(devp->frontend && devp->frontend->sm_ops){
+		sm_ops = devp->frontend->sm_ops;
+		if(sm_ops->check_frame_skip &&
+			sm_ops->check_frame_skip(devp->frontend)) {
+			goto irq_handled;
+		}
+	}
+	next_wr_vfe = provider_vf_peek(devp->vfp);
 
 	if (!next_wr_vfe) {
                 /*add for force vdin buffer recycle*/
@@ -1423,16 +1427,16 @@ irqreturn_t vdin_v4l2_isr(int irq, void *dev_id)
 	/* prepare for next input data */
 	next_wr_vfe = provider_vf_get(devp->vfp);
 	if(devp->parm.port == TVIN_PORT_VIU){
-	        VSYNC_WR_MPEG_REG_BITS(VDIN_WR_CTRL+devp->addr_offset, (next_wr_vfe->vf.canvas0Addr&0xff), WR_CANVAS_BIT, WR_CANVAS_WID);
+		VSYNC_WR_MPEG_REG_BITS(VDIN_WR_CTRL+devp->addr_offset, (next_wr_vfe->vf.canvas0Addr&0xff), WR_CANVAS_BIT, WR_CANVAS_WID);
        /* prepare for chroma canvas*/
-                if((devp->prop.dest_cfmt == TVIN_NV12)||(devp->prop.dest_cfmt == TVIN_NV21))
+		if((devp->prop.dest_cfmt == TVIN_NV12)||(devp->prop.dest_cfmt == TVIN_NV21))
 			VSYNC_WR_MPEG_REG_BITS(VDIN_WR_CTRL2+devp->addr_offset, (next_wr_vfe->vf.canvas0Addr>>8)&0xff, WRITE_CHROMA_CANVAS_ADDR_BIT,WRITE_CHROMA_CANVAS_ADDR_WID);
 	}else{
 		vdin_set_canvas_id(devp->addr_offset, (next_wr_vfe->vf.canvas0Addr&0xff));
-                if((devp->prop.dest_cfmt == TVIN_NV12)||(devp->prop.dest_cfmt == TVIN_NV21))
-                        vdin_set_chma_canvas_id(devp->addr_offset, (next_wr_vfe->vf.canvas0Addr>>8)&0xff);
+		if((devp->prop.dest_cfmt == TVIN_NV12)||(devp->prop.dest_cfmt == TVIN_NV21))
+			vdin_set_chma_canvas_id(devp->addr_offset, (next_wr_vfe->vf.canvas0Addr>>8)&0xff);
 	}
-        devp->curr_wr_vfe = next_wr_vfe;
+	devp->curr_wr_vfe = next_wr_vfe;
 	vf_notify_receiver(devp->name,VFRAME_EVENT_PROVIDER_VFRAME_READY,NULL);
 
 

@@ -2004,7 +2004,7 @@ inline void vdin0_output_ctl(unsigned int output_nr_flag)
 }
 inline void vdin_set_mpegin(struct vdin_dev_s *devp)
 {
-	unsigned int offset = devp->addr_offset;
+//	unsigned int offset = devp->addr_offset;
 	//set VDIN_MEAS_CLK_CNTL, select XTAL clock
 	WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000100);
 
@@ -2022,7 +2022,7 @@ inline void vdin_set_mpegin(struct vdin_dev_s *devp)
 }
 inline void vdin_force_gofiled(struct vdin_dev_s *devp)
 {
-	unsigned int offset = devp->addr_offset;
+//	unsigned int offset = devp->addr_offset;
 	WRITE_CBUS_REG_BITS(VDIN_COM_CTRL0,1,28,1);    //vdin software reset base on di_pre;must set once only!!!
 	WRITE_CBUS_REG_BITS(VDIN_COM_CTRL0,0,28,1);
 }

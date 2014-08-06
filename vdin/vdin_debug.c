@@ -592,7 +592,7 @@ static ssize_t vdin_cm2_store(struct device *dev,
 	int n = 0;
 	char *buf_orig, *ps, *token;
 	char *parm[7];
-	u32 addr, val, bit;
+	u32 addr;
 	int data[5] = {0};
 	unsigned int addr_port = VDIN_CHROMA_ADDR_PORT;
 	unsigned int data_port = VDIN_CHROMA_DATA_PORT;

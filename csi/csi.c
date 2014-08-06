@@ -304,9 +304,9 @@ static ssize_t csi_attr_store(struct device *dev,struct device_attribute *attr,c
 {
         struct amcsi_dev_s *csi_devp;
 
-        unsigned int n=0, fps=0;
+        unsigned int n=0;
 
-        unsigned char ret=0;
+//        unsigned char ret=0;
         char *buf_orig, *ps, *token;
         char *parm[6] = {NULL};
 
@@ -429,8 +429,8 @@ static int amcsi_feopen(struct tvin_frontend_s *fe, enum tvin_port_e port)
 {
         struct amcsi_dev_s *csi_devp = container_of(fe, amcsi_dev_t, frontend);
         struct vdin_parm_s *parm = fe->private_data;
-        csi_parm_t *p = &csi_devp->csi_parm;
-        int ret;
+       // csi_parm_t *p = &csi_devp->csi_parm;
+//        int ret;
 
         if((port != TVIN_PORT_MIPI)){
                 DPRINT("[mipi..]%s:invaild port %d.\n",__func__, port);

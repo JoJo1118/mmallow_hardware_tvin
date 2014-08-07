@@ -269,7 +269,7 @@ static ssize_t csi_attr_show(struct device *dev, struct device_attribute *attr, 
                         csi_devp->csi_parm.hs_freq, //hz
                         csi_devp->csi_parm.urgent);
         len += sprintf(buf+len, "\treset=%d, left jiffies=%ld, reset_count=%d\n"
-                                "\tcsi_devp->t.data=%p, csi_devp=%p\n"
+                                "\tcsi_devp->t.data=%ld, csi_devp=%p\n"
                                 "\tcsi_devp->t.function=%p, csi2_timer_func=%p\n",
                                  csi_devp->reset, csi_devp->t.expires - jiffies,
                                  csi_devp->reset_count,
@@ -408,7 +408,7 @@ static void csi2_timer_func(unsigned long arg)
                         printk("reset csi\n");
                         am_mipi_csi2_init(&csi_devp->csi_parm);
                         csi_devp->reset_count ++;
-                        printk("period=%d, jiffies=%d\n", csi_devp->period, msecs_to_jiffies(csi_devp->period));
+                        printk("period=%d, jiffies=%ld\n", csi_devp->period, msecs_to_jiffies(csi_devp->period));
                 }
                 //printk("min_frmrate=%d\n", csi_devp->min_frmrate);
                 csi_devp->period = 1000 / csi_devp->min_frmrate;

@@ -38,7 +38,7 @@ static void isp_param_show(isp_param_t *parm, int len)
 				pr_info("%s %s[%d]=0x%x.\n",__func__,parm[i].name,j,*(parm[i].param+j));
 		} else if(ISP_FLOAT == parm[i].type) {
 			for(j=0;j<parm[i].length;j++)
-				pr_info("%s %s[%d]=%f.\n",__func__,parm[i].name,j,*(parm[i].param+j));
+				pr_info("%s %s[%d]=%d.\n",__func__,parm[i].name,j,*(parm[i].param+j));
 		}
 	}
 }
@@ -56,7 +56,7 @@ static int isp_set_param(isp_param_t *parm,int len,char **buf)
 			} else if(ISP_FLOAT == parm[i].type) {
 				for(j=0;j<parm[i].length&&*(buf+j+1)!=NULL;j++) {
 					sscanf(*(buf+j+1),"%f",(float*)(parm[i].param+j));
-					pr_info("%s %s[%d]=%f.\n",__func__,parm[i].name,j,*(parm[i].param+j));
+					pr_info("%s %s[%d]=%d.\n",__func__,parm[i].name,j,*(parm[i].param+j));
 				}
 			}
 			break;

@@ -680,10 +680,10 @@ static ssize_t ls_store(struct device *dev,struct device_attribute *attr,const c
 	unsigned int psize_v2h=0,ocenter_c2l=0,ocenter_c2t=0,gain_0db=0,curvature_gr=0,curvature_r=0;
         unsigned int curvature_b=0,curvature_gb=0;
         isp_dev_t *devp;
-	devp = dev_get_drvdata(dev);
 	isp_info_t *info = &devp->info;
-
         bool force_enable=false;
+	devp = dev_get_drvdata(dev);
+
 
 	/* to avoid the bellow warning message while compiling:
 	 * warning: the frame size of 1576 bytes is larger than 1024 bytes

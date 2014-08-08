@@ -199,7 +199,7 @@ typedef enum data_type_e{
 	ISP_U8=0,
 	ISP_U16,
 	ISP_U32,
-	ISP_FLOAT,
+	//ISP_FLOAT, //not use
 }data_type_t;
 
 typedef struct isp_param_s{

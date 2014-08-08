@@ -243,7 +243,7 @@ void isp_set_test_pattern(xml_tp_t *tp)
 	if(tp){
 		for(i=0;i<XML_TP;i++)
 			WR(ISP_PAT_GEN_CTRL+i,tp->reg_map[i]);
-	} 
+	}
 	return;
 }
 /*
@@ -330,7 +330,7 @@ void isp_set_matrix(xml_csc_t *csc, unsigned int height)
 	        if(height==0) {
 	    	        start = isp_matrix_lup[2];
 			for(i=0;i<XML_CSC;i++)
-			        WR(ISP_MATRIX_PRE_OFST0_1+i, *(start+i));			
+			        WR(ISP_MATRIX_PRE_OFST0_1+i, *(start+i));
 	        }else{
 		        start = (height>720)?isp_matrix_lup[1]:isp_matrix_lup[0];
 		        for(i=0;i<XML_CSC;i++)
@@ -496,14 +496,14 @@ static void isp_set_lnsd(xml_lut_ls_t *lnsd)
 	if(lnsd){
 		pr_info("%s\n",__func__);
 		WRITE_VCBUS_REG(0x2d28, (READ_VCBUS_REG(0x2d28)&0xefffffff)); // disable lens shielding
-		WRITE_VCBUS_REG(0x2daf, 0x0000000c);         // lens shielding lut ram: v-bus write mode		
+		WRITE_VCBUS_REG(0x2daf, 0x0000000c);         // lens shielding lut ram: v-bus write mode
 		WRITE_VCBUS_REG(ISP_LNS_XYSCAL, lnsd->reg_map[i]);
 		for(i=1;i<XML_LUT_LS;i++){
 			WR(ISP_LNSD_LUT_ADDR,i-1);
 			WR(ISP_LNSD_LUT_DATA,lnsd->reg_map[i]);
 		}
-	    WRITE_VCBUS_REG(0x2daf, 0x00000000); // lens shielding lut ram: hardware read mode	
-	    WRITE_VCBUS_REG(0x2d28, (READ_VCBUS_REG(0x2d28)|0x10000000));		
+	    WRITE_VCBUS_REG(0x2daf, 0x00000000); // lens shielding lut ram: hardware read mode
+	    WRITE_VCBUS_REG(0x2d28, (READ_VCBUS_REG(0x2d28)|0x10000000));
 	}
 }
 
@@ -564,7 +564,7 @@ static void isp_set_lnsd_test(unsigned int w,unsigned int h)
 			WRITE_VCBUS_REG(0x2dc7, isp_param_lns_lut_5m[i]);
 	    }
     }
-    WRITE_VCBUS_REG(0x2daf, 0x00000000); // lens shielding lut ram: hardware read mode	
+    WRITE_VCBUS_REG(0x2daf, 0x00000000); // lens shielding lut ram: hardware read mode
     WRITE_VCBUS_REG(0x2d28, (READ_VCBUS_REG(0x2d28)|0x10000000));
 }
 #endif
@@ -615,14 +615,14 @@ void isp_bypass_for_rgb()
 	WR_BITS(ISP_GAIN_GRBG01,0x100,GAIN_GRBG0_BIT,GAIN_GRBG0_WID);
 	WR_BITS(ISP_GAIN_GRBG01,0x100,GAIN_GRBG1_BIT,GAIN_GRBG1_WID);
 	WR_BITS(ISP_GAIN_GRBG23,0x100,GAIN_GRBG2_BIT,GAIN_GRBG2_WID);
-	WR_BITS(ISP_GAIN_GRBG23,0x100,GAIN_GRBG3_BIT,GAIN_GRBG3_WID);	
+	WR_BITS(ISP_GAIN_GRBG23,0x100,GAIN_GRBG3_BIT,GAIN_GRBG3_WID);
 	WR_BITS(ISP_LNS_CTRL,0,LNS_CMOP_ENABLE_BIT,LNS_CMOP_ENABLE_WID);
 	WR_BITS(ISP_GMR0_CTRL,0,GMR_CORRECT_ENABLE_BIT,GMR_CORRECT_ENABLE_WID);
 	WR_BITS(ISP_DFT_CTRL,0,ISP_DFT_ENABLE_BIT,ISP_DFT_ENABLE_WID);
 	isp_set_matrix(NULL,0);
 	WR_BITS(ISP_PKNR_ENABLE,0,ISP_NR_EN_BIT,ISP_NR_EN_WID);
-	WR_BITS(ISP_PKNR_ENABLE,0,ISP_PK_EN_BIT,ISP_PK_EN_WID);	
-	
+	WR_BITS(ISP_PKNR_ENABLE,0,ISP_PK_EN_BIT,ISP_PK_EN_WID);
+
 }
 static void isp_set_bayer_fmt(tvin_color_fmt_t bfmt)
 {
@@ -640,7 +640,7 @@ static void isp_set_bayer_fmt(tvin_color_fmt_t bfmt)
 void isp_set_def_config(xml_default_regs_t *regs,tvin_port_t fe_port,tvin_color_fmt_t bfmt,unsigned int w,unsigned int h)
 {
 	unsigned int mux = 0;
-	
+
 	switch(fe_port){
 		case TVIN_PORT_CAMERA:
 			mux = 1;
@@ -653,7 +653,7 @@ void isp_set_def_config(xml_default_regs_t *regs,tvin_port_t fe_port,tvin_color_
 			break;
 	}
 	WR_BITS(VPU_MISC_CTRL,mux,ISP_IN_SEL_BIT,ISP_IN_SEL_WID);
-	
+
 	isp_top_init(&regs->top,w,h);
 	isp_set_test_pattern(&regs->tp);
 	isp_set_clamp_gain(&regs->cg);
@@ -690,7 +690,7 @@ void isp_hw_enable(bool flag)
 		WR_BITS(ISP_TIMING_MODE,1,5,1);
 		WR_BITS(ISP_FRM_SOFT_RST,1,0,1);
 	}
-		
+
 }
 /*
 *just enable test pattern
@@ -759,7 +759,7 @@ void isp_load_def_setting(unsigned int w,unsigned int h,unsigned char bayer_fmt)
 	WR(ISP_CLAMP_GRBG23,0x0);
 	WR(ISP_GAIN_GRBG01, 0x1000100);
 	WR(ISP_GAIN_GRBG23, 0x1000100);
-	
+
 	WR(ISP_HV_SIZE,w<<REG_HSIZE_BIT|h);
         WR(ISP_HBLANK, w<<REG_TOTAL_W_BIT|10);
 	// demosaicing
@@ -770,7 +770,7 @@ void isp_load_def_setting(unsigned int w,unsigned int h,unsigned char bayer_fmt)
 	//enable
 	WR_BITS(ISP_FRM_SOFT_RST,0,0,1);
 	WR_BITS(ISP_TIMING_MODE,0,5,1);
-	
+
 }
 
 /*
@@ -1127,6 +1127,7 @@ void get_isp_gamma_table(unsigned short *gamma,unsigned int type)
 /*
 * lens-shading debug start
 */
+#if 0
 static unsigned long long div64(unsigned long long n, unsigned long long d) // n for numerator, d for denominator
 {
     unsigned int n_bits = 0, d_bits = 0, i = 0;
@@ -1207,7 +1208,8 @@ static unsigned int phase_curve_grid(unsigned int curvature, unsigned int gain_0
 
     return(data);
 }
-
+#endif
+#if 0//for no use
 void isp_ls_curve(unsigned int psize_v2h,    // pixel_size_percentage_vertical_to_horizontal (default is 100), given 1.4um*1.4um, it is:
                                              // 100(%) for p2p format
                                              // 100(%) for skipping format
@@ -1402,3 +1404,4 @@ void isp_ls_curve(unsigned int psize_v2h,    // pixel_size_percentage_vertical_t
     pr_info(" -------end------\n");
 
 }
+#endif

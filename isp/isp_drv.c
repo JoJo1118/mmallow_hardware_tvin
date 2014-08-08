@@ -660,7 +660,7 @@ static ssize_t gamma_store(struct device *dev,
 }
 
 static DEVICE_ATTR(gamma, 0664, gamma_show, gamma_store);
-
+#if 0//for no use
 static ssize_t ls_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
         ssize_t len = 0;
@@ -717,7 +717,7 @@ static ssize_t ls_store(struct device *dev,struct device_attribute *attr,const c
 }
 
 static DEVICE_ATTR(lens, 0664, ls_show, ls_store);
-
+#endif
 /*
 *get aet current state
 *cat /sys/class/isp/isp0/aet
@@ -1360,7 +1360,7 @@ static int isp_probe(struct platform_device *pdev)
 	ret = device_create_file(devp->dev,&dev_attr_wave_param);
 	ret = device_create_file(devp->dev,&dev_attr_gamma_debug);
 	ret = device_create_file(devp->dev,&dev_attr_gamma);
-	ret = device_create_file(devp->dev,&dev_attr_lens);
+	//ret = device_create_file(devp->dev,&dev_attr_lens);
 	ret = device_create_file(devp->dev,&dev_attr_aet);
 	if(ret < 0)
 		goto err;
@@ -1396,7 +1396,7 @@ static int isp_remove(struct platform_device *pdev)
 	device_remove_file(devp->dev,&dev_attr_af_param);
 	device_remove_file(devp->dev,&dev_attr_cap_param);
 	device_remove_file(devp->dev,&dev_attr_wave_param);
-	device_remove_file(devp->dev,&dev_attr_lens);
+	//device_remove_file(devp->dev,&dev_attr_lens);
 
 	isp_delete_device(devp->index);
         tvin_unreg_frontend(&devp->frontend);

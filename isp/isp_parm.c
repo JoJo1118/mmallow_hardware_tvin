@@ -36,10 +36,10 @@ static void isp_param_show(isp_param_t *parm, int len)
 		if(ISP_U32==parm[i].type || ISP_U16== parm[i].type || ISP_U8== parm[i].type) {
 			for(j=0;j<parm[i].length;j++)
 				pr_info("%s %s[%d]=0x%x.\n",__func__,parm[i].name,j,*(parm[i].param+j));
-		} else if(ISP_FLOAT == parm[i].type) {
+		}/* else if(ISP_FLOAT == parm[i].type) {
 			for(j=0;j<parm[i].length;j++)
 				pr_info("%s %s[%d]=%d.\n",__func__,parm[i].name,j,*(parm[i].param+j));
-		}
+		}*/
 	}
 }
 
@@ -53,12 +53,12 @@ static int isp_set_param(isp_param_t *parm,int len,char **buf)
 					*(parm[i].param+j) = simple_strtol(*(buf+j+1),NULL,16);
 					pr_info("%s %s[%d]=0x%x.\n",__func__,parm[i].name,j,*(parm[i].param+j));
 				}
-			} else if(ISP_FLOAT == parm[i].type) {
+			} /*else if(ISP_FLOAT == parm[i].type) {
 				for(j=0;j<parm[i].length&&*(buf+j+1)!=NULL;j++) {
 					sscanf(*(buf+j+1),"%f",(float*)(parm[i].param+j));
 					pr_info("%s %s[%d]=%d.\n",__func__,parm[i].name,j,*(parm[i].param+j));
 				}
-			}
+			}*/
 			break;
 		}
 	}
@@ -68,86 +68,90 @@ static int isp_set_param(isp_param_t *parm,int len,char **buf)
 	}
 	return 0;
 }
-
+isp_param_t isp_param_ae[AE_PARM_NUM]={
+		{"ae_algorithm",      NULL,      1,  ISP_U32},
+		{"ae_statistics",     NULL,  3,  ISP_U32},
+		{"ae_exp",            NULL,         3,  ISP_U32},
+		{"ae_ag",             NULL,          3,  ISP_U32},
+		{"ae_skip",           NULL,        3,  ISP_U32},
+		{"ratio_winl",        NULL,        1,  ISP_U32},
+		{"ratio_winr",        NULL,        1,  ISP_U32},
+		{"ratio_wint",        NULL,        1,  ISP_U32},
+		{"ratio_winb",        NULL,        1,  ISP_U32},
+		{"alert_mode",        NULL,        1,  ISP_U32},
+		{"tune_mode",         NULL,         1,  ISP_U32},
+		{"ratio_r",           NULL,           1,  ISP_U32},
+		{"ratio_g",           NULL,           1,  ISP_U32},
+		{"ratio_b",           NULL,           1,  ISP_U32},
+		{"stepdnr",           NULL,           1,  ISP_U32},
+		{"stepdng",           NULL,           1,  ISP_U32},
+		{"stepdnb",           NULL,           1,  ISP_U32},
+		{"stepup",            NULL,            1,  ISP_U32},
+		{"slow_lpfcoef",      NULL,      1,  ISP_U32},
+		{"fast_lpfcoef",      NULL,      1,  ISP_U32},
+		{"coef_cur",          NULL,       16, ISP_U32},
+		{"coef_env",          NULL,       16, ISP_U32},
+		{"env_hign",          NULL,          1,  ISP_U32},
+		{"env_hign2mid",      NULL,      1,  ISP_U32},
+		{"env_low2mid",       NULL,       1,  ISP_U32},
+		{"env_low",           NULL,           1,  ISP_U32},
+		{"thr_r_high",        NULL,        1,  ISP_U32},
+		{"thr_r_mid",         NULL,         1,  ISP_U32},
+		{"thr_r_low",         NULL,         1,  ISP_U32},
+		{"thr_g_high",        NULL,        1,  ISP_U32},
+		{"thr_g_mid",         NULL,         1,  ISP_U32},
+		{"thr_g_low",         NULL,         1,  ISP_U32},
+		{"thr_b_high",        NULL,        1,  ISP_U32},
+		{"thr_b_mid",         NULL,         1,  ISP_U32},
+		{"thr_b_low",         NULL,         1,  ISP_U32},
+		{"lpftype_high",      NULL,      1,  ISP_U32},
+		{"lpftype_mid",       NULL,       1,  ISP_U32},
+		{"lpftype_low",       NULL,       1,  ISP_U32},
+		{"targethigh",        NULL,        1,  ISP_U32},
+		{"targetmid",         NULL,         1,  ISP_U32},
+		{"targetlow",         NULL,         1,  ISP_U32},
+		{"radium_inner_h",    NULL,    1,  ISP_U32},
+		{"radium_outer_h",    NULL,    1,  ISP_U32},
+		{"radium_inner_m",    NULL,    1,  ISP_U32},
+		{"radium_outer_m",    NULL,    1,  ISP_U32},
+		{"radium_inner_l",    NULL,    1,  ISP_U32},
+		{"radium_outer_l",    NULL,    1,  ISP_U32},
+		{"flash_thr",	      NULL,         1,  ISP_U32},
+		{"ratio_histr",	      NULL,       1,  ISP_U32},
+		{"ratio_histg",	      NULL,       1,  ISP_U32},
+		{"ratio_histb",	      NULL,       1,  ISP_U32},
+		{"target_r",	      NULL,          1,  ISP_U32},
+		{"target_g",	      NULL,          1,  ISP_U32},
+		{"target_b",	      NULL,          1,  ISP_U32},
+		{"maxrate_inner",     NULL,     1,  ISP_U32},
+		{"maxrate_outer",     NULL,     1,  ISP_U32},
+		{"slow_lpfcoef_enh",  NULL,  1,  ISP_U32},
+		{"fast_lpfcoef_enh",  NULL,  1,  ISP_U32},
+		{"flash_thr_enh",     NULL,     1,  ISP_U32},
+		{"ae_ratio_low",	  NULL, 	 1,  ISP_U32},
+		{"ae_ratio_low2mid",  NULL,  1,  ISP_U32},
+		{"ae_ratio_mid2high", NULL, 1,  ISP_U32},
+		{"ae_ratio_high",	  NULL, 	 1,  ISP_U32},
+		{"ae_min_diff",	      NULL, 	     1,  ISP_U32},
+		{"ae_max_diff",	      NULL, 	     1,  ISP_U32},
+		{"reserve",	          NULL, 	     16, ISP_U32},
+		{"aet_fmt_gain",	  NULL, 	 1,  ISP_U32},
+};
+/* ae_param is all u32 if not need to modify here */
 void set_ae_parm(xml_algorithm_ae_t *ae_sw,char **parm)
 {
 	int len = AE_PARM_NUM;
-	isp_param_t ae[AE_PARM_NUM]={
-		{"ae_algorithm",      &ae_sw->ae_algorithm,      1,  ISP_U32},
-		{"ae_statistics",     &ae_sw->ae_statistics[0],  3,  ISP_U32},
-		{"ae_exp",            &ae_sw->ae_exp[0],         3,  ISP_U32},
-		{"ae_ag",             &ae_sw->ae_ag[0],          3,  ISP_U32},
-		{"ae_skip",           &ae_sw->ae_skip[0],        3,  ISP_U32},
-		{"ratio_winl",        &ae_sw->ratio_winl,        1,  ISP_U32},
-		{"ratio_winr",        &ae_sw->ratio_winr,        1,  ISP_U32},
-		{"ratio_wint",        &ae_sw->ratio_wint,        1,  ISP_U32},
-		{"ratio_winb",        &ae_sw->ratio_winb,        1,  ISP_U32},
-		{"alert_mode",        &ae_sw->alert_mode,        1,  ISP_U32},
-		{"tune_mode",         &ae_sw->tune_mode,         1,  ISP_U32},
-		{"ratio_r",           &ae_sw->ratio_r,           1,  ISP_U32},
-		{"ratio_g",           &ae_sw->ratio_g,           1,  ISP_U32},
-		{"ratio_b",           &ae_sw->ratio_b,           1,  ISP_U32},
-		{"stepdnr",           &ae_sw->stepdnr,           1,  ISP_U32},
-		{"stepdng",           &ae_sw->stepdng,           1,  ISP_U32},
-		{"stepdnb",           &ae_sw->stepdnb,           1,  ISP_U32},
-		{"stepup",            &ae_sw->stepup,            1,  ISP_U32},
-		{"slow_lpfcoef",      &ae_sw->slow_lpfcoef,      1,  ISP_U32},
-		{"fast_lpfcoef",      &ae_sw->fast_lpfcoef,      1,  ISP_U32},
-		{"coef_cur",          &ae_sw->coef_cur[0],       16, ISP_U32},
-		{"coef_env",          &ae_sw->coef_env[0],       16, ISP_U32},
-		{"env_hign",          &ae_sw->env_hign,          1,  ISP_U32},
-		{"env_hign2mid",      &ae_sw->env_hign2mid,      1,  ISP_U32},
-		{"env_low2mid",       &ae_sw->env_low2mid,       1,  ISP_U32},
-		{"env_low",           &ae_sw->env_low,           1,  ISP_U32},
-		{"thr_r_high",        &ae_sw->thr_r_high,        1,  ISP_U32},
-		{"thr_r_mid",         &ae_sw->thr_r_mid,         1,  ISP_U32},
-		{"thr_r_low",         &ae_sw->thr_r_low,         1,  ISP_U32},
-		{"thr_g_high",        &ae_sw->thr_g_high,        1,  ISP_U32},
-		{"thr_g_mid",         &ae_sw->thr_g_mid,         1,  ISP_U32},
-		{"thr_g_low",         &ae_sw->thr_g_low,         1,  ISP_U32},
-		{"thr_b_high",        &ae_sw->thr_b_high,        1,  ISP_U32},
-		{"thr_b_mid",         &ae_sw->thr_b_mid,         1,  ISP_U32},
-		{"thr_b_low",         &ae_sw->thr_b_low,         1,  ISP_U32},
-		{"lpftype_high",      &ae_sw->lpftype_high,      1,  ISP_U32},
-		{"lpftype_mid",       &ae_sw->lpftype_mid,       1,  ISP_U32},
-		{"lpftype_low",       &ae_sw->lpftype_low,       1,  ISP_U32},
-		{"targethigh",        &ae_sw->targethigh,        1,  ISP_U32},
-		{"targetmid",         &ae_sw->targetmid,         1,  ISP_U32},
-		{"targetlow",         &ae_sw->targetlow,         1,  ISP_U32},
-		{"radium_inner_h",    &ae_sw->radium_inner_h,    1,  ISP_U32},
-		{"radium_outer_h",    &ae_sw->radium_outer_h,    1,  ISP_U32},
-		{"radium_inner_m",    &ae_sw->radium_inner_m,    1,  ISP_U32},
-		{"radium_outer_m",    &ae_sw->radium_outer_m,    1,  ISP_U32},
-		{"radium_inner_l",    &ae_sw->radium_inner_l,    1,  ISP_U32},
-		{"radium_outer_l",    &ae_sw->radium_outer_l,    1,  ISP_U32},
-		{"flash_thr",	      &ae_sw->flash_thr,         1,  ISP_U32},
-		{"ratio_histr",	      &ae_sw->ratio_histr,       1,  ISP_U32},
-		{"ratio_histg",	      &ae_sw->ratio_histg,       1,  ISP_U32},
-		{"ratio_histb",	      &ae_sw->ratio_histb,       1,  ISP_U32},
-		{"target_r",	      &ae_sw->target_r,          1,  ISP_U32},
-		{"target_g",	      &ae_sw->target_g,          1,  ISP_U32},
-		{"target_b",	      &ae_sw->target_b,          1,  ISP_U32},
-		{"maxrate_inner",     &ae_sw->maxrate_inner,     1,  ISP_U32},
-		{"maxrate_outer",     &ae_sw->maxrate_outer,     1,  ISP_U32},
-		{"slow_lpfcoef_enh",  &ae_sw->slow_lpfcoef_enh,  1,  ISP_U32},
-		{"fast_lpfcoef_enh",  &ae_sw->fast_lpfcoef_enh,  1,  ISP_U32},
-		{"flash_thr_enh",     &ae_sw->flash_thr_enh,     1,  ISP_U32},
-		{"ae_ratio_low",	  &ae_sw->ae_ratio_low, 	 1,  ISP_U32},
-		{"ae_ratio_low2mid",  &ae_sw->ae_ratio_low2mid,  1,  ISP_U32},
-		{"ae_ratio_mid2high", &ae_sw->ae_ratio_mid2high, 1,  ISP_U32},
-		{"ae_ratio_high",	  &ae_sw->ae_ratio_high, 	 1,  ISP_U32},
-		{"ae_min_diff",	      &ae_sw->ae_min_diff, 	     1,  ISP_U32},
-		{"ae_max_diff",	      &ae_sw->ae_max_diff, 	     1,  ISP_U32},
-		{"reserve",	          &ae_sw->reserve[0], 	     16, ISP_U32},
-		{"aet_fmt_gain",	  &ae_sw->aet_fmt_gain, 	 1,  ISP_U32},
-	};
-
-	if(!strcmp(parm[0],"show")){
-		isp_param_show((isp_param_t*)&ae,len);
-	} else {
-		isp_set_param((isp_param_t*)&ae,len,parm);
+	unsigned int i,*ae_sw_t;
+	ae_sw_t = (unsigned int *)ae_sw;
+	for(i = 0;i < AE_PARM_NUM;i++){
+		isp_param_ae[i].param = ae_sw_t;
+		ae_sw_t += isp_param_ae[i].length;
 	}
-
+	if(!strcmp(parm[0],"show")){
+		isp_param_show((isp_param_t*)&isp_param_ae,len);
+	} else {
+		isp_set_param((isp_param_t*)&isp_param_ae,len,parm);
+	}
 }
 
 void set_awb_parm(xml_algorithm_awb_t *awb_sw,char **parm)
@@ -229,7 +233,7 @@ void set_af_parm(xml_algorithm_af_t *af_sw,char **parm)
 		{"detect_step_cnt",       &af_sw->detect_step_cnt,         1, ISP_U32},
 		{"ave_vdc_thr",		  &af_sw->ave_vdc_thr,		   		   1, ISP_U32},
 		{"win_ratio", 	  	  &af_sw->win_ratio,		   1, ISP_U32},
-		{"step",      		  &af_sw->step,           FOCUS_GRIDS, ISP_U32},
+		{"step",      		  (unsigned int *)&af_sw->step,           FOCUS_GRIDS, ISP_U32},
 		{"valid_step_cnt",        &af_sw->valid_step_cnt,          1, ISP_U32},
 		{"jump_offset",           &af_sw->jump_offset,             1, ISP_U32},
 		{"field_delay",           &af_sw->field_delay,             1, ISP_U32},

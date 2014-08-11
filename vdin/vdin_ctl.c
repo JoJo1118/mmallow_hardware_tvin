@@ -1515,7 +1515,7 @@ inline void vdin_set_default_regmap(unsigned int offset)
 
 
 	//set VDIN_MEAS_CLK_CNTL, select XTAL clock
-	WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000100);
+	WR(HHI_VDIN_MEAS_CLK_CNTL, 0x00000100);
 
 	// [   18]        meas.rst              = 0
 	// [   17]        meas.widen_hs_vs_en   = 1
@@ -1634,14 +1634,14 @@ void vdin_enable_module(unsigned int offset, bool enable)
 	if (enable)
 	{
 		//set VDIN_MEAS_CLK_CNTL, select XTAL clock
-		WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000100);
+		WR(HHI_VDIN_MEAS_CLK_CNTL, 0x00000100);
 		//vdin_hw_enable(offset);
 		//todo: check them
 	}
 	else
 	{
 		//set VDIN_MEAS_CLK_CNTL, select XTAL clock
-		WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000000);
+		WR(HHI_VDIN_MEAS_CLK_CNTL, 0x00000000);
 		vdin_hw_disable(offset);
 	}
 }
@@ -1990,40 +1990,39 @@ void vdin_set_cm2(unsigned int offset,unsigned int w,unsigned int h,unsigned int
     WR_BITS(VDIN_CM_BRI_CON_CTRL, 1, CM_TOP_EN_BIT,CM_TOP_EN_WID);
 }
 #endif
-inline void vdin0_output_ctl(unsigned int output_nr_flag)
+inline void vdin0_output_ctl(unsigned int offset,unsigned int output_nr_flag)
 {
-	WRITE_CBUS_REG_BITS(VDIN_WR_CTRL, 1, VCP_IN_EN_BIT, VCP_IN_EN_WID);
+	WR_BITS(VDIN_WR_CTRL, 1, VCP_IN_EN_BIT, VCP_IN_EN_WID);
 	if(output_nr_flag){
-		WRITE_CBUS_REG_BITS(VDIN_WR_CTRL, 0, VCP_WR_EN_BIT, VCP_WR_EN_WID);
-		WRITE_CBUS_REG_BITS(VDIN_WR_CTRL, 1, VCP_NR_EN_BIT, VCP_NR_EN_WID);
+		WR_BITS(VDIN_WR_CTRL, 0, VCP_WR_EN_BIT, VCP_WR_EN_WID);
+		WR_BITS(VDIN_WR_CTRL, 1, VCP_NR_EN_BIT, VCP_NR_EN_WID);
 	}
 	else{
-		WRITE_CBUS_REG_BITS(VDIN_WR_CTRL, 1, VCP_WR_EN_BIT, VCP_WR_EN_WID);
-		WRITE_CBUS_REG_BITS(VDIN_WR_CTRL, 0, VCP_NR_EN_BIT, VCP_NR_EN_WID);
+		WR_BITS(VDIN_WR_CTRL, 1, VCP_WR_EN_BIT, VCP_WR_EN_WID);
+		WR_BITS(VDIN_WR_CTRL, 0, VCP_NR_EN_BIT, VCP_NR_EN_WID);
 	}
 }
 inline void vdin_set_mpegin(struct vdin_dev_s *devp)
 {
-//	unsigned int offset = devp->addr_offset;
+	unsigned int offset = devp->addr_offset;
 	//set VDIN_MEAS_CLK_CNTL, select XTAL clock
-	WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000100);
+	WR(HHI_VDIN_MEAS_CLK_CNTL, 0x00000100);
 
-	WRITE_CBUS_REG(VDIN_COM_CTRL0,0x80000911);
-	WRITE_CBUS_REG(VDIN_COM_GCLK_CTRL,0x0);
+	WR(VDIN_COM_CTRL0,0x80000911);
+	WR(VDIN_COM_GCLK_CTRL,0x0);
 
-	WRITE_CBUS_REG(VDIN_INTF_WIDTHM1,devp->h_active-1);
-	WRITE_CBUS_REG(VDIN_WR_CTRL2,0x0);
+	WR(VDIN_INTF_WIDTHM1,devp->h_active-1);
+	WR(VDIN_WR_CTRL2,0x0);
 
-	WRITE_CBUS_REG(VDIN_HIST_CTRL,0x3);
-	WRITE_CBUS_REG(VDIN_HIST_H_START_END,devp->h_active-1);
-	WRITE_CBUS_REG(VDIN_HIST_V_START_END,devp->v_active-1);
-
-	vdin0_output_ctl(1);
+	WR(VDIN_HIST_CTRL,0x3);
+	WR(VDIN_HIST_H_START_END,devp->h_active-1);
+	WR(VDIN_HIST_V_START_END,devp->v_active-1);
+	vdin0_output_ctl(offset,1);
 }
 inline void vdin_force_gofiled(struct vdin_dev_s *devp)
 {
-//	unsigned int offset = devp->addr_offset;
-	WRITE_CBUS_REG_BITS(VDIN_COM_CTRL0,1,28,1);    //vdin software reset base on di_pre;must set once only!!!
-	WRITE_CBUS_REG_BITS(VDIN_COM_CTRL0,0,28,1);
+	unsigned int offset = devp->addr_offset;
+	WR_BITS(VDIN_COM_CTRL0,1,28,1);    //vdin software reset base on di_pre;must set once only!!!
+	WR_BITS(VDIN_COM_CTRL0,0,28,1);
 }
 

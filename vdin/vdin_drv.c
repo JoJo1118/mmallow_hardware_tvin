@@ -825,11 +825,11 @@ static int vdin_func(int no, vdin_arg_t *arg)
                 return -1;
         }else if(!(devp->flags&VDIN_FLAG_DEC_STARTED)&&(parm->cmd != VDIN_CMD_MPEGIN_START)){
         	if(vdin_dbg_en)
-			pr_err("[vdin..]%s vdin%d has't started.\n",__func__,no);
-			return -1;
+			;//pr_err("[vdin..]%s vdin%d has't started.\n",__func__,no);
+		return -1;
 	}
 	if(vdin_dbg_en)
-		pr_info("[vdin_drv]%s:parm->cmd : %d \n",__func__,parm->cmd);
+		pr_info("[vdin_drv]%s vdin%d:parm->cmd : %d \n",__func__,no,parm->cmd);
 	switch(parm->cmd){
                 /*ajust vdin1 matrix1 & matrix2 for isp to get histogram information*/
 		case VDIN_CMD_SET_CSC:

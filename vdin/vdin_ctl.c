@@ -341,8 +341,26 @@ static struct vdin_matrix_lup_s vdin_matrix_lup[] =
 
 inline void vdin_get_format_convert(struct vdin_dev_s *devp)
 {
-	if(devp->prop.color_format == devp->prop.dest_cfmt)
-		devp->format_convert = VDIN_FORMAT_CONVERT_MAX;
+	if(devp->prop.color_format == devp->prop.dest_cfmt){
+		switch(devp->prop.color_format){
+			case TVIN_YUV422:
+			case TVIN_YUYV422:
+			case TVIN_YVYU422:
+			case TVIN_UYVY422:
+			case TVIN_VYUY422:
+				devp->format_convert = VDIN_FORMAT_CONVERT_YUV_YUV422;
+				break;
+			case TVIN_YUV444:
+				devp->format_convert = VDIN_FORMAT_CONVERT_YUV_YUV444;
+				break;
+			case TVIN_RGB444:
+				devp->format_convert = VDIN_FORMAT_CONVERT_RGB_RGB;
+				break;
+			default:
+				devp->format_convert = VDIN_FORMAT_CONVERT_MAX;
+				break;
+		}
+	}
 	else {
 		switch(devp->prop.color_format){
 			case TVIN_YUV422:

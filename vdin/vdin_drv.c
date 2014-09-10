@@ -1333,6 +1333,7 @@ irqreturn_t vdin_v4l2_isr(int irq, void *dev_id)
 		devp->stamp = stamp;
 		goto irq_handled;
 	}
+
 	if((devp->parm.port == TVIN_PORT_VIU)||(devp->parm.port == TVIN_PORT_CAMERA)){
 	        if(!vdin_write_done_check(devp->addr_offset, devp)){
 			if(vdin_dbg_en)
@@ -1341,12 +1342,7 @@ irqreturn_t vdin_v4l2_isr(int irq, void *dev_id)
 	        }
 	}
 
-
 	if(devp->last_wr_vfe){
-		struct timeval ts;
-		do_gettimeofday(&ts);
-		devp->last_wr_vfe->vf.pts_us64 = ts.tv_sec;
-		devp->last_wr_vfe->vf.pts = ts.tv_usec;
 		provider_vf_put(devp->last_wr_vfe, devp->vfp);
 		devp->last_wr_vfe = NULL;
 		vf_notify_receiver(devp->name,VFRAME_EVENT_PROVIDER_VFRAME_READY,NULL);

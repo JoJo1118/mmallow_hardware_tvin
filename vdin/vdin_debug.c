@@ -784,6 +784,7 @@ static void memp_set(int type)
                 aml_clr_reg32_mask(P_VPU_DI_NRWR_MMC_CTRL, 1<<12);   //           arb1
                 aml_clr_reg32_mask(P_VPU_DI_DIWR_MMC_CTRL, 1<<12);   //           arb1
 #endif
+		memp = type;
 		break;
 	case MEMP_DCDR_WITHOUT_3D:
 	case MEMP_DCDR_WITH_3D:

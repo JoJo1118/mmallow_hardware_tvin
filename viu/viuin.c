@@ -596,16 +596,20 @@ static void viuin_stop(struct tvin_frontend_s *fe, enum tvin_port_e port)
 
 static int viuin_isr(struct tvin_frontend_s *fe, unsigned int hcnt64)
 {	
+    int curr_port;
+	
 	viuin_t *devp = container_of(fe,viuin_t,frontend);	
 	
 	if (!devp) 	    
 	    return -ENODEV;
-	    	
+
+    curr_port = RD_BITS(VPU_VIU_VENC_MUX_CTRL,0,2);
+	
 #if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
 	vsync_enter_line_curr = (READ_VCBUS_REG(devp->enc_info_addr)>>16)&0x1fff;
 	if(vsync_enter_line_curr > vsync_enter_line_max)
                 vsync_enter_line_max = vsync_enter_line_curr;
-	if(vsync_enter_line_max_threshold > vsync_enter_line_min_threshold){
+	if(vsync_enter_line_max_threshold > vsync_enter_line_min_threshold && curr_port == 0){
 		if((vsync_enter_line_curr > vsync_enter_line_max_threshold)||(vsync_enter_line_curr < vsync_enter_line_min_threshold)){
 		        vsync_enter_line_threshold_overflow_count++;
 		        return TVIN_BUF_SKIP;

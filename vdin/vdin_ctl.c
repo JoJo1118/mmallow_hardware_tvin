@@ -33,12 +33,12 @@
 #define TVIN_MAX_PIXCLK 20000
 
 #if defined (VDIN_V2)
-#define TVIN_MAX_HACTIVE     4096
-#define TVIN_MAX_VACTIVE     4096
+static short max_hactive = 4096;
 #else
-#define TVIN_MAX_HACTIVE     1920
-#define TVIN_MAX_VACTIVE     1080
+static short max_hactive = 1920;
 #endif
+module_param(max_hactive, short, 0664);
+MODULE_PARM_DESC(max_hactive, "the max hactive of vdin");
 
 /*
 *protection for vga vertical de adjustment,if vertical blanking too short
@@ -1944,9 +1944,9 @@ inline void vdin_set_hvscale(struct vdin_dev_s *devp)
         if((devp->prop.scaling4w < devp->h_active) && (devp->prop.scaling4w > 0)) {
 	        vdin_set_hscale(offset,devp->h_active,devp->prop.scaling4w);
                 devp->h_active = devp->prop.scaling4w;
-        } else if (devp->h_active > TVIN_MAX_HACTIVE) {
-                vdin_set_hscale(offset,devp->h_active,TVIN_MAX_HACTIVE);
-                devp->h_active = TVIN_MAX_HACTIVE;
+        } else if (devp->h_active > max_hactive) {
+                vdin_set_hscale(offset,devp->h_active,max_hactive);
+                devp->h_active = max_hactive;
         }
 	pr_info("[vdin.%d] dst hactive:%u,",devp->index,devp->h_active);
 
@@ -2025,7 +2025,7 @@ inline void vdin_set_mpegin(struct vdin_dev_s *devp)
 {
 	unsigned int offset = devp->addr_offset;
 	//set VDIN_MEAS_CLK_CNTL, select XTAL clock
-	WR(HHI_VDIN_MEAS_CLK_CNTL, 0x00000100);
+	WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000100);
 
 	WR(VDIN_COM_CTRL0,0x80000911);
 	WR(VDIN_COM_GCLK_CTRL,0x0);

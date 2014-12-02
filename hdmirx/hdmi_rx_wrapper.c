@@ -79,12 +79,12 @@ static int sample_rate_change_th = 1000;
 static int audio_sample_rate_stable_count_th = 15; // audio change <--> audio_sample_rate is stable
 static unsigned local_port = 0;
 static int sig_pll_unlock_cnt = 0;			//signal unstable PLL unlock
-static unsigned sig_pll_unlock_max = 500;
+static unsigned sig_pll_unlock_max = 10;
 static int sig_pll_lock_cnt = 0;
 static int clk_rate_stable_cnt = 0;
 static unsigned sig_pll_lock_max = 10;		//signal unstable PLL lock
 static int debug_errorcnt=0;
-static int hdmirx_reset_level = 0;
+static int hdmirx_reset_level = 1;
 
 //static int sig_unlock_reset_timer = 0;
 static int sig_unlock_reset_cnt = 0;			//signal unstable PLL unlock
@@ -1665,7 +1665,7 @@ void hdmirx_hw_monitor(void)
 	case HDMIRX_HWSTATE_TIMINGCHANGE:
 		//hdmirx_timingchange_reset();
 		if(1 == hdmirx_reset_level){
-
+			hdmirx_phy_init(rx.port, 0);
 		}else if(2 == hdmirx_reset_level){
 
 		}else if(3 == hdmirx_reset_level){
@@ -1692,13 +1692,15 @@ void hdmirx_hw_monitor(void)
 				hdmirx_print("[HDMIRX State] unstable->stable\n");
 			}
 		}else{
+
 			if(sig_pll_unlock_cnt++ > sig_pll_unlock_max) {
 				sig_pll_unlock_cnt = 0;
+				rx.no_signal = true;
 				sig_pll_lock_cnt = 0;
 				hdmirx_error_count_config();	//recount EQ & resist calibration
 #if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
-				hdmirx_phy_init(rx.port, 0);  // for pll lock sometimes
-				hdmirx_print("[HDMIRX]pll unlock, init phy!\n");
+				//hdmirx_phy_init(rx.port, 0);  // for pll lock sometimes
+				//hdmirx_print("[HDMIRX]pll unlock, init phy!\n");
 #endif
 			}
 		}

@@ -589,6 +589,8 @@ int hdmirx_cec_rx_monitor(void)
 		printk("\n rx msg %x",rx_queue.cec_msg[rx_queue.rd_index].cmd);
 		printk("\n %x",rx_queue.cec_msg[rx_queue.rd_index].addr);
 		printk("\n %x",rx_queue.cec_msg[rx_queue.rd_index].msg_data[0]);
+		printk("\n %x",rx_queue.cec_msg[rx_queue.rd_index].msg_data[1]);
+		printk("\n %x",rx_queue.cec_msg[rx_queue.rd_index].msg_data[2]);
 	}
 	switch(rx_queue.cec_msg[rx_queue.rd_index].cmd){
 	case CMD_TCL_WIFI:

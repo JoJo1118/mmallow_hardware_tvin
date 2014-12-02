@@ -50,7 +50,7 @@
 
 #define EDID_AUTO_CHECKSUM_ENABLE   0               // Checksum byte selection: 0=Use data stored in MEM; 1=Use checksum calculated by HW.
 #define EDID_CLK_DIVIDE_M1          2               // EDID I2C clock = sysclk / (1+EDID_CLK_DIVIDE_M1).
-#define EDID_AUTO_CEC_ENABLE        0
+#define EDID_AUTO_CEC_ENABLE        1
 #define ACR_MODE            0                       // Select which ACR scheme:
                                                     // 0=Analog PLL based ACR;
                                                     // 1=Digital ACR.
@@ -58,7 +58,7 @@
 #define EDID_IN_FILTER_MODE         7               // 0=No in filter; 1=Filter, use every sample;
                                                     // 2=Filter, use 1 sample out of 2 ...; 7=Filter, use 1 sample out of 7.
 
-
+#define EDID_CEC_ID_ADDR            0x00a100a0      // EDID address offsets for storing 2-byte of Physical Address
 //G9-AUDIO FIFO hardware: 32bit i2s in,16bit i2s out
 #define I2S_32BIT_128FS_OUTPUT	0
 #define I2S_32BIT_256FS_OUTPUT	1
@@ -638,6 +638,10 @@ static void control_init_more(void)
 #endif
     data32 |= edid_clock_divide << 0;   // [ 7: 0]  clk_divide_m1
     hdmirx_wr_top(HDMIRX_TOP_EDID_GEN_CNTL,  data32);
+
+#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
+	hdmirx_wr_top(HDMIRX_TOP_EDID_ADDR_CEC,	EDID_CEC_ID_ADDR);
+#endif
 
 #if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 	data32=0;

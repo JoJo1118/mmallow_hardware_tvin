@@ -417,7 +417,7 @@ static ssize_t vdin_attr_store(struct device *dev,struct device_attribute *attr,
                 devp->flags |= VDIN_FLAG_FORCE_RECYCLE;
         }else if(!strcmp(parm[0],"read_pic")){
         	vdin_write_mem(devp,parm[1],parm[2]);
-        }
+}
 
 
         kfree(buf_orig);

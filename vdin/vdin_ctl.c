@@ -1534,7 +1534,7 @@ inline void vdin_set_default_regmap(unsigned int offset)
 
 
 	//set VDIN_MEAS_CLK_CNTL, select XTAL clock
-	WR(HHI_VDIN_MEAS_CLK_CNTL, 0x00000100);
+	WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000100);
 
 	// [   18]        meas.rst              = 0
 	// [   17]        meas.widen_hs_vs_en   = 1
@@ -1653,14 +1653,14 @@ void vdin_enable_module(unsigned int offset, bool enable)
 	if (enable)
 	{
 		//set VDIN_MEAS_CLK_CNTL, select XTAL clock
-		WR(HHI_VDIN_MEAS_CLK_CNTL, 0x00000100);
+		WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000100);
 		//vdin_hw_enable(offset);
 		//todo: check them
 	}
 	else
 	{
 		//set VDIN_MEAS_CLK_CNTL, select XTAL clock
-		WR(HHI_VDIN_MEAS_CLK_CNTL, 0x00000000);
+		WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000000);
 		vdin_hw_disable(offset);
 	}
 }

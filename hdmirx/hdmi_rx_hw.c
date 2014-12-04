@@ -918,10 +918,10 @@ void hdmirx_set_hpd(int port, unsigned char val)
     }
 #else
     if(val){
-        hdmirx_wr_top( HDMIRX_TOP_HPD_PWR5V,  hdmirx_rd_top(HDMIRX_TOP_HPD_PWR5V)&(~(1<<rx.port)));
+        hdmirx_wr_top( HDMIRX_TOP_HPD_PWR5V,  hdmirx_rd_top(HDMIRX_TOP_HPD_PWR5V)&(~(1<<port)));
     }
     else{
-		hdmirx_wr_top( HDMIRX_TOP_HPD_PWR5V,  hdmirx_rd_top(HDMIRX_TOP_HPD_PWR5V)|(1<<rx.port));
+		hdmirx_wr_top( HDMIRX_TOP_HPD_PWR5V,  hdmirx_rd_top(HDMIRX_TOP_HPD_PWR5V)|(1<<port));
     }
 #endif
 #endif

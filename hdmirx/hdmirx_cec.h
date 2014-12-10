@@ -307,9 +307,9 @@ typedef enum _cec_map_status
 #define HDMI_IOC_CEC_ARC_ON				_IO(HDMI_IOC_MAGIC, 0x03)
 #define HDMI_IOC_CEC_ARC_OFF			_IO(HDMI_IOC_MAGIC, 0x04)
 #define HDMI_IOC_CEC_CLEAR_BUFFER		_IO(HDMI_IOC_MAGIC, 0x05)
-#define HDMI_IOC_CEC_GET_MSG_CNT		_IOR(HDMI_IOC_MAGIC, 0x05, int)
-#define HDMI_IOC_CEC_GET_MSG			_IOR(HDMI_IOC_MAGIC, 0x06, struct _cec_msg)
-#define HDMI_IOC_CEC_SENT_MSG        	_IOW(HDMI_IOC_MAGIC, 0x07, struct _cec_msg)
+#define HDMI_IOC_CEC_GET_MSG_CNT		_IOR(HDMI_IOC_MAGIC, 0x06, int)
+#define HDMI_IOC_CEC_GET_MSG			_IOR(HDMI_IOC_MAGIC, 0x07, struct _cec_msg)
+#define HDMI_IOC_CEC_SENT_MSG        	_IOW(HDMI_IOC_MAGIC, 0x08, struct _cec_msg)
 
 //#include <linux/tvin/tvin.h>
 //#include "../tvin_global.h"

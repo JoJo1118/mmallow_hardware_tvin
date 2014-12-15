@@ -923,7 +923,6 @@ static void vdin_vf_unreg(struct vdin_dev_s *devp)
 	vf_unreg_provider(&devp->vprov);
 }
 
-#ifdef CONFIG_POST_PROCESS_MANAGER_3D_PROCESS
 static inline void vdin_set_view(struct vdin_dev_s *devp, struct vframe_s *vf)
 {
 	struct vframe_view_s *left_eye, *right_eye;
@@ -1032,7 +1031,6 @@ static inline void vdin_set_view(struct vdin_dev_s *devp, struct vframe_s *vf)
 			break;
 	}
 }
-#endif
 irqreturn_t vdin_isr_simple(int irq, void *dev_id)
 {
 	struct vdin_dev_s *devp = (struct vdin_dev_s *)dev_id;
@@ -1273,11 +1271,11 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 	vdin_set_vframe_prop_info(curr_wr_vf, devp);
 	vdin_backup_histgram(curr_wr_vf, devp);
 
-#ifdef CONFIG_POST_PROCESS_MANAGER_3D_PROCESS
-	curr_wr_vf->trans_fmt = devp->parm.info.trans_fmt;
+	if((devp->parm.port >= TVIN_PORT_HDMI0)&&(devp->parm.port <= TVIN_PORT_HDMI7)){
+		curr_wr_vf->trans_fmt = devp->parm.info.trans_fmt;
 
-	vdin_set_view(devp, curr_wr_vf);
-#endif
+		vdin_set_view(devp, curr_wr_vf);
+	}
 	vdin_calculate_duration(devp);
 	/* put for receiver
 

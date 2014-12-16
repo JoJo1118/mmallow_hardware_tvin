@@ -93,6 +93,10 @@ static unsigned short v_cut_offset = 0;
 module_param(v_cut_offset,ushort,0664);
 MODULE_PARM_DESC(v_cut_offset,"the cut window vertical offset for viuin");
 
+static unsigned short open_cnt = 0;
+module_param(open_cnt,ushort,0664);
+MODULE_PARM_DESC(open_cnt,"open_cnt for vdin0/1");
+
 typedef struct viuin_s{
         unsigned int flag;
         struct vframe_prop_s *prop;
@@ -559,6 +563,7 @@ static int viuin_open(struct tvin_frontend_s *fe, enum tvin_port_e port)
                         break;
         }
         devp->flag = 0; 
+        open_cnt++;
         return 0;
 }
 static void viuin_close(struct tvin_frontend_s *fe)
@@ -566,7 +571,11 @@ static void viuin_close(struct tvin_frontend_s *fe)
         viuin_t *devp = container_of(fe,viuin_t,frontend);
         memset(&devp->parm,0,sizeof(vdin_parm_t));
         /*close the venc to vdin path*/
-                        WR_BITS(VPU_VIU_VENC_MUX_CTRL,0,4,8);
+        if(open_cnt)
+            open_cnt--;
+        if(open_cnt == 0){
+            WR_BITS(VPU_VIU_VENC_MUX_CTRL,0,4,8);
+        }
 }
 
 static void viuin_start(struct tvin_frontend_s *fe, enum tvin_sig_fmt_e fmt)

@@ -645,7 +645,7 @@ static void viuin_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_proper
         viuin_t *devp = container_of(fe,viuin_t,frontend);
 
         #if ((MESON_CPU_TYPE == MESON_CPU_TYPE_MESON6) || (MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8)\
-			||(MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8B))
+			||(MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8B)||( MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV))
         prop->color_format = TVIN_YUV422;
         #else
         prop->color_format = TVIN_RGB444;

@@ -392,19 +392,32 @@ void hdmirx_phy_init(int rx_port_sel, int dcm)
     hdmirx_wr_dwc(HDMIRX_DWC_SNPS_PHYG3_CTRL,    data32); // DEFAULT: {27'd0, 3'd0, 2'd1}
 
     // Configuring PHY's MPLL
-    hdmirx_wr_phy(MPLL_PARAMETERS2,    0x2594);
-    hdmirx_wr_phy(MPLL_PARAMETERS3,    0x395B);
-    hdmirx_wr_phy(MPLL_PARAMETERS4,    0x3723);
-    hdmirx_wr_phy(MPLL_PARAMETERS5,    0x54BC);
-    hdmirx_wr_phy(MPLL_PARAMETERS6,    0x3A9C);
-    hdmirx_wr_phy(MPLL_PARAMETERS7,    0x310E);
-    hdmirx_wr_phy(MPLL_PARAMETERS8,    0x2520);
+    hdmirx_wr_phy(MPLL_PARAMETERS2,    0x2d20);
+    hdmirx_wr_phy(MPLL_PARAMETERS3,    0x3713);
+    hdmirx_wr_phy(MPLL_PARAMETERS4,    0x24da);
+    hdmirx_wr_phy(MPLL_PARAMETERS5,    0x5492);
+    hdmirx_wr_phy(MPLL_PARAMETERS6,    0x4b0d);
+    hdmirx_wr_phy(MPLL_PARAMETERS7,    0x4760);
+    hdmirx_wr_phy(MPLL_PARAMETERS8,    0x008c);
+	hdmirx_wr_phy(MPLL_PARAMETERS9,    0x0002);
+    hdmirx_wr_phy(MPLL_PARAMETERS10,   0x2d20);
+    hdmirx_wr_phy(MPLL_PARAMETERS11,    0x2e31);
+    hdmirx_wr_phy(MPLL_PARAMETERS12,    0x4b64);
+    hdmirx_wr_phy(MPLL_PARAMETERS13,    0x2493);
+    hdmirx_wr_phy(MPLL_PARAMETERS14,    0x676d);
+    hdmirx_wr_phy(MPLL_PARAMETERS15,    0x23e0);
+	hdmirx_wr_phy(MPLL_PARAMETERS16,    0x001b);
+    hdmirx_wr_phy(MPLL_PARAMETERS17,    0x2218);
+    hdmirx_wr_phy(MPLL_PARAMETERS18,    0x1b25);
+	hdmirx_wr_phy(MPLL_PARAMETERS19,    0x2492);
+    hdmirx_wr_phy(MPLL_PARAMETERS20,    0x48ea);
+    hdmirx_wr_phy(MPLL_PARAMETERS21,    0x0011);
 
 	// Configuring I2C to work in fastmode
 	hdmirx_wr_dwc(HDMIRX_DWC_I2CM_PHYG3_MODE,    0x1);
 
 	/* write timebase override and override enable */
-	hdmirx_wr_phy(OVL_PROT_CTRL, 0x2); //disable overload protect for Philips DVD ???
+	hdmirx_wr_phy(OVL_PROT_CTRL, 0xa); //disable overload protect for Philips DVD ???
 	hdmirx_wr_phy(REG_HDMI_PHY_CMU_CONFIG,
 	(rx.phy.phy_cmu_config_force_val != 0) ? rx.phy.phy_cmu_config_force_val :
 	((rx.phy.lock_thres << 10) | (1 << 9) | (((1 << 9) - 1) & ((rx.phy.cfg_clk * 4) / 1000))));
@@ -1152,18 +1165,18 @@ void clk_init(void)
     data32 |= 0 << 25;  // [26:25] HDMIRX mode detection clock mux select: osc_clk
     data32 |= 1 << 24;  // [24]    HDMIRX mode detection clock enable
     data32 |= 0 << 16;  // [22:16] HDMIRX mode detection clock divider
-    data32 |= 3 << 9;   // [10: 9] HDMIRX config clock mux select: fclk_div5=400MHz
+    data32 |= 3 << 9;   // [10: 9] HDMIRX config clock mux select: fclk_div5=510MHz
     data32 |= 1 << 8;   // [    8] HDMIRX config clock enable
-    data32 |= 3 << 0;   // [ 6: 0] HDMIRX config clock divider: 400/4=100MHz
+    data32 |= 19 << 0;   // [ 6: 0] HDMIRX config clock divider: 510/20=100MHz
     WRITE_MPEG_REG(HHI_HDMIRX_CLK_CNTL,     data32);
 
     data32  = 0;
     data32 |= 2             << 25;  // [26:25] HDMIRX ACR ref clock mux select: fclk_div5
     data32 |= rx.ctrl.acr_mode      << 24;  // [24]    HDMIRX ACR ref clock enable
     data32 |= 0             << 16;  // [22:16] HDMIRX ACR ref clock divider
-    data32 |= 2             << 9;   // [10: 9] HDMIRX audmeas clock mux select: fclk_div5
+    data32 |= 2             << 9;   // [10: 9] HDMIRX audmeas clock mux select: fclk_div5=510
     data32 |= 1             << 8;   // [    8] HDMIRX audmeas clock enable
-    data32 |= 1             << 0;   // [ 6: 0] HDMIRX audmeas clock divider: 400/2 = 200MHz
+    data32 |= 2             << 0;   // [ 6: 0] HDMIRX audmeas clock divider: 510/3 = 170MHz
     WRITE_MPEG_REG(HHI_HDMIRX_AUD_CLK_CNTL, data32);
 
     data32  = 0;
@@ -1226,7 +1239,7 @@ void hdmirx_hw_config(void)
 	hdmirx_wr_top(HDMIRX_TOP_INTR_MASKN, 0); //disable top interrupt gate
 	control_reset(0);
 #if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
-	hdmirx_wr_top(HDMIRX_TOP_PORT_SEL, 1<<4); //enable all 4 port available
+	hdmirx_wr_top(HDMIRX_TOP_PORT_SEL, (1<<4)|(1<<rx.port)); //enable all 4 port available
 #else
 	hdmirx_wr_top(HDMIRX_TOP_PORT_SEL,   (1<<rx.port));  //G9 EDID multiplex mode
 #endif
@@ -1258,7 +1271,7 @@ void hdmirx_hw_config(void)
 	/*enable irq */
 	hdmirx_wr_top(HDMIRX_TOP_INTR_STAT_CLR, ~0);
 	hdmirx_wr_top(HDMIRX_TOP_INTR_MASKN, 0x00001fff);
-	hdmirx_interrupts_hpd(true);
+	//hdmirx_interrupts_hpd(true);
 	/**/
 
 #ifndef USE_GPIO_FOR_HPD
@@ -1291,9 +1304,8 @@ void hdmirx_hw_reset(void)
     hdmirx_wr_top( HDMIRX_TOP_SW_RESET, 0x3f);
     mdelay(1);
     control_reset(0);
-#if (MESON_CPU_TYPE < MESON_CPU_TYPE_MESONG9TV)
-    hdmirx_wr_top( HDMIRX_TOP_PORT_SEL,   (1<<rx.port));  //G9 EDID multiplex mode
-#endif
+    hdmirx_wr_top( HDMIRX_TOP_PORT_SEL,  (1<<4) | (1<<rx.port));  //G9 EDID multiplex mode
+
 	hdmirx_interrupts_cfg(false); //disable dwc interrupt
     if(hdcp_enable){
         hdmi_rx_ctrl_hdcp_config(&rx.hdcp);
@@ -1319,7 +1331,7 @@ void hdmirx_hw_reset(void)
     /*enable irq */
     hdmirx_wr_top(HDMIRX_TOP_INTR_STAT_CLR, ~0);
     hdmirx_wr_top(HDMIRX_TOP_INTR_MASKN, 0x00001fff);
-    hdmirx_interrupts_hpd(true);
+    //hdmirx_interrupts_hpd(true);
     /**/
 
 #ifndef USE_GPIO_FOR_HPD

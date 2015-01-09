@@ -425,7 +425,10 @@ void hdmirx_get_sig_property(struct tvin_frontend_s *fe, struct tvin_sig_propert
 		prop->trans_fmt = TVIN_TFMT_3D_LA;
 	}
 	/* 1: no repeat; 2: repeat 1 times; 3: repeat two; ... */
-	prop->decimation_ratio = (hdmirx_hw_get_pixel_repeat() - 1) | HDMI_DE_REPEAT_DONE_FLAG;
+	if(hdmirx_de_repeat_enable)
+		prop->decimation_ratio = (hdmirx_hw_get_pixel_repeat() - 1) | HDMI_DE_REPEAT_DONE_FLAG;
+	else
+		prop->decimation_ratio = (hdmirx_hw_get_pixel_repeat() - 1);
 
 #if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 

@@ -46,6 +46,20 @@
 #define MPLL_PARAMETERS6                (0x2BUL)
 #define MPLL_PARAMETERS7                (0x2CUL)
 #define MPLL_PARAMETERS8                (0x2DUL)
+#define MPLL_PARAMETERS9                (0x2EUL)
+#define MPLL_PARAMETERS10                (0xC0UL)
+#define MPLL_PARAMETERS11                (0xC1UL)
+#define MPLL_PARAMETERS12                (0xC2UL)
+#define MPLL_PARAMETERS13                (0xC3UL)
+#define MPLL_PARAMETERS14                (0xC4UL)
+#define MPLL_PARAMETERS15                (0xC5UL)
+#define MPLL_PARAMETERS16                (0xC6UL)
+#define MPLL_PARAMETERS17               (0xC7UL)
+#define MPLL_PARAMETERS18                (0xC8UL)
+#define MPLL_PARAMETERS19                (0xC9UL)
+#define MPLL_PARAMETERS20                (0xCAUL)
+#define MPLL_PARAMETERS21                (0xCBUL)
+
 
 
 //------------------------------------------------------------------------------

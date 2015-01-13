@@ -371,7 +371,6 @@ int hdmi_rx_phy_try_force_close(struct hdmi_rx_phy *ctx)
 void hdmirx_phy_init(int rx_port_sel, int dcm)
 {
 	unsigned int data32;
-
     // PDDQ = 1'b1; PHY_RESET = 1'b1;
     data32  = 0;
     data32 |= 1             << 6;   // [6]      physvsretmodez

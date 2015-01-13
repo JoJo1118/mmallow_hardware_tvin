@@ -19,7 +19,7 @@
 #include "../tvin_global.h"
 #include "../tvin_format_table.h"
 
-#define HDMIRX_VER "Ref.2015/01/08"
+#define HDMIRX_VER "Ref.2015/01/13b"
 
 #define HDMI_STATE_CHECK_FREQ     (20*5)
 #define ABS(x) ((x)<0 ? -(x) : (x))
@@ -345,6 +345,7 @@ struct rx {
 
 	/* wrapper */
 	unsigned int state;
+	unsigned int pre_state;
 	unsigned char portA_pow5v_state_pre;
 	unsigned char portB_pow5v_state_pre;
 	unsigned char portC_pow5v_state_pre;

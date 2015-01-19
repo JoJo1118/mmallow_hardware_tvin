@@ -1197,7 +1197,7 @@ void hdmirx_20_init(void)
     data32 |= (1    << 10); // [10]     gb_checken
     data32 |= (1    << 9);  // [9]      preamb_checken
     data32 |= (1    << 8);  // [8]      ctrl_checken
-    data32 |= (1    << 4);  // [4]      scdc_enable
+    data32 |= (0    << 4);  // [4]      scdc_enable
     data32 |= (scramble_sel    << 0);  // [1:0]    scramble_sel
     hdmirx_wr_dwc(HDMIRX_DWC_HDMI20_CONTROL,    data32);
 
@@ -1234,11 +1234,16 @@ void hdmirx_hw_config(void)
 	hdmirx_wr_top(HDMIRX_TOP_MEM_PD,    0); // Release memories out of power down. // hdmi2.0 new
 #endif
 	clk_init();
+	mdelay(10);
 
-	hdmirx_wr_top(HDMIRX_TOP_INTR_MASKN, 0); //disable top interrupt gate
-	control_reset(0);
+    hdmirx_wr_top(HDMIRX_TOP_INTR_MASKN, 0); //disable top interrupt gate
+    hdmirx_wr_top( HDMIRX_TOP_SW_RESET, 0x3f);
+    mdelay(1);
+    control_reset(0);
+
 #if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 	hdmirx_wr_top(HDMIRX_TOP_PORT_SEL, (1<<4)|(1<<rx.port)); //enable all 4 port available
+	hdmirx_wr_top(HDMIRX_TOP_HPD_PWR5V, 0x1f);
 #else
 	hdmirx_wr_top(HDMIRX_TOP_PORT_SEL,   (1<<rx.port));  //G9 EDID multiplex mode
 #endif

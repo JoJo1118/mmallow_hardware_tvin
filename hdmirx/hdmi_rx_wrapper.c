@@ -2540,7 +2540,7 @@ int hdmirx_debug(const char* buf, int size)
 		if(tmpbuf[5] == '0') {
 		    printk(" hdmirx hw config \n");
 		    hdmirx_hw_config();
-		    hdmi_rx_ctrl_edid_update();
+		    //hdmi_rx_ctrl_edid_update();
 		    //hdmirx_config_video(&rx.video_params);
 			//hdmirx_config_audio();
 		}else if(tmpbuf[5] == '1') {
@@ -2812,9 +2812,11 @@ void hdmirx_hw_init(tvin_port_t port)
 	rx.portB_pow5v_state_pre = 0;
 	rx.portC_pow5v_state_pre = 0;
     hdmirx_set_pinmux();
+
 	hdmirx_hw_config();
+	hdmirx_set_hpd(rx.port, 0);
 	hdmi_rx_ctrl_edid_update();
-    hdmirx_set_hpd(rx.port, 0);
+	mdelay(30);
 
     hdmirx_print("%s %d\n", __func__, rx.port);
 

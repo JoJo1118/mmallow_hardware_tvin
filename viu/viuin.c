@@ -533,10 +533,24 @@ static int viuin_support(struct tvin_frontend_s *fe, enum tvin_port_e port)
         else
                 return -1;
 }
-
+void viuin_check_venc_line(viuin_t *devp_local)
+{
+	unsigned int vencv_line_cur,cnt;
+	cnt = 0;
+	do{
+		vencv_line_cur = (READ_VCBUS_REG(devp_local->enc_info_addr)>>16)&0x1fff;
+		udelay(10);
+		cnt++;
+		if(cnt > 100000)
+			break;
+	}while(vencv_line_cur != 1);
+	if(vencv_line_cur != 1)
+		printk("**************%s,vencv_line_cur:%d,cnt:%d***********\n",__func__,vencv_line_cur,cnt);
+}
 static int viuin_open(struct tvin_frontend_s *fe, enum tvin_port_e port)
 {
         viuin_t *devp = container_of(fe,viuin_t,frontend);
+	unsigned int viu_mux = 0;
         if(!memcpy(&devp->parm,fe->private_data,sizeof(vdin_parm_t))){
                 printk("[viuin..]%s memcpy error.\n",__func__); 
                 return -1;
@@ -544,24 +558,27 @@ static int viuin_open(struct tvin_frontend_s *fe, enum tvin_port_e port)
         /*open the venc to vdin path*/
         switch(RD_BITS(VPU_VIU_VENC_MUX_CTRL,0,2)){
                 case 0:
-                        WR_BITS(VPU_VIU_VENC_MUX_CTRL,0x88,4,8);
+                        viu_mux = 0x8;//WR_BITS(VPU_VIU_VENC_MUX_CTRL,0x88,4,8);
 			devp->enc_info_addr = ENCL_INFO_READ;
                         break;
-                case 1:                        
-                        WR_BITS(VPU_VIU_VENC_MUX_CTRL,0x11,4,8);
+                case 1:
+                        viu_mux = 0x1;//WR_BITS(VPU_VIU_VENC_MUX_CTRL,0x11,4,8);
 			devp->enc_info_addr = ENCI_INFO_READ;
                         break;
-                case 2:                        
-                        WR_BITS(VPU_VIU_VENC_MUX_CTRL,0x22,4,8);
+                case 2:
+                        viu_mux = 0x2;//WR_BITS(VPU_VIU_VENC_MUX_CTRL,0x22,4,8);
 			devp->enc_info_addr = ENCP_INFO_READ;
                         break;
-                case 3:                        
-                        WR_BITS(VPU_VIU_VENC_MUX_CTRL,0x44,4,8);
+                case 3:
+                        viu_mux = 0x4;//WR_BITS(VPU_VIU_VENC_MUX_CTRL,0x44,4,8);
 			devp->enc_info_addr = ENCT_INFO_READ;
                         break;
                 default:
                         break;
         }
+	viuin_check_venc_line(devp);
+	WR_BITS(VPU_VIU_VENC_MUX_CTRL,viu_mux,4,4);
+	WR_BITS(VPU_VIU_VENC_MUX_CTRL,viu_mux,8,4);
         devp->flag = 0; 
         open_cnt++;
         return 0;
@@ -569,13 +586,15 @@ static int viuin_open(struct tvin_frontend_s *fe, enum tvin_port_e port)
 static void viuin_close(struct tvin_frontend_s *fe)
 {        
         viuin_t *devp = container_of(fe,viuin_t,frontend);
+		viuin_check_venc_line(devp);
         memset(&devp->parm,0,sizeof(vdin_parm_t));
         /*close the venc to vdin path*/
         if(open_cnt)
             open_cnt--;
         if(open_cnt == 0){
-            WR_BITS(VPU_VIU_VENC_MUX_CTRL,0,4,8);
-        }
+		WR_BITS(VPU_VIU_VENC_MUX_CTRL,0,8,4);
+        WR_BITS(VPU_VIU_VENC_MUX_CTRL,0,4,4);
+		}
 }
 
 static void viuin_start(struct tvin_frontend_s *fe, enum tvin_sig_fmt_e fmt)

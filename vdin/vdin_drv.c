@@ -136,6 +136,15 @@ static unsigned int vdin_irq_flag = 0;
 module_param(vdin_irq_flag,uint,0664);
 MODULE_PARM_DESC(vdin_irq_flag,"vdin_irq_flag");
 
+/*1:support rdma;0:no support rdma*/
+#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
+static unsigned int vdin_rdma_flag = 1;
+#else
+static unsigned int vdin_rdma_flag = 0;
+#endif
+module_param(vdin_rdma_flag,uint,0664);
+MODULE_PARM_DESC(vdin_rdma_flag,"vdin_rdma_flag");
+
 static int irq_max_count = 0;
 static void vdin_backup_histgram(struct vframe_s *vf, struct vdin_dev_s *devp);
 
@@ -1136,6 +1145,11 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 		vdin_irq_flag = 3;
 		goto irq_handled;
 	}
+	if(devp->last_wr_vfe && (vdin_rdma_flag == 1)){
+		provider_vf_put(devp->last_wr_vfe, devp->vfp);
+		devp->last_wr_vfe = NULL;
+		vf_notify_receiver(devp->name,VFRAME_EVENT_PROVIDER_VFRAME_READY,NULL);
+	}
 	/*check vs is valid base on the time during continuous vs*/
 	if(vdin_check_cycle(devp) && (!(isr_flag & VDIN_BYPASS_CYC_CHECK))){
 		vdin_irq_flag = 4;
@@ -1291,12 +1305,15 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 	else
 		curr_wr_vf->height = devp->v_active;
 	curr_wr_vfe->flag |= VF_FLAG_NORMAL_FRAME;
-	provider_vf_put(curr_wr_vfe, devp->vfp);
+	if(vdin_rdma_flag == 1)
+		devp->last_wr_vfe = curr_wr_vfe;
+	else
+		provider_vf_put(curr_wr_vfe, devp->vfp);
 
 	/* prepare for next input data */
 	next_wr_vfe = provider_vf_get(devp->vfp);
 #ifdef CONFIG_VSYNC_RDMA
-	if(devp->h_active > 1920 || devp->v_active > 1080){
+	if((devp->h_active > 1920 || devp->v_active > 1080)&&(vdin_rdma_flag == 1)){
                 RDMA2_WR_MPEG_REG_BITS(VDIN_WR_CTRL, (next_wr_vfe->vf.canvas0Addr&0xff), WR_CANVAS_BIT, WR_CANVAS_WID);
 /* prepare for chroma canvas*/
                 if((devp->prop.dest_cfmt == TVIN_NV12)||(devp->prop.dest_cfmt == TVIN_NV21))
@@ -1314,7 +1331,9 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
                 vdin_set_chma_canvas_id(devp->addr_offset,(next_wr_vfe->vf.canvas0Addr>>8)&0xff);
 #endif
         devp->curr_wr_vfe = next_wr_vfe;
-	vf_notify_receiver(devp->name,VFRAME_EVENT_PROVIDER_VFRAME_READY,NULL);
+	if(vdin_rdma_flag == 0)
+		vf_notify_receiver(devp->name,VFRAME_EVENT_PROVIDER_VFRAME_READY,NULL);
+
 #ifdef TVAFE_VGA_SUPPORT
 	/* 1.csc=blank wr=default*/
 	if (is_vga &&

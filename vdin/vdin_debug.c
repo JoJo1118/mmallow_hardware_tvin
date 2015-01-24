@@ -810,6 +810,9 @@ static void memp_set(int type)
 		break;
 	case MEMP_DCDR_WITHOUT_3D:
 	case MEMP_DCDR_WITH_3D:
+#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+       aml_write_reg32(P_VPU_VDIN_ASYNC_HOLD_CTRL, 0x80408040);
+#endif
 #if defined(VDIN_V1)
 //#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESON8B)
 #if ((MESON_CPU_TYPE != MESON_CPU_TYPE_MESON8B)&&(MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV))//??

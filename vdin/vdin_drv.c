@@ -1145,7 +1145,7 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 		vdin_irq_flag = 3;
 		goto irq_handled;
 	}
-	if(devp->last_wr_vfe && (vdin_rdma_flag == 1)){
+	if(devp->last_wr_vfe && (vdin_rdma_flag == 1)&&(devp->h_active > 1920 || devp->v_active > 1080)){
 		provider_vf_put(devp->last_wr_vfe, devp->vfp);
 		devp->last_wr_vfe = NULL;
 		vf_notify_receiver(devp->name,VFRAME_EVENT_PROVIDER_VFRAME_READY,NULL);
@@ -1305,7 +1305,7 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 	else
 		curr_wr_vf->height = devp->v_active;
 	curr_wr_vfe->flag |= VF_FLAG_NORMAL_FRAME;
-	if(vdin_rdma_flag == 1)
+	if((vdin_rdma_flag == 1)&&(devp->h_active > 1920 || devp->v_active > 1080))
 		devp->last_wr_vfe = curr_wr_vfe;
 	else
 		provider_vf_put(curr_wr_vfe, devp->vfp);
@@ -1331,7 +1331,7 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
                 vdin_set_chma_canvas_id(devp->addr_offset,(next_wr_vfe->vf.canvas0Addr>>8)&0xff);
 #endif
         devp->curr_wr_vfe = next_wr_vfe;
-	if(vdin_rdma_flag == 0)
+	if((vdin_rdma_flag == 0)||((devp->h_active <= 1920) && (devp->v_active <= 1080)))
 		vf_notify_receiver(devp->name,VFRAME_EVENT_PROVIDER_VFRAME_READY,NULL);
 
 #ifdef TVAFE_VGA_SUPPORT

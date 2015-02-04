@@ -987,6 +987,10 @@ static inline void vdin_set_wr_ctrl(unsigned int offset, unsigned int v, unsigne
 	WR_BITS(VDIN_WR_CTRL, 1, WR_REQ_URGENT_BIT, WR_REQ_URGENT_WID);
 	// req_en
 	WR_BITS(VDIN_WR_CTRL, 1, WR_REQ_EN_BIT, WR_REQ_EN_WID);
+        #if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV  
+        //dis ctrl reg wpulse   
+        WR_BITS(VDIN_WR_CTRL, 1, 10, 1);        
+        #endif
 }
 
 void set_wr_ctrl(int h_pos,int v_pos,struct vdin_dev_s *devp)
@@ -1441,7 +1445,11 @@ inline void vdin_set_default_regmap(unsigned int offset)
 	// [10: 0]      matrix.pre_ofsset2      = 0 <s8.2>
 	WR(VDIN_MATRIX_PRE_OFFSET2, 0x00000000);
 	// [11: 0]       write.lfifo_buf_size   = 0x100
+	#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+	WR(VDIN_LFIFO_CTRL,     0x00000f00);
+	#else
 	WR(VDIN_LFIFO_CTRL,     0x00000780);
+	#endif
 	// [15:14]     clkgate.bbar             = 0/(auto, off, on, on)
 	// [13:12]     clkgate.bbar             = 0/(auto, off, on, on)
 	// [11:10]     clkgate.bbar             = 0/(auto, off, on, on)

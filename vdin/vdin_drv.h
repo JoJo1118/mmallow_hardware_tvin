@@ -38,7 +38,7 @@
 #include "vdin_vf.h"
 #include "vdin_regs.h"
 
-#define VDIN_VER "Ref.2015/01/23a"
+#define VDIN_VER "Ref.2015/01/31a"
 
 /*the counter of vdin*/
 #define VDIN_MAX_DEVS			2
@@ -59,7 +59,8 @@
 #define VDIN_FLAG_FORCE_RECYCLE         0x00000800
 /*flag for vdin scale down,color fmt convertion*/
 #define VDIN_FLAG_MANUAL_CONVERTION     0x00001000
-
+/*flag for vdin rdma enable*/
+#define VDIN_FLAG_RDMA_ENABLE           0x00002000
 /*values of vdin isr bypass check flag */
 #define VDIN_BYPASS_STOP_CHECK          0x00000001
 #define VDIN_BYPASS_CYC_CHECK           0x00000002

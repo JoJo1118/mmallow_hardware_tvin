@@ -77,7 +77,7 @@ static DEVICE_ATTR(sig_det, 0664, sig_det_show, sig_det_store);
 
 static ssize_t vdin_attr_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
-        //struct vdin_dev_s *devp = dev_get_drvdata(dev);
+        struct vdin_dev_s *devp = dev_get_drvdata(dev);
         ssize_t len = 0;
         len += sprintf(buf+len,"\n0 HDMI0\t1 HDMI1\t2 HDMI2\t3 Component0\t4 Component1"
                                "\n5 CVBS0\t6 CVBS1\t7 Vga0\t8 CVBS2\n");
@@ -85,6 +85,7 @@ static ssize_t vdin_attr_show(struct device *dev, struct device_attribute *attr,
 	len += sprintf(buf+len,"echo v4l2start bt656/viuin/isp h_actve v_active frame_rate cfmt dfmt scan_fmt >/sys/class/vdin/vdinx/attr.\n");
 	len += sprintf(buf+len,"cfmt/dfmt:\t0: RGB44\t1 YUV422\t2 YUV444\t7 NV12\t8 NV21\n");
 	len += sprintf(buf+len,"scan_fmt:\t1: PROGRESSIVE\t2 INTERLACE\n");
+	len += sprintf(buf+len,"abnormal cnt %u\n",devp->abnormal_cnt);
         return len;
 }
 static void vdin_dump_mem(char *path, vdin_dev_t *devp)
@@ -784,7 +785,11 @@ static void memp_set(int type)
 	switch (type) {
 	case MEMP_VDIN_WITHOUT_3D:
 	case MEMP_VDIN_WITH_3D:
-
+#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+                aml_write_reg32(P_VPU_VDIN_ASYNC_HOLD_CTRL, 0x80408040);
+                aml_write_reg32(P_VPU_VDISP_ASYNC_HOLD_CTRL, 0x80408040);
+                aml_write_reg32(P_VPU_VPUARB2_ASYNC_HOLD_CTRL, 0x80408040);
+#endif
 #if defined(VDIN_V1)
 //#if ((MESON_CPU_TYPE != MESON_CPU_TYPE_MESON8B)||
 #if ((MESON_CPU_TYPE != MESON_CPU_TYPE_MESON8B)&&(MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV)&&(MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9BB))//??

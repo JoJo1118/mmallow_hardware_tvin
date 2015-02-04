@@ -137,7 +137,7 @@ module_param(vdin_irq_flag,uint,0664);
 MODULE_PARM_DESC(vdin_irq_flag,"vdin_irq_flag");
 
 /*1:support rdma;0:no support rdma*/
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8
+#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV
 static unsigned int vdin_rdma_flag = 1;
 #else
 static unsigned int vdin_rdma_flag = 0;
@@ -556,8 +556,19 @@ void vdin_start_dec(struct vdin_dev_s *devp)
 			devp->prop.scaling4w = devp->debug.scaler4w;
 			devp->prop.scaling4h = devp->debug.scaler4h;
 		}
+		if(devp->debug.cutwin.hs || devp->debug.cutwin.he || devp->debug.cutwin.vs || devp->debug.cutwin.ve){
+			devp->prop.hs = devp->debug.cutwin.hs;
+			devp->prop.he = devp->debug.cutwin.he;
+			devp->prop.vs = devp->debug.cutwin.vs;
+			devp->prop.ve = devp->debug.cutwin.ve;
+		}
        }
-
+       #ifdef CONFIG_VSYNC_RDMA
+       if(vdin_rdma_flag && 
+       	  (devp->v_active > 1080 || devp->h_active > 1920)
+       	  )
+       	       devp->flags |= VDIN_FLAG_RDMA_ENABLE;
+       #endif
 	vdin_get_format_convert(devp);
 	devp->curr_wr_vfe = NULL;
 	/* h_active/v_active will be recalculated by bellow calling */
@@ -674,6 +685,7 @@ void vdin_stop_dec(struct vdin_dev_s *devp)
 	switch_vpu_mem_pd_vmod(devp->addr_offset?VPU_VIU_VDIN1:VPU_VIU_VDIN0,VPU_MEM_POWER_DOWN);
 	#endif
 	memset(&devp->prop, 0, sizeof(struct tvin_sig_property_s));
+	devp->flags &= (~VDIN_FLAG_RDMA_ENABLE);
 	ignore_frames = 0;
 	devp->cycle = 0;
 	if(vdin_dbg_en)
@@ -1145,7 +1157,7 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 		vdin_irq_flag = 3;
 		goto irq_handled;
 	}
-	if(devp->last_wr_vfe && (vdin_rdma_flag == 1)&&(devp->h_active > 1920 || devp->v_active > 1080)){
+	if(devp->last_wr_vfe && (devp->flags&VDIN_FLAG_RDMA_ENABLE)){
 		provider_vf_put(devp->last_wr_vfe, devp->vfp);
 		devp->last_wr_vfe = NULL;
 		vf_notify_receiver(devp->name,VFRAME_EVENT_PROVIDER_VFRAME_READY,NULL);
@@ -1267,7 +1279,7 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 		goto irq_handled;
 	}
 	/*if vdin-nr,di must get vdin current field type which di pre will read*/
-        if(vf_notify_receiver(devp->name,VFRAME_EVENT_PROVIDER_QUREY_VDIN2NR,NULL)){
+        if(vf_notify_receiver(devp->name,VFRAME_EVENT_PROVIDER_QUREY_VDIN2NR,NULL)||(devp->flags&VDIN_FLAG_RDMA_ENABLE)){
 		curr_wr_vf->type = devp->curr_field_type;
 	}else{
 		curr_wr_vf->type = last_field_type;
@@ -1305,7 +1317,7 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 	else
 		curr_wr_vf->height = devp->v_active;
 	curr_wr_vfe->flag |= VF_FLAG_NORMAL_FRAME;
-	if((vdin_rdma_flag == 1)&&(devp->h_active > 1920 || devp->v_active > 1080))
+	if(devp->flags&VDIN_FLAG_RDMA_ENABLE)
 		devp->last_wr_vfe = curr_wr_vfe;
 	else
 		provider_vf_put(curr_wr_vfe, devp->vfp);
@@ -1313,7 +1325,7 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 	/* prepare for next input data */
 	next_wr_vfe = provider_vf_get(devp->vfp);
 #ifdef CONFIG_VSYNC_RDMA
-	if((devp->h_active > 1920 || devp->v_active > 1080)&&(vdin_rdma_flag == 1)){
+	if(devp->flags&VDIN_FLAG_RDMA_ENABLE){
                 RDMA2_WR_MPEG_REG_BITS(VDIN_WR_CTRL, (next_wr_vfe->vf.canvas0Addr&0xff), WR_CANVAS_BIT, WR_CANVAS_WID);
 /* prepare for chroma canvas*/
                 if((devp->prop.dest_cfmt == TVIN_NV12)||(devp->prop.dest_cfmt == TVIN_NV21))
@@ -1331,7 +1343,7 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
                 vdin_set_chma_canvas_id(devp->addr_offset,(next_wr_vfe->vf.canvas0Addr>>8)&0xff);
 #endif
         devp->curr_wr_vfe = next_wr_vfe;
-	if((vdin_rdma_flag == 0)||((devp->h_active <= 1920) && (devp->v_active <= 1080)))
+	if(!(devp->flags&VDIN_FLAG_RDMA_ENABLE))
 		vf_notify_receiver(devp->name,VFRAME_EVENT_PROVIDER_VFRAME_READY,NULL);
 
 #ifdef TVAFE_VGA_SUPPORT
@@ -1364,6 +1376,7 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 irq_handled:
 	spin_unlock_irqrestore(&devp->isr_lock, flags);
 #ifdef CONFIG_VSYNC_RDMA
+if(devp->flags&VDIN_FLAG_RDMA_ENABLE)
         rdma2_config(1);//trigger by vdin0 vsync
 #endif
         isr_log(devp->vfp);

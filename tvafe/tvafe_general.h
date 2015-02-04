@@ -15,7 +15,7 @@
 // ***************************************************************************
 typedef enum tvafe_adc_ch_e {
 	TVAFE_ADC_CH_NULL = 0,
-#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 	TVAFE_ADC_CH_0,
 	TVAFE_ADC_CH_1,
 	TVAFE_ADC_CH_2,

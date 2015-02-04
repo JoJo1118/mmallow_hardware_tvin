@@ -297,7 +297,7 @@ static inline void vdin_set_source_type(struct vdin_dev_s *devp, struct vframe_s
 {
 	switch (devp->parm.port)
 	{
-		#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+		#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 		case TVIN_PORT_CVBS3:
 			vf->source_type= VFRAME_SOURCE_TYPE_TUNER;
 			break;
@@ -307,7 +307,7 @@ static inline void vdin_set_source_type(struct vdin_dev_s *devp, struct vframe_s
 			break;
 		case TVIN_PORT_CVBS1:
 		case TVIN_PORT_CVBS2:
-		#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV)
+		#if (MESON_CPU_TYPE < MESON_CPU_TYPE_MESONG9TV)
 		case TVIN_PORT_CVBS3:
 		#endif
 		case TVIN_PORT_CVBS4:

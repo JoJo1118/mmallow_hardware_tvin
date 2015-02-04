@@ -371,6 +371,7 @@ int hdmi_rx_phy_try_force_close(struct hdmi_rx_phy *ctx)
 void hdmirx_phy_init(int rx_port_sel, int dcm)
 {
 	unsigned int data32;
+	printk("hdmirx_phy_init\n");
     // PDDQ = 1'b1; PHY_RESET = 1'b1;
     data32  = 0;
     data32 |= 1             << 6;   // [6]      physvsretmodez
@@ -559,8 +560,8 @@ int hdmirx_iaudioclk_domain_reset(void)
 {
 	int error = 0;
 
-	hdmirx_wr_bits_dwc(HDMIRX_DWC_DMI_SW_RST, IAUDIOCLK_DOMAIN_RESET, 1);
-	hdmirx_wr_bits_dwc(HDMIRX_DWC_DMI_SW_RST, IAUDIOCLK_DOMAIN_RESET, 0);
+	//hdmirx_wr_bits_dwc(HDMIRX_DWC_DMI_SW_RST, IAUDIOCLK_DOMAIN_RESET, 1);
+	//hdmirx_wr_bits_dwc(HDMIRX_DWC_DMI_SW_RST, IAUDIOCLK_DOMAIN_RESET, 0);
 	return error;
 }
 int hdmirx_audio_fifo_rst(void)
@@ -643,11 +644,7 @@ static void control_init_more(void)
     data32 |= EDID_AUTO_CEC_ENABLE      << 11;  // [   11]  auto_cec_enable
     data32 |= 0                         << 10;  // [   10]  scl_stretch_trigger_config
     data32 |= 0                         << 9;   // [    9]  force_scl_stretch_trigger
-#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
-    data32 |= 0                         << 8;   // [    8]  scl_stretch_enable
-#else
 	data32 |= 1                         << 8;   // [    8]  scl_stretch_enable
-#endif
     data32 |= edid_clock_divide << 0;   // [ 7: 0]  clk_divide_m1
     hdmirx_wr_top(HDMIRX_TOP_EDID_GEN_CNTL,  data32);
 
@@ -657,20 +654,13 @@ static void control_init_more(void)
 
 #if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 	data32=0;
+	data32 |= (0							<< 28); // [28] 	cntl_vs_timing: 0=Detect VS rising; 1=Detect HS falling.
+	data32 |= (0							<< 27); // [27] 	cntl_hs_timing: 0=Detect HS rising; 1=Detect HS falling.
 	data32 |= (0							<< 24); // [26:24]	vid_data_map. 0={vid2, vid1, vid0}->{vid2, vid1, vid0}
+
 	data32 |= (0							<< 19); // [19] 	cntl_422_mode : 0=Insert a repeat of every pixel; 1=Insert an average of every 2-pixel.
-	data32 |= (1							<< 5);	// [5]		cntl_vs_irq_pol: 0=Use vid_vs rising edge to generate vs_irq; 1=Use vid_vs falling edge to generate vs_irq.
-	data32 |= (0							<< 4);	// [4]		is_vic39
-	data32 |= (0							<< 2);	// [3:2]	vs_pol: [1] 0=Auto-detect VS polarity; 1=use manual VS polarity.
-													//					[0] munual VS polarity. 0=Active high; 1=Active low.
-	data32 |= (0							<< 0);	// [1:0]	hs_pol: [1] 0=Auto-detect HS polarity; 1=use manual HS polarity.
-													//					[0] munual HS polarity. 0=Active high; 1=Active low.
 	hdmirx_wr_top(HDMIRX_TOP_VID_CNTL,	data32);
 
-	data32	= 0;
-	data32 |= (3						<< 27); // [29:27]	decoup_thresh_dpix. Read start threshold for decouple FIFO in hdmirx_vid_dpix.
-	data32 |= (3						<< 24); // [26:24]	decoup_thresh_420out. Read start threshold for output decouple FIFO in hdmirx_vid_420
-	data32 |= (3						<< 21); // [23:21]	decoup_thresh_420in. Read start threshold for input decouple FIFO in hdmirx_vid_420
 	data32 |= (0						<< 20); // [20] 	last420l_rdwin_mode. Control when to start read from FIFO for outputting 420 even or last line.
 												//			0=use measured the previous line's start position minus last420l_rdwin_auto.
 												//			1=use last420l_rdwin_manual to start the read window.
@@ -766,14 +756,12 @@ static void hdmi_rx_ctrl_hdcp_config( const struct hdmi_rx_ctrl_hdcp *hdcp)
 	int error = 0;
 	unsigned i = 0;
 	unsigned k = 0;
-#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
-	hdmirx_wr_top(HDMIRX_TOP_EDID_GEN_CNTL,hdmirx_rd_top(HDMIRX_TOP_EDID_GEN_CNTL)|0x100);
-#endif
 	hdmirx_wr_bits_dwc( HDMIRX_DWC_HDCP_CTRL, HDCP_ENABLE, 0);
 	//hdmirx_wr_bits_dwc(ctx, HDMIRX_DWC_HDCP_CTRL, KEY_DECRYPT_ENABLE, 1);
 	hdmirx_wr_bits_dwc( HDMIRX_DWC_HDCP_CTRL, KEY_DECRYPT_ENABLE, 0);
 	hdmirx_wr_dwc(HDMIRX_DWC_HDCP_SEED, hdcp->seed);
 	for (i = 0; i < HDCP_KEYS_SIZE; i += 2) {
+
 		for (k = 0; k < HDCP_KEY_WR_TRIES; k++) {
 			if (hdmirx_rd_bits_dwc( HDMIRX_DWC_HDCP_STS, HDCP_KEY_WR_OK_STS) != 0) {
 				break;
@@ -793,9 +781,6 @@ static void hdmi_rx_ctrl_hdcp_config( const struct hdmi_rx_ctrl_hdcp *hdcp)
 	hdmirx_wr_dwc(HDMIRX_DWC_HDCP_RPT_BSTATUS, 0);	/* nothing attached downstream */
 
 	hdmirx_wr_bits_dwc( HDMIRX_DWC_HDCP_CTRL, HDCP_ENABLE, 1);
-#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
-	hdmirx_wr_top(HDMIRX_TOP_EDID_GEN_CNTL,hdmirx_rd_top(HDMIRX_TOP_EDID_GEN_CNTL)&(~0x100));
-#endif
 }
 
 #if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
@@ -1072,16 +1057,16 @@ void hdmirx_set_pinmux(void)
         WRITE_CBUS_REG(PAD_PULL_UP_REG2, READ_CBUS_REG(PAD_PULL_UP_REG2) |
 	            ((1<<0)|(1<<4)|(1<<8)|(1<<12)));
 
-    //WRITE_CBUS_REG(PERIPHS_PIN_MUX_0, READ_CBUS_REG(PERIPHS_PIN_MUX_0 ) &
-     //           (~((1<<26)|(1<<22)|(1<<18)|(1<<14))));
+    WRITE_CBUS_REG(PERIPHS_PIN_MUX_10, READ_CBUS_REG(PERIPHS_PIN_MUX_10 ) &
+                (~((1<<2)|(1<<5)|(1<<8)|(1<<11))));
 
 
 
     WRITE_CBUS_REG(PREG_PAD_GPIO0_EN_N, READ_CBUS_REG(PREG_PAD_GPIO0_EN_N) &
-                ((1<<5)|(1<<9)|(1<<13)|(1<<17)));
+                (~((1<<5)|(1<<9)|(1<<13)|(1<<17))));
 
-    //WRITE_CBUS_REG(PREG_PAD_GPIO0_O, READ_CBUS_REG(PREG_PAD_GPIO0_O) |
-                //((1<<5)|(1<<9)|(1<<13)|(1<<17)));
+    WRITE_CBUS_REG(PREG_PAD_GPIO0_O, READ_CBUS_REG(PREG_PAD_GPIO0_O) |
+                ((1<<5)|(1<<9)|(1<<13)|(1<<17)));
 #endif
 
 #if 0
@@ -1164,16 +1149,16 @@ void clk_init(void)
     data32 |= 0 << 25;  // [26:25] HDMIRX mode detection clock mux select: osc_clk
     data32 |= 1 << 24;  // [24]    HDMIRX mode detection clock enable
     data32 |= 0 << 16;  // [22:16] HDMIRX mode detection clock divider
-    data32 |= 3 << 9;   // [10: 9] HDMIRX config clock mux select: fclk_div5=510MHz
+    data32 |= 0 << 9;   // [10: 9] HDMIRX config clock mux select: fclk_div5=400MHz
     data32 |= 1 << 8;   // [    8] HDMIRX config clock enable
-    data32 |= 19 << 0;   // [ 6: 0] HDMIRX config clock divider: 510/20=100MHz
+    data32 |= 0 << 0;   // [ 6: 0] HDMIRX config clock divider: 400/4=100MHz
     WRITE_MPEG_REG(HHI_HDMIRX_CLK_CNTL,     data32);
 
     data32  = 0;
     data32 |= 2             << 25;  // [26:25] HDMIRX ACR ref clock mux select: fclk_div5
     data32 |= rx.ctrl.acr_mode      << 24;  // [24]    HDMIRX ACR ref clock enable
     data32 |= 0             << 16;  // [22:16] HDMIRX ACR ref clock divider
-    data32 |= 2             << 9;   // [10: 9] HDMIRX audmeas clock mux select: fclk_div5=510
+    data32 |= 2             << 9;   // [10: 9] HDMIRX audmeas clock mux select: fclk_div5
     data32 |= 1             << 8;   // [    8] HDMIRX audmeas clock enable
     data32 |= 2             << 0;   // [ 6: 0] HDMIRX audmeas clock divider: 510/3 = 170MHz
     WRITE_MPEG_REG(HHI_HDMIRX_AUD_CLK_CNTL, data32);
@@ -1197,7 +1182,7 @@ void hdmirx_20_init(void)
     data32 |= (1    << 10); // [10]     gb_checken
     data32 |= (1    << 9);  // [9]      preamb_checken
     data32 |= (1    << 8);  // [8]      ctrl_checken
-    data32 |= (0    << 4);  // [4]      scdc_enable
+    data32 |= (1    << 4);  // [4]      scdc_enable
     data32 |= (scramble_sel    << 0);  // [1:0]    scramble_sel
     hdmirx_wr_dwc(HDMIRX_DWC_HDMI20_CONTROL,    data32);
 
@@ -1226,28 +1211,21 @@ void hdmirx_20_init(void)
 void hdmirx_hw_config(void)
 {
 	hdmirx_print("%s %d\n", __func__, rx.port);
-#if (MESON_CPU_TYPE < MESON_CPU_TYPE_MESONG9TV)
-	WRITE_CBUS_REG(RESET0_REGISTER, 0x8); //reset HDMIRX module
 	mdelay(10);
 	//hdmirx_rd_check_TOP(HDMIRX_TOP_SW_RESET, 0x01, 0x00);
-#else
-	hdmirx_wr_top(HDMIRX_TOP_MEM_PD,    0); // Release memories out of power down. // hdmi2.0 new
-#endif
+	//hdmirx_wr_top(HDMIRX_TOP_MEM_PD,    0); // Release memories out of power down. // hdmi2.0 new
 	clk_init();
-	mdelay(10);
 
-    hdmirx_wr_top(HDMIRX_TOP_INTR_MASKN, 0); //disable top interrupt gate
-    hdmirx_wr_top( HDMIRX_TOP_SW_RESET, 0x3f);
-    mdelay(1);
-    control_reset(0);
-
-#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
-	hdmirx_wr_top(HDMIRX_TOP_PORT_SEL, (1<<4)|(1<<rx.port)); //enable all 4 port available
-	hdmirx_wr_top(HDMIRX_TOP_HPD_PWR5V, 0x1f);
+	hdmirx_wr_top(HDMIRX_TOP_INTR_MASKN, 0); //disable top interrupt gate
+	control_reset(0);
+#if 0//(MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
+	hdmirx_wr_top(HDMIRX_TOP_PORT_SEL, 0x10 | ((1<<rx.port))); //enable all 4 port available
+	//hdmirx_wr_top(HDMIRX_TOP_PORT_SEL, ((1<<rx.port)));
 #else
 	hdmirx_wr_top(HDMIRX_TOP_PORT_SEL,   (1<<rx.port));  //G9 EDID multiplex mode
 #endif
 	hdmirx_interrupts_cfg(false); //disable dwc interrupt
+
 	if(hdcp_enable){
 		hdmi_rx_ctrl_hdcp_config(&rx.hdcp);
 	} else {
@@ -1308,8 +1286,9 @@ void hdmirx_hw_reset(void)
     hdmirx_wr_top( HDMIRX_TOP_SW_RESET, 0x3f);
     mdelay(1);
     control_reset(0);
-    hdmirx_wr_top( HDMIRX_TOP_PORT_SEL,  (1<<4) | (1<<rx.port));  //G9 EDID multiplex mode
-
+#if (MESON_CPU_TYPE < MESON_CPU_TYPE_MESONG9TV)
+    hdmirx_wr_top( HDMIRX_TOP_PORT_SEL,   (1<<rx.port));  //G9 EDID multiplex mode
+#endif
 	hdmirx_interrupts_cfg(false); //disable dwc interrupt
     if(hdcp_enable){
         hdmi_rx_ctrl_hdcp_config(&rx.hdcp);
@@ -1426,13 +1405,13 @@ int hdmirx_get_video_info(struct hdmi_rx_ctrl *ctx, struct hdmi_rx_ctrl_video *p
 		/* refresh rate */
 	tmp = hdmirx_rd_bits_dwc( HDMIRX_DWC_MD_VTC, VTOT_CLK);
 	//tmp = (tmp == 0)? 0: (ctx->md_clk * 100000) / tmp;
-	if((params->vtotal == 0) || (params->htotal == 0))
-		params->refresh_rate = (tmp == 0)? 0: (ctx->md_clk * 100000) / tmp;
-	else {
-		params->refresh_rate = (hdmirx_get_pixel_clock() / (params->vtotal * params->htotal / 100));
+	//if((params->vtotal == 0) || (params->htotal == 0))
+	params->refresh_rate = (tmp == 0)? 0: (ctx->md_clk * 100000) / tmp;
+	//else {
+		//params->refresh_rate = (hdmirx_get_pixel_clock() / (params->vtotal * params->htotal / 100));
 		//if(abs(tmp - params->refresh_rate) > 50)
 			//printk("\n\n refresh_rate -%ld -- tmp-%d\n\n",params->refresh_rate,tmp);
-	}
+	//}
 	/* deep color mode */
 	tmp = hdmirx_rd_bits_dwc( HDMIRX_DWC_HDMI_STS, DCM_CURRENT_MODE);
 #if 0
@@ -1474,23 +1453,6 @@ exit:
 
 void hdmirx_config_video(struct hdmi_rx_ctrl_video *video_params)
 {
-#if (MESON_CPU_TYPE < MESON_CPU_TYPE_MESONG9TV)
-	int data32=0;
-
-	if ((video_params->sw_vic >= HDMI_3840_2160p) && (video_params->sw_vic <= HDMI_4096_2160p)) {
-	    data32 |= 1 << 23; //video_params.pixel_repetition << 23;  // [23]     hscale_half: 1=Horizontally scale down by half
-	    data32 |= 1 << 29;  //clk_half  297-148.5
-	} else {
-	    data32 |= 0 << 23; //video_params.pixel_repetition << 23;  // [23]     hscale_half: 1=Horizontally scale down by half
-	    data32 |= 0 << 29;  //clk_half  297-148.5
-	}
-
-    data32 |= 0                             << 22;  // [22]     force_vid_rate: 1=Force video output sample rate
-    data32 |= 0                             << 19;  // [21:19]  force_vid_rate_chroma_cfg : 0=Bypass, not rate change. Applicable only if force_vid_rate=1
-    data32 |= 0                             << 16;  // [18:16]  force_vid_rate_luma_cfg   : 0=Bypass, not rate change. Applicable only if force_vid_rate=1
-    data32 |= 0x7fff                        << 0;   // [14: 0]  hsizem1
-    hdmirx_wr_top( HDMIRX_TOP_VID_CNTL,   data32);
-#endif
 }
 
 int hdmirx_audio_init(void)

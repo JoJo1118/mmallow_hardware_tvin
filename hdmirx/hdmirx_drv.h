@@ -120,7 +120,7 @@ typedef enum HDMI_Video_Type_ {
 
 /*
 */
-//#define USE_GPIO_FOR_HPD
+#define USE_GPIO_FOR_HPD
 
 /** Configuration clock minimum [kHz] */
 #define CFG_CLK_MIN				(10000UL)

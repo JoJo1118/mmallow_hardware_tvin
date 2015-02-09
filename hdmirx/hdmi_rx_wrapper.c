@@ -164,7 +164,7 @@ static int frame_rate = 0;
 static int sm_pause = 0;
 int hdcp_enable = 1;
 int hdmirx_debug_flag = 0;
-static bool use_test_hdcp_key = 1;
+static bool use_test_hdcp_key = 0;
 //static int wait_ddc_idle_cnt = 0;
 
 #define VIDEO_LOG_ENABLE	0x01
@@ -1653,9 +1653,10 @@ void hdmirx_hw_monitor(void)
 	//}
 	switch(rx.state){
 	case HDMIRX_HWSTATE_INIT:
+		hdmirx_set_hpd(rx.port, 0);
 	    if (hw_cfg_mode == 0) {
+			hdmi_rx_ctrl_edid_update();
 	        hdmirx_hw_config();
-	        hdmi_rx_ctrl_edid_update();
 	    }
 		audio_status_init();
 	    Signal_status_init();
@@ -1686,6 +1687,7 @@ void hdmirx_hw_monitor(void)
 			sw_pwr_cnt = 0;
 			hdmirx_print("\n[HDMIRX State] 5v low->5v high\n");
 		} else {
+			#if 0
 			if (hdmirx_tmds_pll_lock() && (hdmirx_get_tmds_clock() > 0)) {
 		        if (sw_pwr_cnt++ > HDMIRX_SW_PWR_CNT) {
 		            rx.state = HDMIRX_HWSTATE_HDMI5V_HIGH;
@@ -1699,6 +1701,7 @@ void hdmirx_hw_monitor(void)
 		        sw_5v_sts = false;
 				rx.no_signal = true;
 		    }
+			#endif
 		}
 		break;
 	case HDMIRX_HWSTATE_HDMI5V_HIGH:
@@ -1721,7 +1724,7 @@ void hdmirx_hw_monitor(void)
 			rx.no_signal = true;
 			rx.state = HDMIRX_HWSTATE_INIT;
 			rx.pre_state = HDMIRX_HWSTATE_HPD_READY;
-			hdmirx_set_hpd(rx.port, 0);
+			//hdmirx_set_hpd(rx.port, 0);
 			hdmirx_print("\n[HDMIRX State] hpd ready ->init\n");
 		} else {
 		    if (hw_cfg_mode == 1) {
@@ -1752,6 +1755,7 @@ void hdmirx_hw_monitor(void)
 			hdmirx_phy_init(rx.port, 0);
 		}else if(2 == hdmirx_reset_level){
 			hdmirx_hw_config();
+			//hdmi_rx_ctrl_edid_update();
 		}else if(3 == hdmirx_reset_level){
 			hdmirx_timingchange_reset();
 		}
@@ -2704,7 +2708,7 @@ int hdmirx_debug(const char* buf, int size)
 		hs_act_cnt = 0;
 	#endif
 	}else if (strncmp(tmpbuf, "pinmux_on", strlen("pinmux_on")) == 0){
-	     hdmirx_set_pinmux();
+	     //hdmirx_set_pinmux();
 		 printk("[hdmi]%s:hdmi pinmux is on \n",__func__);
 	}else if (strncmp(tmpbuf, "clock", 5) == 0){
 		value = simple_strtoul(tmpbuf + 5, NULL, 10);

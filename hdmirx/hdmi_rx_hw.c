@@ -1213,7 +1213,7 @@ void hdmirx_hw_config(void)
 	hdmirx_print("%s %d\n", __func__, rx.port);
 	mdelay(10);
 	//hdmirx_rd_check_TOP(HDMIRX_TOP_SW_RESET, 0x01, 0x00);
-	//hdmirx_wr_top(HDMIRX_TOP_MEM_PD,    0); // Release memories out of power down. // hdmi2.0 new
+	hdmirx_wr_top(HDMIRX_TOP_MEM_PD,    0); // Release memories out of power down. // hdmi2.0 new
 	clk_init();
 
 	hdmirx_wr_top(HDMIRX_TOP_INTR_MASKN, 0); //disable top interrupt gate

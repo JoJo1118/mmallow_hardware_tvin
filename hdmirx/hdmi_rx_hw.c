@@ -655,7 +655,7 @@ static void control_init_more(void)
 	hdmirx_wr_top(HDMIRX_TOP_EDID_ADDR_CEC,	EDID_CEC_ID_ADDR);
 #endif
 
-#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
+#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
 	data32=0;
 	data32 |= (0							<< 24); // [26:24]	vid_data_map. 0={vid2, vid1, vid0}->{vid2, vid1, vid0}
 	data32 |= (0							<< 19); // [19] 	cntl_422_mode : 0=Insert a repeat of every pixel; 1=Insert an average of every 2-pixel.
@@ -1474,7 +1474,7 @@ exit:
 
 void hdmirx_config_video(struct hdmi_rx_ctrl_video *video_params)
 {
-#if (MESON_CPU_TYPE < MESON_CPU_TYPE_MESONG9TV)
+#if ((MESON_CPU_TYPE < MESON_CPU_TYPE_MESONG9TV) || (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9BB))
 	int data32=0;
 
 	if ((video_params->sw_vic >= HDMI_3840_2160p) && (video_params->sw_vic <= HDMI_4096_2160p)) {

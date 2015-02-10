@@ -630,7 +630,7 @@ void tvin_smr(struct vdin_dev_s *devp)
                                                         tvin_smr_init_counter(devp->index);
                                                         sm_p->state = TVIN_SM_STATUS_PRESTABLE;
                                                         if (sm_debug_enable)
-                                                                pr_info("[smr.%d] unstable --> prestable, and format is %d(%s)\n",
+                                                                pr_info("[smr.%d] unstable --> prestable, and format is 0x%x(%s)\n",
                                                                                 devp->index,info->fmt, tvin_sig_fmt_str(info->fmt));
                                                         sm_print_nosig  = 0;
                                                         sm_print_unstable = 0;

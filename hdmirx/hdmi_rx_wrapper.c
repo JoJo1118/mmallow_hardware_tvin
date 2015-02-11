@@ -91,7 +91,7 @@ static int sig_unlock_reset_cnt = 0;			//signal unstable PLL unlock
 static unsigned sig_unlock_reset_max = 150;
 
 static int sig_lost_lock_cnt = 0;		//signal ready PLL lock --> unlock
-static unsigned sig_lost_lock_max = 10;
+static unsigned sig_lost_lock_max = 6;  //10->6 tiammao box timingchange issue
 
 static int sig_stable_cnt = 0;			//signal stable
 static unsigned sig_stable_max = 25;
@@ -1750,6 +1750,8 @@ void hdmirx_hw_monitor(void)
 		break;
 	case HDMIRX_HWSTATE_TIMINGCHANGE:
 		//hdmirx_timingchange_reset();
+		audio_status_init();
+	    Signal_status_init();
 		hdmirx_print("[HDMIRX State] HDMIRX_HWSTATE_TIMINGCHANGE\n");
 		if(1 == hdmirx_reset_level){
 			hdmirx_phy_init(rx.port, 0);

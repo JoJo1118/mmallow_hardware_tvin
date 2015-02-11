@@ -19,7 +19,7 @@
 #include "../tvin_global.h"
 #include "../tvin_format_table.h"
 
-#define HDMIRX_VER "Ref.2015/02/04a"
+#define HDMIRX_VER "Ref.2015/02/11"
 
 #define HDMI_STATE_CHECK_FREQ     (20*5)
 #define ABS(x) ((x)<0 ? -(x) : (x))
@@ -360,7 +360,8 @@ struct rx {
 	int hpd_wait_time;
 	int audio_wait_time;
 	int audio_sample_rate_stable_count;
-	unsigned int audio_reset_release_flag;
+	int audio_sample_rate_unstable_count;
+	//unsigned int audio_reset_release_flag;
 	int video_wait_time;
 	/* info */
 	struct aud_info_s aud_info;

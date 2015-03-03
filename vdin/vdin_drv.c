@@ -563,18 +563,20 @@ void vdin_start_dec(struct vdin_dev_s *devp)
 			devp->prop.ve = devp->debug.cutwin.ve;
 		}
        }
-       #ifdef CONFIG_VSYNC_RDMA
-       if(vdin_rdma_flag && 
-       	  (devp->v_active > 1080 || devp->h_active > 1920)
-       	  )
-       	       devp->flags |= VDIN_FLAG_RDMA_ENABLE;
-       #endif
+
 	vdin_get_format_convert(devp);
 	devp->curr_wr_vfe = NULL;
 	/* h_active/v_active will be recalculated by bellow calling */
 	vdin_set_decimation(devp);
 	vdin_set_cutwin(devp);
 	vdin_set_hvscale(devp);
+#ifdef CONFIG_VSYNC_RDMA
+       if(vdin_rdma_flag && 
+       	  (devp->v_active > 1080 || devp->h_active > 1920)
+       	  )
+       	       devp->flags |= VDIN_FLAG_RDMA_ENABLE;
+       	     
+#endif
 #if defined(VDIN_V1)
     /*reverse / disable reverse write buffer*/
     vdin_wr_reverse(devp->addr_offset,devp->parm.h_reverse,devp->parm.v_reverse);

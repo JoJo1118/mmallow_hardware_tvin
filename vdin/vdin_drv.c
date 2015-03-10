@@ -137,11 +137,7 @@ module_param(vdin_irq_flag,uint,0664);
 MODULE_PARM_DESC(vdin_irq_flag,"vdin_irq_flag");
 
 /*1:support rdma;0:no support rdma*/
-#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV
-static unsigned int vdin_rdma_flag = 1;
-#else
 static unsigned int vdin_rdma_flag = 0;
-#endif
 module_param(vdin_rdma_flag,uint,0664);
 MODULE_PARM_DESC(vdin_rdma_flag,"vdin_rdma_flag");
 

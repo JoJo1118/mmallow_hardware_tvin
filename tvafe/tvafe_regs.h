@@ -2740,7 +2740,7 @@
 #define AFC_YC_ALHPA12_BIT                       0
 #define AFC_YC_ALHPA12_WID                 8
 
-#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 #define TVFE_ATV_DMD_CLP_CTRL                                ((TOP_BASE_ADD+0xA8)<<2)
 #define ATV_DMD_IN_EN_BIT			24
 #define ATV_DMD_IN_EN_WID			1

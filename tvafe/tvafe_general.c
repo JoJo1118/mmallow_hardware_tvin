@@ -63,7 +63,7 @@ struct tvafe_adc_cal_s cal_std_value_vga = {
 };
 
 static int threshold_value = 32;
-#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV)
+#if (MESON_CPU_TYPE < MESON_CPU_TYPE_MESONG9TV)
 static enum tvafe_adc_pin_e tvafe_default_cvbs_out = TVAFE_ADC_PIN_A_PGA_0;
 #endif
 const signed short tvafe_comp_hs_patch[TVIN_SIG_FMT_COMP_MAX - TVIN_SIG_FMT_COMP_480P_60HZ_D000] =
@@ -566,7 +566,7 @@ const static unsigned int cvbs_top_reg_default[][2] = {
 	{TVFE_APB_INDICATOR2                    ,0x00000000,}, // TVFE_APB_INDICATOR2
 	{TVFE_ADC_READBACK_CTRL                 ,0x80140003,}, // TVFE_ADC_READBACK_CTRL
 	{TVFE_ADC_READBACK_INDICATOR            ,0x00000000,}, // TVFE_ADC_READBACK_INDICATOR
-#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 	{TVFE_VAFE_CTRL0			,0x00090b00,}, // TVFE_VAFE_CTRL0
 	{TVFE_VAFE_CTRL1			,0x00000110,}, // TVFE_VAFE_CTRL1
 	{TVFE_VAFE_CTRL2			,0x0010ef93,}, // TVFE_VAFE_CTRL2
@@ -580,7 +580,7 @@ const static unsigned int cvbs_top_reg_default[][2] = {
 	{TVFE_FREERUN_GEN_PRD       ,  0x00000000,},//TVFE_FREERUN_GEN_PRD
 	{TVFE_FREERUN_GEN_COAST   , 0x00000000,},//TVFE_FREERUN_GEN_COAST
 	{TVFE_FREERUN_GEN_CTRL      , 0x00000000,},//TVFE_FREERUN_GEN_CTRL
-#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 	{TVFE_AAFILTER_CTRL1		,   0x00182222,},//0x00082222 TVFE_AAFILTER_CTRL1 bypass all
 	{TVFE_AAFILTER_CTRL2		,   0x252b39c6,},//TVFE_AAFILTER_CTRL2
 #else
@@ -600,10 +600,10 @@ const static unsigned int cvbs_top_reg_default[][2] = {
 	{TVFE_AFC_CTRL4 		     ,	 0xfefbff14,},//TVFE_AFC_CTRL4
 	{TVFE_AFC_CTRL5 		     ,		0x0,},//TVFE_AFC_CTRL5
 #else
-#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 	{TVFE_AFC_CTRL1                      ,   0x05730459,},//TVFE_AFC_CTRL1
 #else
-    {TVFE_AFC_CTRL1                      ,   0x893904d2,},//TVFE_AFC_CTRL1 
+    {TVFE_AFC_CTRL1                      ,   0x893904d2,},//TVFE_AFC_CTRL1
 #endif
 	{TVFE_AFC_CTRL2                      ,   0xf4b9ac9,},//TVFE_AFC_CTRL2
 	{TVFE_AFC_CTRL3                      ,   0x1fd8c36,},//TVFE_AFC_CTRL3
@@ -620,7 +620,7 @@ const static unsigned int cvbs_top_reg_default[][2] = {
 static enum tvafe_adc_ch_e tvafe_adc_pin_muxing(enum tvafe_adc_pin_e pin)
 {
 	enum tvafe_adc_ch_e ret = TVAFE_ADC_CH_NULL;
-#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 	if (pin == TVAFE_CVBS_IN0)
 	{
 		W_APB_BIT(TVFE_VAFE_CTRL1,1,VAFE_IN_SEL_BIT,VAFE_IN_SEL_WID);
@@ -683,7 +683,7 @@ static enum tvafe_adc_ch_e tvafe_adc_pin_muxing(enum tvafe_adc_pin_e pin)
  * tvafe top mux setting for yuv channel
  */
 
-#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV)
+#if (MESON_CPU_TYPE < MESON_CPU_TYPE_MESONG9TV)
 static int tvafe_adc_top_muxing(enum tvafe_adc_ch_e gy,
 		enum tvafe_adc_ch_e bpb,
 		enum tvafe_adc_ch_e rpr,
@@ -811,7 +811,7 @@ int tvafe_set_source_muxing(enum tvin_port_e port, struct tvafe_pin_mux_s *pinmu
 	switch (port)
 	{
 		case TVIN_PORT_CVBS0:
-#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 			tvafe_adc_pin_muxing(pinmux->pin[CVBS_IN0]);
 #else
 			if (tvafe_adc_pin_muxing(pinmux->pin[CVBS0_Y]) == TVAFE_ADC_CH_PGA)
@@ -827,7 +827,7 @@ int tvafe_set_source_muxing(enum tvin_port_e port, struct tvafe_pin_mux_s *pinmu
 #endif
 			break;
 		case TVIN_PORT_CVBS1:
-#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 			tvafe_adc_pin_muxing(pinmux->pin[CVBS_IN1]);
 #else
 			if (tvafe_adc_pin_muxing(pinmux->pin[CVBS1_Y]) == TVAFE_ADC_CH_PGA)
@@ -843,7 +843,7 @@ int tvafe_set_source_muxing(enum tvin_port_e port, struct tvafe_pin_mux_s *pinmu
 #endif
 			break;
 		case TVIN_PORT_CVBS2:
-#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 			tvafe_adc_pin_muxing(pinmux->pin[CVBS_IN2]);
 #else
 			if (tvafe_adc_pin_muxing(pinmux->pin[CVBS2_Y]) == TVAFE_ADC_CH_PGA)
@@ -859,7 +859,7 @@ int tvafe_set_source_muxing(enum tvin_port_e port, struct tvafe_pin_mux_s *pinmu
 #endif
 			break;
 		case TVIN_PORT_CVBS3:
-#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 			tvafe_adc_pin_muxing(pinmux->pin[CVBS_IN3]);
 #else
 			if (tvafe_adc_pin_muxing(pinmux->pin[CVBS3_Y]) == TVAFE_ADC_CH_PGA)
@@ -874,7 +874,7 @@ int tvafe_set_source_muxing(enum tvin_port_e port, struct tvafe_pin_mux_s *pinmu
 			}
 #endif
 			break;
-#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV)
+#if (MESON_CPU_TYPE < MESON_CPU_TYPE_MESONG9TV)
 		case TVIN_PORT_CVBS4:
 			if (tvafe_adc_pin_muxing(pinmux->pin[CVBS4_Y]) == TVAFE_ADC_CH_PGA)
 			{
@@ -3212,7 +3212,7 @@ static void tvafe_set_cvbs_default(struct tvafe_cvd2_s *cvd2, struct tvafe_cvd2_
 	/**disable auto mode clock**/
 	WRITE_CBUS_REG(HHI_TVFE_AUTOMODE_CLK_CNTL, 0);
 
-#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV)
+#if (MESON_CPU_TYPE < MESON_CPU_TYPE_MESONG9TV)
 	/** write 7740 register **/
 	tvafe_adc_configure(TVIN_SIG_FMT_CVBS_PAL_I);
 #else
@@ -3246,7 +3246,7 @@ static void tvafe_set_cvbs_default(struct tvafe_cvd2_s *cvd2, struct tvafe_cvd2_
 
 void tvafe_enable_avout(enum tvin_port_e port,bool enable)
 {
-#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 	if(enable){
 		if(port == TVIN_PORT_CVBS3){
 			WRITE_CBUS_REG_BITS(HHI_VDAC_CNTL0, 0, 10, 1);//disable AFE output buffer
@@ -3334,7 +3334,7 @@ void tvafe_init_reg(struct tvafe_cvd2_s *cvd2, struct tvafe_cvd2_mem_s *mem, enu
 		tvafe_set_cvbs_default(cvd2, mem, port, pinmux);
 		/*turn on/off av out*/
 		tvafe_enable_avout(port,enableavout);
-#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 		/*Enable AFE Bandgap*/
 		WRITE_CBUS_REG_BITS(HHI_VDAC_CNTL0, 0, 9, 1);//CDAC_CTRL_RESV2<1>=0
 #endif
@@ -3386,7 +3386,7 @@ void tvafe_enable_module(bool enable)
 	W_APB_BIT(TVFE_TOP_CTRL, 1, VAFE_MCLK_EN_BIT, VAFE_MCLK_EN_WID);
 	W_APB_BIT(TVFE_TOP_CTRL, 3, TVFE_ADC_CLK_DIV_BIT, TVFE_ADC_CLK_DIV_WID);
 	//adc power up
-#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV)
+#if (MESON_CPU_TYPE < MESON_CPU_TYPE_MESONG9TV)
 	W_APB_BIT(ADC_REG_21, 1, FULLPDZ_BIT, FULLPDZ_WID);
 #endif
 	/*reset module*/
@@ -3396,7 +3396,7 @@ void tvafe_enable_module(bool enable)
 	if (!enable)
 	{
 		//adc power down
-#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV)
+#if (MESON_CPU_TYPE < MESON_CPU_TYPE_MESONG9TV)
 		W_APB_BIT(ADC_REG_21, 0, FULLPDZ_BIT, FULLPDZ_WID);
 #endif
 		//tvfe power down

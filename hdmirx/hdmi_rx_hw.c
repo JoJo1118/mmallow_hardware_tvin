@@ -1453,6 +1453,23 @@ exit:
 
 void hdmirx_config_video(struct hdmi_rx_ctrl_video *video_params)
 {
+#if ((MESON_CPU_TYPE < MESON_CPU_TYPE_MESONG9TV) || (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9BB))
+	int data32=0;
+
+	if ((video_params->sw_vic >= HDMI_3840_2160p) && (video_params->sw_vic <= HDMI_4096_2160p)) {
+	    data32 |= 1 << 23; //video_params.pixel_repetition << 23;  // [23]     hscale_half: 1=Horizontally scale down by half
+	    data32 |= 1 << 29;  //clk_half  297-148.5
+	} else {
+	    data32 |= 0 << 23; //video_params.pixel_repetition << 23;  // [23]     hscale_half: 1=Horizontally scale down by half
+	    data32 |= 0 << 29;  //clk_half  297-148.5
+	}
+
+    data32 |= 0                             << 22;  // [22]     force_vid_rate: 1=Force video output sample rate
+    data32 |= 0                             << 19;  // [21:19]  force_vid_rate_chroma_cfg : 0=Bypass, not rate change. Applicable only if force_vid_rate=1
+    data32 |= 0                             << 16;  // [18:16]  force_vid_rate_luma_cfg   : 0=Bypass, not rate change. Applicable only if force_vid_rate=1
+    data32 |= 0x7fff                        << 0;   // [14: 0]  hsizem1
+    hdmirx_wr_top( HDMIRX_TOP_VID_CNTL,   data32);
+#endif
 }
 
 int hdmirx_audio_init(void)

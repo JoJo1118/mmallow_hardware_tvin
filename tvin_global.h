@@ -59,7 +59,7 @@
 //#define ACD_REG_NUM1            0x32  //0x00-0x32 except 0x1E&0x31
 //#define ACD_REG_NUM2            0x39  //the sum of the part2 acd register
 #define ACD_REG_NUM            0xff//the sum all of the acd register
-#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 #define CRYSTAL_24M
 #endif
 #ifndef CRYSTAL_24M
@@ -114,7 +114,7 @@
 #define CVD2_DGAIN_MIN		    0x0100
 #endif
 
-//#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV)
+//#if (MESON_CPU_TYPE < MESON_CPU_TYPE_MESONG9TV)
 #define TVAFE_SET_CVBS_CDTO_EN
 //#endif
 #ifdef TVAFE_SET_CVBS_CDTO_EN

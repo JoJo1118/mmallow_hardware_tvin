@@ -129,7 +129,7 @@ typedef enum HDMI_Video_Type_ {
 
 /** TMDS clock minimum [kHz] */
 #define TMDS_CLK_MIN			(24000UL)//(25000UL)
-#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
+#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
 /** TMDS clock maximum [kHz] */
 #define TMDS_CLK_MAX			(600000UL)//(340000UL)
 #else

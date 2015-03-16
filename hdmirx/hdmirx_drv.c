@@ -51,8 +51,8 @@
 #define TVHDMI_CLASS_NAME         "hdmirx"
 #define INIT_FLAG_NOT_LOAD 0x80
 #if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
-  #define HDMI_DE_REPEAT_DONE_FLAG 0x0
-  int hdmirx_de_repeat_enable = 0;
+  #define HDMI_DE_REPEAT_DONE_FLAG 0xF0
+  int hdmirx_de_repeat_enable = 1;
 #else
   #define HDMI_DE_REPEAT_DONE_FLAG 0xF0
   int hdmirx_de_repeat_enable = 1;
@@ -167,7 +167,7 @@ int hdmirx_dec_open(struct tvin_frontend_s *fe, enum tvin_port_e port)
 		hdmirx_phy_fast_switching(1);
 		return 0;
 	}
-	
+
 #endif
 	open_flage = 1;
 	/* timer */

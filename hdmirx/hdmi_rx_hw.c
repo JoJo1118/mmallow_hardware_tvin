@@ -1455,8 +1455,9 @@ exit:
 
 void hdmirx_config_video(struct hdmi_rx_ctrl_video *video_params)
 {
-#if (MESON_CPU_TYPE < MESON_CPU_TYPE_MESONG9TV)
+#if ((MESON_CPU_TYPE < MESON_CPU_TYPE_MESONG9TV) || (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9BB))
 	int data32=0;
+
 	if ((video_params->sw_vic >= HDMI_3840_2160p) && (video_params->sw_vic <= HDMI_4096_2160p)) {
 	    data32 |= 1 << 23; //video_params.pixel_repetition << 23;  // [23]     hscale_half: 1=Horizontally scale down by half
 	    data32 |= 1 << 29;  //clk_half  297-148.5

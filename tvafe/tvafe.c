@@ -432,7 +432,7 @@ param:void
 		return -1;
 	}
 	pinmux = devp->pinmux;
-#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV)
+#if (MESON_CPU_TYPE < MESON_CPU_TYPE_MESONG9TV)
 	switch(port)
 	{
 		case TVIN_PORT_VGA0:
@@ -508,7 +508,7 @@ int tvafe_dec_open(struct tvin_frontend_s *fe, enum tvin_port_e port)
 		mutex_unlock(&devp->afe_mutex);
 		return 1;
 	}
-	#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+	#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 	if ((port < TVIN_PORT_CVBS0)|| (port > TVIN_PORT_CVBS7))
 	{
 		pr_err("[tvafe..] %s(%d), %s unsupport\n", __func__,
@@ -561,7 +561,7 @@ void tvafe_dec_start(struct tvin_frontend_s *fe, enum tvin_sig_fmt_e fmt)
 		mutex_unlock(&devp->afe_mutex);
 		return;
 	}
-#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 	if ((port < TVIN_PORT_CVBS0)|| (port > TVIN_PORT_CVBS7))
 	{
 		pr_err("[tvafe..] %s(%d), %s unsupport\n", __func__,
@@ -604,7 +604,7 @@ void tvafe_dec_stop(struct tvin_frontend_s *fe, enum tvin_port_e port)
 		mutex_unlock(&devp->afe_mutex);
 		return;
 	}
-	#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+	#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 	if ((port < TVIN_PORT_CVBS0)|| (port > TVIN_PORT_CVBS7))
 	{
 		pr_err("[tvafe..] %s(%d), %s unsupport\n", __func__,
@@ -622,7 +622,7 @@ void tvafe_dec_stop(struct tvin_frontend_s *fe, enum tvin_port_e port)
 	memset(&tvafe->parm.info, 0, sizeof(struct tvin_info_s));
 
 	tvafe->parm.port = port;
-#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV)
+#if (MESON_CPU_TYPE < MESON_CPU_TYPE_MESONG9TV)
 	tvafe_adc_digital_reset();
 #endif
 	// need to do ...
@@ -661,7 +661,7 @@ void tvafe_dec_close(struct tvin_frontend_s *fe)
 		mutex_unlock(&devp->afe_mutex);
 		return;
 	}
-#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 	if ((tvafe->parm.port < TVIN_PORT_CVBS0)|| (tvafe->parm.port > TVIN_PORT_CVBS7))
 	{
 		pr_err("[tvafe..] %s(%d), %s unsupport\n", __func__,

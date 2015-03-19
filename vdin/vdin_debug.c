@@ -792,7 +792,7 @@ static void memp_set(int type)
 #endif
 #if defined(VDIN_V1)
 //#if ((MESON_CPU_TYPE != MESON_CPU_TYPE_MESON8B)||
-#if ((MESON_CPU_TYPE != MESON_CPU_TYPE_MESON8B)&&(MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV))//??
+#if ((MESON_CPU_TYPE != MESON_CPU_TYPE_MESON8B)&&(MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV)&&(MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9BB))//??
 		aml_set_reg32_mask(P_MMC_QOS7_CTRL0, 1<<25);	// set audio to urgent
                 aml_write_reg32(P_MMC_CHAN_CTRL0, 0xf);		// set ch1-7 arbiter weight to 0
 		aml_clr_reg32_mask(P_MMC_CHAN_CTRL1, 0xf<<20);	// set ch8 arbiter weight to 0
@@ -820,7 +820,7 @@ static void memp_set(int type)
 #endif
 #if defined(VDIN_V1)
 //#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESON8B)
-#if ((MESON_CPU_TYPE != MESON_CPU_TYPE_MESON8B)&&(MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV))//??
+#if ((MESON_CPU_TYPE != MESON_CPU_TYPE_MESON8B)&&(MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV)&&(MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9BB))//??
 		aml_set_reg32_mask(P_MMC_QOS7_CTRL0, 1<<25);		// set audio to urgent
                 aml_write_reg32(P_MMC_CHAN_CTRL0, 0xf);			// set ch1-7 arbiter weight to 0
 		aml_clr_reg32_mask(P_MMC_CHAN_CTRL1, 0xf<<20);		// set ch8 arbiter weight to 0
@@ -844,7 +844,7 @@ static void memp_set(int type)
 	case MEMP_ATV_WITH_3D:
 #if defined(VDIN_V1)
 //#if (MESON_CPU_TYPE != MESON_CPU_TYPE_MESON8B)
-#if ((MESON_CPU_TYPE != MESON_CPU_TYPE_MESON8B)&&(MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV))//??
+#if ((MESON_CPU_TYPE != MESON_CPU_TYPE_MESON8B)&&(MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9TV)&&(MESON_CPU_TYPE != MESON_CPU_TYPE_MESONG9BB))//??
 		aml_set_reg32_mask(P_MMC_QOS7_CTRL0, 1<<25);		// set audio to urgent
                 aml_write_reg32(P_MMC_CHAN_CTRL0, 0xf);			// set ch1-7 arbiter weight to 0
 		aml_clr_reg32_mask(P_MMC_CHAN_CTRL1, 0xf<<20);		// set ch8 arbiter weight to 0

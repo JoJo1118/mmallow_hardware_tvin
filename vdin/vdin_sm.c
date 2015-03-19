@@ -256,7 +256,7 @@ void tvin_smr(struct vdin_dev_s *devp)
 
                                 {
                                         sm_p->back_stable_counter = 0;
-					#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+					#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
                                         if(((port == TVIN_PORT_CVBS3) || (port == TVIN_PORT_CVBS0))&&devp->unstable_flag)
 					#else
 					if((port == TVIN_PORT_CVBS0)&&devp->unstable_flag)
@@ -279,7 +279,7 @@ void tvin_smr(struct vdin_dev_s *devp)
                                 else
                                 {
                                         ++sm_p->back_stable_counter;
-					#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+					#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
                                         if((port == TVIN_PORT_CVBS3) || (port == TVIN_PORT_CVBS0))
 					#else
 					if(port == TVIN_PORT_CVBS0)
@@ -437,7 +437,7 @@ void tvin_smr(struct vdin_dev_s *devp)
                                 if (nosig || fmt_changed /* || !pll_lock */)
                                 {
                                         ++sm_p->state_counter;
-					#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+					#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
                                         if ((port == TVIN_PORT_CVBS3) || (port == TVIN_PORT_CVBS0))
 					#else
 					if (port == TVIN_PORT_CVBS0)
@@ -564,7 +564,7 @@ void tvin_smr(struct vdin_dev_s *devp)
 
                                 {
                                         sm_p->back_stable_counter = 0;
-					#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+					#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
                                         if(((port == TVIN_PORT_CVBS3) || (port == TVIN_PORT_CVBS0))&&devp->unstable_flag)
 					#else
 					if((port == TVIN_PORT_CVBS0)&&devp->unstable_flag)
@@ -587,7 +587,7 @@ void tvin_smr(struct vdin_dev_s *devp)
                                 else
                                 {
                                         ++sm_p->back_stable_counter;
-					#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+					#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
                                         if((port == TVIN_PORT_CVBS3) || (port == TVIN_PORT_CVBS0))
 					#else
 					if(port == TVIN_PORT_CVBS0)
@@ -750,7 +750,7 @@ void tvin_smr(struct vdin_dev_s *devp)
                                 if (nosig || fmt_changed /* || !pll_lock */)
                                 {
                                         ++sm_p->state_counter;
-					#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+					#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
                                         if ((port == TVIN_PORT_CVBS3) || (port == TVIN_PORT_CVBS0))
 					#else
 					if (port == TVIN_PORT_CVBS0)

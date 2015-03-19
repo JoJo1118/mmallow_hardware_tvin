@@ -149,7 +149,7 @@ static int edid_mode = 0;
 #else
 static int edid_mode = 0;
 #endif
-static int switch_mode = 0x1;
+//static int switch_mode = 0x1;
 static int force_vic = 0;
 static int repeat_check = 1;
 static int force_ready = 0;
@@ -1058,6 +1058,8 @@ enum tvin_sig_fmt_e hdmirx_hw_get_fmt(void)
 			break;
 		case HDMI_1080p60:		    /*16*/
 		    fmt = TVIN_SIG_FMT_HDMI_1920X1080P_60HZ;
+			if(is_alternative() && (rx.pre_video_params.video_format==3))
+				fmt = TVIN_SIG_FMT_HDMI_3840_2160_00HZ;
 			break;
 		case HDMI_1080p24:		    /*32*/
 			if(is_frame_packing()){
@@ -1100,6 +1102,8 @@ enum tvin_sig_fmt_e hdmirx_hw_get_fmt(void)
 			break;
 		case HDMI_1080p50:		   /*31*/
 			fmt = TVIN_SIG_FMT_HDMI_1920X1080P_50HZ;
+			if(is_alternative() && (rx.pre_video_params.video_format==3))
+				fmt = TVIN_SIG_FMT_HDMI_3840_2160_00HZ;
 			break;
 		case HDMI_1080p25:		   /*33*/
 			fmt = TVIN_SIG_FMT_HDMI_1920X1080P_25HZ;
@@ -2667,6 +2671,16 @@ void timer_state(void)
 	}
 }
 
+ssize_t hdmirx_cable_status_buf(char* buf)
+{
+	return sprintf(buf, "%x\n", (unsigned int)(hdmirx_rd_top(HDMIRX_TOP_HPD_PWR5V) >> 20));
+}
+
+ssize_t hdmirx_signal_status_buf(char* buf)
+{
+	return sprintf(buf, "%x\n", rx.no_signal);
+}
+
 int hdmirx_debug(const char* buf, int size)
 {
 	char tmpbuf[128];
@@ -2681,6 +2695,18 @@ int hdmirx_debug(const char* buf, int size)
 	tmpbuf[i] = 0;
 	if(strncmp(tmpbuf, "hpd", 3)==0){
         hdmirx_set_hpd(rx.port, tmpbuf[3]=='0'?0:1);
+	}
+	else if(strncmp(tmpbuf, "cable_status", 12) == 0){
+		size = hdmirx_rd_top(HDMIRX_TOP_HPD_PWR5V) >> 20;
+		printk("cable_status = %x\n",size);
+	}
+	else if(strncmp(tmpbuf, "signal_status", 13) == 0){
+		size = rx.no_signal;
+		printk("signal_status = %d\n",size);
+	}
+	else if(strncmp(tmpbuf, "input_mode", 10) == 0){
+		size = rx.pre_video_params.sw_vic;
+		printk("input_mode = %d",size);
 	}
 	#ifdef CEC_FUNC_ENABLE
 	else if(strncmp(tmpbuf, "cec", 3)==0){
@@ -3071,8 +3097,8 @@ module_param(frame_rate, int, 0664);
 MODULE_PARM_DESC(edid_mode, "\n edid_mode \n");
 module_param(edid_mode, int, 0664);
 
-MODULE_PARM_DESC(switch_mode, "\n switch_mode \n");
-module_param(switch_mode, int, 0664);
+//MODULE_PARM_DESC(switch_mode, "\n switch_mode \n");
+//module_param(switch_mode, int, 0664);
 
 MODULE_PARM_DESC(force_vic, "\n force_vic \n");
 module_param(force_vic, int, 0664);

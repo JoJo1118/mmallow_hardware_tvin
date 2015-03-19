@@ -70,7 +70,7 @@ struct _cec_dev_map cec_map[16];
 
 static int cec_enable = 1;
 static int arc_enable = 1;
-static int cec_log = 3;  // 1: error log  2: info log  3 all
+static int cec_log = 0;  // 1: error log  2: info log  3 all
 static enum _cec_map_status cec_map_status = E_CEC_MAP_UPDATE_START;
 static int cec_retry_cnt = 0;
 static int cec_dev_index = 1;

@@ -50,13 +50,9 @@
 #define TVHDMI_DEVICE_NAME        "hdmirx"
 #define TVHDMI_CLASS_NAME         "hdmirx"
 #define INIT_FLAG_NOT_LOAD 0x80
-#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
-  #define HDMI_DE_REPEAT_DONE_FLAG 0xF0
-  int hdmirx_de_repeat_enable = 1;
-#else
-  #define HDMI_DE_REPEAT_DONE_FLAG 0xF0
-  int hdmirx_de_repeat_enable = 1;
-#endif
+
+#define HDMI_DE_REPEAT_DONE_FLAG	0xF0
+int hdmirx_de_repeat_enable = 1;
 
 
 /* 50ms timer for hdmirx main loop (HDMI_STATE_CHECK_FREQ is 20) */
@@ -379,11 +375,7 @@ void hdmirx_get_sig_property(struct tvin_frontend_s *fe, struct tvin_sig_propert
 		prop->color_format = TVIN_RGB444;
 
 	sig_fmt = hdmirx_hw_get_fmt();
-	if(((sig_fmt == TVIN_SIG_FMT_HDMI_1920X1080P_60HZ) ||
-		(sig_fmt == TVIN_SIG_FMT_HDMI_1920X1080P_50HZ)) &&
-		hdmi_yuv444_enable &&
-		(prop->color_format == TVIN_RGB444))
-		prop->dest_cfmt = TVIN_YUV444;
+
 	//cur_colorspace = prop->color_format;
 	prop->trans_fmt = TVIN_TFMT_2D;
 	if (hdmirx_hw_get_3d_structure(&_3d_structure, &_3d_ext_data) >= 0) {
@@ -434,8 +426,8 @@ void hdmirx_get_sig_property(struct tvin_frontend_s *fe, struct tvin_sig_propert
 
 #else
 	if(TVIN_SIG_FMT_HDMI_4096_2160_00HZ == sig_fmt) {
-		prop->hs = 64;
-		prop->he = 64;
+		prop->hs = 128;
+		prop->he = 128;
 		prop->vs = 0;
 		prop->ve = 0;
 		prop->scaling4h = 1080;
@@ -763,12 +755,46 @@ static ssize_t cec_set_state(struct device *dev, struct device_attribute *attr, 
 	return count;
 }
 
+static ssize_t cable_status_show(struct class *class, struct class_attribute *attr, char *buf)
+{
+	return hdmirx_cable_status_buf(buf);
+}
+
+static ssize_t signal_status_show(struct class *class, struct class_attribute *attr, char *buf)
+{
+	return hdmirx_signal_status_buf(buf);
+}
 static DEVICE_ATTR(debug, S_IWUSR | S_IWUGO | S_IWOTH , hdmirx_debug_show, hdmirx_debug_store);
 static DEVICE_ATTR(edid,  S_IWUSR | S_IRUGO, hdmirx_edid_show, hdmirx_edid_store);
 static DEVICE_ATTR(key,   S_IWUSR | S_IRUGO, hdmirx_key_show, hdmirx_key_store);
 static DEVICE_ATTR(log,   S_IWUGO | S_IRUGO, show_log, store_log);
 static DEVICE_ATTR(reg,   S_IWUGO | S_IRUGO, show_reg, NULL);
 static DEVICE_ATTR(cec,   S_IWUGO | S_IRUGO, cec_get_state, cec_set_state);
+static CLASS_ATTR(cable_status,    S_IRUGO, cable_status_show, NULL);
+static CLASS_ATTR(signal_status,   S_IRUGO, signal_status_show, NULL);
+
+static int hdmirx_create_class_attrs(struct class *cls)
+{
+	int ret = 0;
+
+	if (cls == NULL)
+		return 1;
+
+	ret = class_create_file(cls, &class_attr_cable_status);
+	ret |= class_create_file(cls, &class_attr_signal_status);
+
+	return ret;
+}
+
+static void hdmirx_remove_class_attrs(struct class *cls)
+{
+	if (cls == NULL)
+		return;
+
+	class_remove_file(cls, &class_attr_cable_status);
+	class_remove_file(cls, &class_attr_signal_status);
+	return;
+}
 
 static int hdmirx_add_cdev(struct cdev *cdevp, struct file_operations *fops,
 		int minor)
@@ -864,6 +890,11 @@ static int hdmirx_probe(struct platform_device *pdev)
 		pr_info("hdmirx: fail to create cec attribute file\n");
 		goto fail_create_cec_file;
 	}
+	ret = hdmirx_create_class_attrs(hdmirx_clsp);
+	if (ret) {
+		pr_info("hdmirx: fail to create class attribute file\n");
+		goto fail_create_class_attrs;
+	}
 	/* frontend */
 	tvin_frontend_init(&hdevp->frontend, &hdmirx_dec_ops, &hdmirx_sm_ops, hdevp->index);
 	sprintf(hdevp->frontend.name, "%s", TVHDMI_NAME);
@@ -880,6 +911,8 @@ static int hdmirx_probe(struct platform_device *pdev)
 	return 0;
 
 
+fail_create_class_attrs:
+	hdmirx_remove_class_attrs(hdmirx_clsp);
 fail_create_cec_file:
 	device_remove_file(hdevp->dev, &dev_attr_reg);
 fail_create_reg_file:
@@ -913,6 +946,7 @@ static int hdmirx_remove(struct platform_device *pdev)
 	device_remove_file(hdevp->dev, &dev_attr_log);
 	device_remove_file(hdevp->dev, &dev_attr_reg);
 	device_remove_file(hdevp->dev, &dev_attr_cec);
+	hdmirx_remove_class_attrs(hdmirx_clsp);
 	tvin_unreg_frontend(&hdevp->frontend);
 	hdmirx_delete_device(hdevp->index);
 	cdev_del(&hdevp->cdev);

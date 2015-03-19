@@ -19,7 +19,7 @@
 #include "../tvin_global.h"
 #include "../tvin_format_table.h"
 
-#define HDMIRX_VER "Ref.2015/02/16c"
+#define HDMIRX_VER "Ref.2015/03/19"
 
 #define HDMI_STATE_CHECK_FREQ     (20*5)
 #define ABS(x) ((x)<0 ? -(x) : (x))
@@ -455,5 +455,7 @@ extern int hdmirx_de_repeat_enable;
 extern int hdmirx_hw_dump_reg(unsigned char* buf, int size);
 extern bool hdmirx_audio_pll_lock(void);
 extern bool hdmirx_tmds_pll_lock(void);
+extern ssize_t hdmirx_cable_status_buf(char* buf);
+extern ssize_t hdmirx_signal_status_buf(char* buf);
 
 #endif  // _TVHDMI_H

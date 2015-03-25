@@ -1113,6 +1113,7 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 	struct tvin_decoder_ops_s *decops;
 	unsigned int stamp = 0;
 	struct tvin_state_machine_ops_s *sm_ops;
+	int vdin2nr = 0;
 	//unsigned long long total_time;
 	//unsigned long long total_tmp;
 #ifdef TVAFE_VGA_SUPPORT
@@ -1276,8 +1277,9 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 		vdin_irq_flag = 14;
 		goto irq_handled;
 	}
+	vdin2nr = vf_notify_receiver(devp->name,VFRAME_EVENT_PROVIDER_QUREY_VDIN2NR,NULL);
 	/*if vdin-nr,di must get vdin current field type which di pre will read*/
-        if(vf_notify_receiver(devp->name,VFRAME_EVENT_PROVIDER_QUREY_VDIN2NR,NULL)||(devp->flags&VDIN_FLAG_RDMA_ENABLE)){
+        if(vdin2nr || (devp->flags&VDIN_FLAG_RDMA_ENABLE)){
 		curr_wr_vf->type = devp->curr_field_type;
 	}else{
 		curr_wr_vf->type = last_field_type;
@@ -1341,7 +1343,7 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
                 vdin_set_chma_canvas_id(devp->addr_offset,(next_wr_vfe->vf.canvas0Addr>>8)&0xff);
 #endif
         devp->curr_wr_vfe = next_wr_vfe;
-	if(!(devp->flags&VDIN_FLAG_RDMA_ENABLE))
+	if(!(devp->flags&VDIN_FLAG_RDMA_ENABLE) && vdin2nr)
 		vf_notify_receiver(devp->name,VFRAME_EVENT_PROVIDER_VFRAME_READY,NULL);
 
 #ifdef TVAFE_VGA_SUPPORT

@@ -161,8 +161,8 @@ static void vdin_dump_state(vdin_dev_t *devp)
 	      		  vf->trans_fmt,vf->left_eye.start_x,vf->right_eye.start_x,vf->left_eye.width,
 	      		  vf->left_eye.start_y,vf->right_eye.start_y,vf->left_eye.height);
                 pr_info("current parameters:\n frontend of vdin index: %d, 3d flag: 0x%x, reserved 0x%x,"
-                        " devp->flags:0x%x, max buffer num %u.\n",curparm->index,  curparm->flag,
-                        curparm->reserved, devp->flags,devp->canvas_max_num);
+                        " devp->flags:0x%x, max buffer num %u, send2di:%s.\n",curparm->index,  curparm->flag,
+                        curparm->reserved, devp->flags,devp->canvas_max_num,devp->send2di?"1":"0");
         }
 
 	pr_info("Vdin driver version: %s\n",VDIN_VER);

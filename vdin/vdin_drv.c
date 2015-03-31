@@ -530,6 +530,7 @@ static void vdin_vf_init(struct vdin_dev_s *devp)
  * 5. enable irq .
  *
  */
+char* vf_get_receiver_name(const char* provider_name);
 void vdin_start_dec(struct vdin_dev_s *devp)
 {
 	struct tvin_state_machine_ops_s *sm_ops;
@@ -631,6 +632,11 @@ void vdin_start_dec(struct vdin_dev_s *devp)
 	/* register provider, so the receiver can get the valid vframe */
 	udelay(start_provider_delay);
 	vf_reg_provider(&devp->vprov);
+	if(strcmp(vf_get_receiver_name(devp->name), "deinterlace") == 0)
+		devp->send2di = true;
+	else
+		devp->send2di = false;
+		
 	vf_notify_receiver(devp->name,VFRAME_EVENT_PROVIDER_START,NULL);
 	#if defined(VDIN_V2)
 	if(devp->parm.port != TVIN_PORT_VIU){
@@ -1343,7 +1349,7 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
                 vdin_set_chma_canvas_id(devp->addr_offset,(next_wr_vfe->vf.canvas0Addr>>8)&0xff);
 #endif
         devp->curr_wr_vfe = next_wr_vfe;
-	if(!(devp->flags&VDIN_FLAG_RDMA_ENABLE) && vdin2nr)
+	if(!(devp->flags&VDIN_FLAG_RDMA_ENABLE) && (vdin2nr || !devp->send2di))
 		vf_notify_receiver(devp->name,VFRAME_EVENT_PROVIDER_VFRAME_READY,NULL);
 
 #ifdef TVAFE_VGA_SUPPORT

@@ -38,7 +38,7 @@
 #include "vdin_vf.h"
 #include "vdin_regs.h"
 
-#define VDIN_VER "Ref.2015/01/31a"
+#define VDIN_VER "Ref.2015/03/31a"
 
 /*the counter of vdin*/
 #define VDIN_MAX_DEVS			2
@@ -189,6 +189,7 @@ typedef struct vdin_dev_s {
 	unsigned int			hcnt64_tag;
 	unsigned int			cycle_tag;
         unsigned int                    start_time;//ms vdin start time
+        bool                            send2di;
         vdin_debug_t                    debug;
 } vdin_dev_t;
 

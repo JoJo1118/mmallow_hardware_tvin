@@ -699,6 +699,8 @@
 #define HDMIRX_DWC_HDCP_EESS_WOO		(0x0F4UL)
 /** Register address: key set writing status */
 #define HDMIRX_DWC_HDCP_STS				(0x0FCUL)
+/** HDCP encrypted status */
+#define ENCRYPTED_STATUS			_BIT(9)
 /** HDCP key set writing status */
 #define		HDCP_KEY_WR_OK_STS		_BIT(0)
 /** Register address: repeater KSV list control */

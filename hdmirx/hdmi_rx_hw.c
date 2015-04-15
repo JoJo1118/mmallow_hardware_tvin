@@ -120,6 +120,9 @@ static int scramble_sel = 1;
 MODULE_PARM_DESC(scramble_sel, "\n scramble_sel \n");
 module_param(scramble_sel, int, 0664);
 
+bool multi_port_edid_enable = 1;
+MODULE_PARM_DESC(multi_port_edid_enable, "\n multi_port_edid_enable \n");
+module_param(multi_port_edid_enable, bool, 0664);
 /**
  * Read data from HDMI RX CTRL
  * @param[in] addr register address
@@ -414,7 +417,8 @@ void hdmirx_phy_init(int rx_port_sel, int dcm)
     hdmirx_wr_phy(MPLL_PARAMETERS21,    0x0011);
 
 	// Configuring I2C to work in fastmode
-	hdmirx_wr_dwc(HDMIRX_DWC_I2CM_PHYG3_MODE,    0x1);
+	//hdmirx_wr_dwc(HDMIRX_DWC_I2CM_PHYG3_MODE,    0x1);
+	hdmirx_wr_top(0x10,3);
 
 	/* write timebase override and override enable */
 	hdmirx_wr_phy(OVL_PROT_CTRL, 0xa); //disable overload protect for Philips DVD ???
@@ -529,18 +533,21 @@ int hdmirx_interrupts_hpd( bool enable)
 }
 
 #if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
-void hdmirx_audiopll_update(void)
+void hdmirx_audiopll_control(bool enable)
 {
-	hdmirx_wr_top(HDMIRX_TOP_ACR_CNTL_STAT,hdmirx_rd_top(HDMIRX_TOP_ACR_CNTL_STAT)|(1<<11));
-	WRITE_CBUS_REG(HHI_HDMIRX_AUD_PLL_CNTL6,(hdmirx_rd_phy(REG_HDMI_PHY_MAINFSM_STATUS1)>>9 & 3)<<28);
-	printk("---%d",hdmirx_rd_phy(REG_HDMI_PHY_MAINFSM_STATUS1));
-	WRITE_CBUS_REG(HHI_HDMIRX_AUD_PLL_CNTL5,0x0000002e);
-	WRITE_CBUS_REG(HHI_HDMIRX_AUD_PLL_CNTL4,0x30000000);
-	WRITE_CBUS_REG(HHI_HDMIRX_AUD_PLL_CNTL3,0x00000000);
-	WRITE_CBUS_REG(HHI_HDMIRX_AUD_PLL_CNTL,0x40000000);
-	WRITE_CBUS_REG(HHI_ADC_PLL_CNTL4,0x805);
-	hdmirx_wr_top(HDMIRX_TOP_ACR_CNTL_STAT,hdmirx_rd_top(HDMIRX_TOP_ACR_CNTL_STAT)|(1<<11));
-
+	if(enable){
+		hdmirx_wr_top(HDMIRX_TOP_ACR_CNTL_STAT,hdmirx_rd_top(HDMIRX_TOP_ACR_CNTL_STAT)|(1<<11));
+		WRITE_CBUS_REG(HHI_HDMIRX_AUD_PLL_CNTL6,(hdmirx_rd_phy(REG_HDMI_PHY_MAINFSM_STATUS1)>>9 & 3)<<28);
+		printk("REG_HDMI_PHY_MAINFSM_STATUS1---%x\n",hdmirx_rd_phy(REG_HDMI_PHY_MAINFSM_STATUS1));
+		WRITE_CBUS_REG(HHI_HDMIRX_AUD_PLL_CNTL5,0x0000002e);
+		WRITE_CBUS_REG(HHI_HDMIRX_AUD_PLL_CNTL4,0x30000000);
+		WRITE_CBUS_REG(HHI_HDMIRX_AUD_PLL_CNTL3,0x00000000);
+		WRITE_CBUS_REG(HHI_HDMIRX_AUD_PLL_CNTL,0x40000000);
+		WRITE_CBUS_REG(HHI_ADC_PLL_CNTL4,0x805);
+		hdmirx_wr_top(HDMIRX_TOP_ACR_CNTL_STAT,hdmirx_rd_top(HDMIRX_TOP_ACR_CNTL_STAT)|(1<<11));
+	}else{
+		WRITE_CBUS_REG(HHI_HDMIRX_AUD_PLL_CNTL,0x20000000); //disable pll, into reset mode
+	}
 }
 #endif
 
@@ -1220,8 +1227,10 @@ void hdmirx_hw_config(void)
 	hdmirx_wr_top(HDMIRX_TOP_INTR_MASKN, 0); //disable top interrupt gate
 	control_reset(0);
 #if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
-	hdmirx_wr_top(HDMIRX_TOP_PORT_SEL, 0x10 | ((1<<rx.port))); //enable all 4 port available
-	//hdmirx_wr_top(HDMIRX_TOP_PORT_SEL, ((1<<rx.port)));
+	if(multi_port_edid_enable)
+		hdmirx_wr_top(HDMIRX_TOP_PORT_SEL, 0x10 | ((1<<rx.port))); //enable all 4 port available
+	else
+		hdmirx_wr_top(HDMIRX_TOP_PORT_SEL, ((1<<rx.port)));
 #else
 	hdmirx_wr_top(HDMIRX_TOP_PORT_SEL,   (1<<rx.port));  //G9 EDID multiplex mode
 #endif
@@ -1379,6 +1388,8 @@ int hdmirx_get_video_info(struct hdmi_rx_ctrl *ctx, struct hdmi_rx_ctrl_video *p
 
 	/* DVI mode */
 	params->dvi = hdmirx_rd_bits_dwc(HDMIRX_DWC_PDEC_STS, DVIDET) != 0;
+	/* hdcp encrypted state */
+	params->hdcp_enc_state = hdmirx_rd_bits_dwc(HDMIRX_DWC_HDCP_STS, ENCRYPTED_STATUS) != 0;
 	/* AVI parameters */
 	error |= hdmirx_packet_get_avi( params);
 	if (error != 0) {

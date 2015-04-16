@@ -1935,7 +1935,9 @@ void hdmirx_hw_monitor(void)
 		        rx.state = HDMIRX_HWSTATE_SIG_UNSTABLE;
 				rx.pre_state = HDMIRX_HWSTATE_SIG_READY;
 				audio_sample_rate = 0;
+				#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 				hdmirx_audiopll_control(0);
+				#endif
 				hdmirx_audio_enable(0);
 				hdmirx_audio_fifo_rst();
 				if(hdmirx_log_flag & VIDEO_LOG_ENABLE){
@@ -1959,7 +1961,9 @@ void hdmirx_hw_monitor(void)
 		            sig_lost_lock_cnt = 0;
 		            sig_unready_cnt = 0;
 					audio_sample_rate = 0;
+					#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 					hdmirx_audiopll_control(0);
+					#endif
 					hdmirx_audio_enable(0);
 					hdmirx_audio_fifo_rst();
 		            rx.state = HDMIRX_HWSTATE_SIG_UNSTABLE;
@@ -2008,7 +2012,9 @@ void hdmirx_hw_monitor(void)
 						if(rx.audio_sample_rate_stable_count==audio_sample_rate_stable_count_th){
 							dump_state(0x2);
 							printk("[hdmirx-audio]:----audio stable\n");
+							#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 							hdmirx_audiopll_control(1);
+							#endif
 							//hdmirx_config_audio();
 							hdmirx_audio_enable(1);
 							hdmirx_audio_fifo_rst();

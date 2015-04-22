@@ -143,6 +143,7 @@ MODULE_PARM_DESC(vdin_rdma_flag,"vdin_rdma_flag");
 
 static int irq_max_count = 0;
 static void vdin_backup_histgram(struct vframe_s *vf, struct vdin_dev_s *devp);
+extern struct vframe_provider_s * vf_get_provider_by_name(const char *provider_name);
 
 static u32 vdin_get_curr_field_type(struct vdin_dev_s *devp)
 {
@@ -1127,8 +1128,24 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 	bool is_vga = false;
 	signed short step = 0;
 #endif
-	if (!devp) return IRQ_HANDLED;
+#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV
+	struct vframe_provider_s *p = NULL;
+	struct vframe_receiver_s *sub_recv = NULL;
+	char provider_name[] = "deinterlace";
+	char provider_vdin0[] = "vdin0";
+#endif
 
+	if (!devp) return IRQ_HANDLED;
+#if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV
+	p = vf_get_provider_by_name(provider_name);
+	sub_recv = vf_get_receiver(provider_vdin0);
+	if((devp->index == 0) && (p != NULL) && ((0 != strncasecmp(sub_recv->name,"deinterlace",11)))) {
+		WRITE_VCBUS_REG_BITS(VIU_SW_RESET, 1, 23, 1);
+		WRITE_VCBUS_REG_BITS(VIU_SW_RESET, 0, 23, 1);
+		if(READ_VCBUS_REG_BITS(VDIN_WR_CTRL, 23,1) != 0)
+			WRITE_VCBUS_REG_BITS(VDIN_WR_CTRL, 0, 23, 1);
+	}
+#endif
 	isr_log(devp->vfp);
 	irq_cnt++;
 	/* debug interrupt interval time

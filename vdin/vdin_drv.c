@@ -1133,6 +1133,7 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 	struct vframe_receiver_s *sub_recv = NULL;
 	char provider_name[] = "deinterlace";
 	char provider_vdin0[] = "vdin0";
+	unsigned int vdin0_sw_reset_flag = 0;
 #endif
 
 	if (!devp) return IRQ_HANDLED;
@@ -1140,10 +1141,23 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 	p = vf_get_provider_by_name(provider_name);
 	sub_recv = vf_get_receiver(provider_vdin0);
 	if((devp->index == 0) && (p != NULL) && ((0 != strncasecmp(sub_recv->name,"deinterlace",11)))) {
+		#ifdef CONFIG_VSYNC_RDMA
+		if(vdin0_sw_reset_flag != 1)
+			vdin0_sw_reset_flag = 1;
+		RDMA2_WR_MPEG_REG_BITS(VIU_SW_RESET, 1, 23, 1);
+		RDMA2_WR_MPEG_REG_BITS(VIU_SW_RESET, 0, 23, 1);
+		#else
 		WRITE_VCBUS_REG_BITS(VIU_SW_RESET, 1, 23, 1);
 		WRITE_VCBUS_REG_BITS(VIU_SW_RESET, 0, 23, 1);
+		#endif
 		if(READ_VCBUS_REG_BITS(VDIN_WR_CTRL, 23,1) != 0)
 			WRITE_VCBUS_REG_BITS(VDIN_WR_CTRL, 0, 23, 1);
+	}
+	else {
+		if(vdin0_sw_reset_flag != 0)
+			vdin0_sw_reset_flag = 0;
+		if(READ_VCBUS_REG_BITS(VDIN_WR_CTRL, 23,1) != 1)
+			WRITE_VCBUS_REG_BITS(VDIN_WR_CTRL, 1, 23, 1);
 	}
 #endif
 	isr_log(devp->vfp);
@@ -1399,7 +1413,7 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 irq_handled:
 	spin_unlock_irqrestore(&devp->isr_lock, flags);
 #ifdef CONFIG_VSYNC_RDMA
-if(devp->flags&VDIN_FLAG_RDMA_ENABLE)
+if((devp->flags&VDIN_FLAG_RDMA_ENABLE) || (vdin0_sw_reset_flag == 1))
         rdma2_config(1);//trigger by vdin0 vsync
 #endif
         isr_log(devp->vfp);

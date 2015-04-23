@@ -1128,12 +1128,12 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 	bool is_vga = false;
 	signed short step = 0;
 #endif
+	unsigned int vdin0_sw_reset_flag = 0;
 #if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV
 	struct vframe_provider_s *p = NULL;
 	struct vframe_receiver_s *sub_recv = NULL;
 	char provider_name[] = "deinterlace";
 	char provider_vdin0[] = "vdin0";
-	unsigned int vdin0_sw_reset_flag = 0;
 #endif
 
 	if (!devp) return IRQ_HANDLED;

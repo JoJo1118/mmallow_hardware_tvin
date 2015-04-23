@@ -123,6 +123,16 @@ module_param(scramble_sel, int, 0664);
 bool multi_port_edid_enable = 1;
 MODULE_PARM_DESC(multi_port_edid_enable, "\n multi_port_edid_enable \n");
 module_param(multi_port_edid_enable, bool, 0664);
+
+int mpll_ctl_setting = 0x302;
+MODULE_PARM_DESC(mpll_ctl_setting, "\n mpll_ctl_setting \n");
+module_param(mpll_ctl_setting, int, 0664);
+
+bool new_phy_config = true;
+MODULE_PARM_DESC(new_phy_config, "\n new_phy_config \n");
+module_param(new_phy_config, bool, 0664);
+
+
 /**
  * Read data from HDMI RX CTRL
  * @param[in] addr register address
@@ -418,13 +428,10 @@ void hdmirx_phy_init(int rx_port_sel, int dcm)
 
 	// Configuring I2C to work in fastmode
 	//hdmirx_wr_dwc(HDMIRX_DWC_I2CM_PHYG3_MODE,    0x1);
-	hdmirx_wr_top(0x10,3);
 
 	/* write timebase override and override enable */
 	hdmirx_wr_phy(OVL_PROT_CTRL, 0xa); //disable overload protect for Philips DVD ???
-	hdmirx_wr_phy(REG_HDMI_PHY_CMU_CONFIG,
-	(rx.phy.phy_cmu_config_force_val != 0) ? rx.phy.phy_cmu_config_force_val :
-	((rx.phy.lock_thres << 10) | (1 << 9) | (((1 << 9) - 1) & ((rx.phy.cfg_clk * 4) / 1000))));
+
 
 	data32  = 0;
 	data32 |= 0                     << 15;  // [15]     mpll_short_power_up
@@ -443,6 +450,14 @@ void hdmirx_phy_init(int rx_port_sel, int dcm)
 	hdmirx_wr_phy(REG_HDMI_PHY_SYSTEM_CONFIG,
 	(rx.phy.phy_system_config_force_val != 0) ? rx.phy.phy_system_config_force_val : data32);
 
+	hdmirx_wr_phy(REG_HDMI_PHY_CMU_CONFIG,
+	(rx.phy.phy_cmu_config_force_val != 0) ? rx.phy.phy_cmu_config_force_val :
+	((rx.phy.lock_thres << 10) | (1 << 9) | (((1 << 9) - 1) & ((rx.phy.cfg_clk * 4) / 1000))));
+
+	if(new_phy_config){
+		hdmirx_wr_phy(HDMIRX_PHY_VOLTAGE_LEVEL,0x010a);
+		hdmirx_wr_phy(HDMIRX_PHY_MPLL_CTRL, mpll_ctl_setting);
+	}
 
 #if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 	// Write PHY register 0x0e, MHL&HDMI select

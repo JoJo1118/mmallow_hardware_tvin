@@ -35,10 +35,12 @@
 /** register address: PHY Gen3 main FSM status 1 */
 #define REG_HDMI_PHY_MAINFSM_STATUS1	   (0x09UL)
 /** PHY Gen3 Clock measurement lock threshold - default 8*/
-#define LOCK_THRES                      (0x08UL)
+#define LOCK_THRES                       0x63//0x08
 
 #define OVL_PROT_CTRL                   (0x0DUL)
 #define HDMIRX_PHY_CDR_CTRL_CNT					(0x0EUL) //HDMI2.0
+#define HDMIRX_PHY_VOLTAGE_LEVEL		(0x22UL)
+#define HDMIRX_PHY_MPLL_CTRL			(0x24UL)
 #define MPLL_PARAMETERS2                (0x27UL)
 #define MPLL_PARAMETERS3                (0x28UL)
 #define MPLL_PARAMETERS4                (0x29UL)

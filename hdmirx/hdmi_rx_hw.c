@@ -120,11 +120,11 @@ static int scramble_sel = 1;
 MODULE_PARM_DESC(scramble_sel, "\n scramble_sel \n");
 module_param(scramble_sel, int, 0664);
 
-bool multi_port_edid_enable = 1;
+bool multi_port_edid_enable = 0;
 MODULE_PARM_DESC(multi_port_edid_enable, "\n multi_port_edid_enable \n");
 module_param(multi_port_edid_enable, bool, 0664);
 
-int mpll_ctl_setting = 0x302;
+int mpll_ctl_setting = 0x200;//0x302;
 MODULE_PARM_DESC(mpll_ctl_setting, "\n mpll_ctl_setting \n");
 module_param(mpll_ctl_setting, int, 0664);
 
@@ -912,8 +912,9 @@ void hdmirx_set_hpd(int port, unsigned char val)
         hdmirx_wr_top( HDMIRX_TOP_HPD_PWR5V,  hdmirx_rd_top(HDMIRX_TOP_HPD_PWR5V)&(~(1<<rx.port)));
     }
 #endif
-#else
-
+#endif
+//G9TV
+#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
 #ifdef USE_GPIO_FOR_HPD
     int bitpos = 1;
     switch(port){
@@ -945,6 +946,43 @@ void hdmirx_set_hpd(int port, unsigned char val)
     }
 #endif
 #endif
+
+	//G9TV
+#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9BB)
+#ifdef USE_GPIO_FOR_HPD
+		int bitpos = 1;
+		switch(port){
+			case 0:
+				bitpos=5;
+				break;
+			case 1:
+				bitpos=9;
+				break;
+			case 2:
+				bitpos=13;
+				break;
+			case 3:
+				bitpos=17;
+				break;
+		}
+		if(val){
+			WRITE_CBUS_REG(PREG_PAD_GPIO0_EN_N, READ_CBUS_REG(PREG_PAD_GPIO0_EN_N) | (1<<bitpos));
+			//WRITE_CBUS_REG(PREG_PAD_GPIO0_EN_N, READ_CBUS_REG(PREG_PAD_GPIO0_EN_N) & (~(1<<bitpos)));
+		}
+		else{
+			WRITE_CBUS_REG(PREG_PAD_GPIO0_EN_N, READ_CBUS_REG(PREG_PAD_GPIO0_EN_N) & (~(1<<bitpos)));
+			//WRITE_CBUS_REG(PREG_PAD_GPIO0_EN_N, READ_CBUS_REG(PREG_PAD_GPIO0_EN_N) | (1<<bitpos));
+		}
+#else
+		if(val){
+			hdmirx_wr_top( HDMIRX_TOP_HPD_PWR5V,  hdmirx_rd_top(HDMIRX_TOP_HPD_PWR5V)&(~(1<<port)));
+		}
+		else{
+			hdmirx_wr_top( HDMIRX_TOP_HPD_PWR5V,  hdmirx_rd_top(HDMIRX_TOP_HPD_PWR5V)|(1<<port));
+		}
+#endif
+#endif
+
     hdmirx_print("%s(%d,%d)\n", __func__, port, val);
 
 }
@@ -1017,7 +1055,91 @@ static void control_reset(unsigned char seq)
     mdelay(1);
     }
 }
-#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
+
+#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
+void hdmirx_set_pinmux(void)
+{
+	WRITE_CBUS_REG(PERIPHS_PIN_MUX_10 , READ_CBUS_REG(PERIPHS_PIN_MUX_10 )|
+				((1 << 0)  |   // pm_gpioW_20_hdmirx_scl_D
+				(1 << 0)   |   // pm_gpioW_19_hdmirx_sda_D
+				(1 << 1)   |   // pm_gpioW_18_hdmirx_5v_D
+				(1 << 2)   |   // pm_gpioW_17_hdmirx_hpd_D
+				(1 << 3)   |   // pm_gpioW_16_hdmirx_scl_C
+				(1 << 3)   |   // pm_gpioW_15_hdmirx_sda_C
+				(1 << 4)   |   // pm_gpioW_14_hdmirx_5v_C
+				(1 << 5)   |   // pm_gpioW_13_hdmirx_hpd_C
+				(1 << 6)   |   // pm_gpioW_12_hdmirx_scl_B
+				(1 << 6)   |   // pm_gpioW_11_hdmirx_sda_B
+				(1 << 7)   |   // pm_gpioW_10_hdmirx_5v_B
+				(1 << 8)   |   // pm_gpioW_9_hdmirx_hpd_B
+				(1 << 9)   |   // pm_gpioW_8_hdmirx_scl_A
+				(1 << 9)   |   // pm_gpioW_7_hdmirx_sda_A
+				(1 << 10)   |   // pm_gpioW_6_hdmirx_5v_A
+				(1 << 11)   |   // pm_gpioW_5_hdmirx_hpd_A
+				(1 << 12)));     // pm_gpioW_4_hdmirx_cec
+	WRITE_CBUS_REG(PERIPHS_PIN_MUX_10, READ_CBUS_REG(PERIPHS_PIN_MUX_10 ) &
+                (~(
+                  (1<<29)
+                  |(1<<28)
+                  |(1<<27)
+                  |(1<<26)
+                  |(1<<25)
+                  |(1<<24)
+                  |(1<<23)
+                  |(1<<22)
+                  |(1<<13))));
+    WRITE_CBUS_REG(PERIPHS_PIN_MUX_11, READ_CBUS_REG(PERIPHS_PIN_MUX_11 ) &
+                (~(
+                  (1<<24)
+                  |(1<<23)
+                  |(1<<22)
+                  |(1<<21)
+                  |(1<<20)
+                  |(1<<19)
+                  |(1<<12)
+                  |(1<<11)
+                  |(1<<10)
+                  |(1<<9)
+                  |(1<<8)
+                  |(1<<7)
+                  |(1<<6)
+                  |(1<<5)
+                  |(1<<4)
+                  |(1<<3)
+                  |(1<<2)
+                  |(1<<1)
+                  |(1<<0))));
+    WRITE_CBUS_REG(PERIPHS_PIN_MUX_6, READ_CBUS_REG(PERIPHS_PIN_MUX_6 ) &
+                (~((1<<21)
+                  |(1<<20)
+                  |(1<<19)
+                  |(1<<18))));
+#ifdef USE_GPIO_FOR_HPD
+    if (pwr_gpio_pull_down)
+        WRITE_CBUS_REG(PAD_PULL_UP_REG2, READ_CBUS_REG(PAD_PULL_UP_REG2) |
+	            ((1<<0)|(1<<4)|(1<<8)|(1<<12)));
+
+    WRITE_CBUS_REG(PERIPHS_PIN_MUX_10, READ_CBUS_REG(PERIPHS_PIN_MUX_10 ) &
+                (~((1<<2)|(1<<5)|(1<<8)|(1<<11))));
+
+
+
+    WRITE_CBUS_REG(PREG_PAD_GPIO0_EN_N, READ_CBUS_REG(PREG_PAD_GPIO0_EN_N) &
+                (~((1<<5)|(1<<9)|(1<<13)|(1<<17))));
+
+    //WRITE_CBUS_REG(PREG_PAD_GPIO0_O, READ_CBUS_REG(PREG_PAD_GPIO0_O) |
+                //((1<<5)|(1<<9)|(1<<13)|(1<<17)));
+#endif
+
+#if 0
+	WRITE_CBUS_REG(PERIPHS_PIN_MUX_1 , READ_CBUS_REG(PERIPHS_PIN_MUX_1 )|
+				( (1 << 2)    |   // pm_gpioW_17_hdmirx_tmds_clk
+				(1 << 1)    |   // pm_gpioW_18_hdmirx_pix_clk
+				(1 << 0)));      // pm_gpioW_19_hdmirx_audmeas
+#endif
+}
+#endif
+#if(MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9BB)
 void hdmirx_set_pinmux(void)
 {
 	WRITE_CBUS_REG(PERIPHS_PIN_MUX_10 , READ_CBUS_REG(PERIPHS_PIN_MUX_10 )|
@@ -1100,7 +1222,8 @@ void hdmirx_set_pinmux(void)
 #endif
 
 }
-#else
+#endif
+#if(MESON_CPU_TYPE < MESON_CPU_TYPE_MESONG9TV)
 void hdmirx_set_pinmux(void)
 {
 	WRITE_CBUS_REG(PERIPHS_PIN_MUX_0 , READ_CBUS_REG(PERIPHS_PIN_MUX_0 )|

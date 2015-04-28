@@ -1728,20 +1728,20 @@ void hdmirx_module_control(bool enable)
 void hdmirx_hw_monitor(void)
 {
     int pre_sample_rate;
-	if(sm_pause)
+	if(sm_pause) //debug mode. pause state machine
 		return;
-	HPD_controller();
+	HPD_controller();//Hdmitx 5v detection
 	switch(rx.state){
 	case HDMIRX_HWSTATE_INIT:
 		if(!multi_port_edid_enable){
-			hdmirx_set_hpd(rx.port, 0);
+			hdmirx_set_hpd(rx.port, 0);  //hpd low
 		}
 	    if (hw_cfg_mode == 0) {
-			hdmi_rx_ctrl_edid_update();
-	        hdmirx_hw_config();
+			hdmi_rx_ctrl_edid_update();  //EDID init
+	        hdmirx_hw_config();  //hdmirx init, phy init + dwc init
 	    }
 		audio_status_init();
-	    Signal_status_init();
+	  	Signal_status_init();
 		rx.state = HDMIRX_HWSTATE_HDMI5V_LOW;
 		rx.pre_state = HDMIRX_HWSTATE_INIT;
 		hdmirx_print("Hdmirx driver version: %s\n", HDMIRX_VER);
@@ -1766,7 +1766,7 @@ void hdmirx_hw_monitor(void)
 			rx.pre_state = HDMIRX_HWSTATE_HDMI5V_HIGH;
 			hdmirx_print("\n[HDMIRX State] 5v high->init\n");
 		} else {
-			hdmirx_set_hpd(rx.port, 1);
+			hdmirx_set_hpd(rx.port, 1);    //hpd high
 			rx.state = HDMIRX_HWSTATE_HPD_READY;
 			rx.pre_state = HDMIRX_HWSTATE_HDMI5V_HIGH;
 			//rx.no_signal = false;
@@ -1811,7 +1811,8 @@ void hdmirx_hw_monitor(void)
 			rx.pre_state = HDMIRX_HWSTATE_SIG_UNSTABLE;
 			break;
 		}
-		hdmirx_clock_rate_monitor();
+		hdmirx_clock_rate_monitor();  //clk rate monitor, check scdc status
+		//tmds valid flag ,dwc0x30 bit0
 		if (hdmirx_tmds_pll_lock()){
 			if(sig_pll_lock_cnt++ > sig_pll_lock_max){
 				memset(&rx.vendor_specific_info, 0, sizeof(struct vendor_specific_info_s));
@@ -2044,6 +2045,7 @@ void hdmirx_hw_monitor(void)
 	     }
     }
 }
+
 /*
 * EDID & hdcp
 */
@@ -2849,6 +2851,7 @@ int hdmirx_debug(const char* buf, int size)
 		}
 	}else if(tmpbuf[0] == 'v'){
 		printk("------------------\n");
+		printk("MESON_CPU_TYPE = %x\n",MESON_CPU_TYPE);
 		printk("Hdmirx driver version: %s\n", HDMIRX_VER);
 		printk("------------------\n");
 	}

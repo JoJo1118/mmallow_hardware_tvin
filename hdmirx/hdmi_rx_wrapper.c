@@ -94,7 +94,7 @@ static int sig_lost_lock_cnt = 0;		//signal ready PLL lock --> unlock
 static unsigned sig_lost_lock_max = 3;//6;  //10->6 tiammao box timingchange issue
 
 static int sig_stable_cnt = 0;			//signal stable
-static unsigned sig_stable_max = 20;
+static unsigned sig_stable_max = 40;
 
 static int cfg_wait_cnt = 0;			//hw_cfg_mode = 1
 static int cfg_wait_max = 50;
@@ -1847,6 +1847,7 @@ void hdmirx_hw_monitor(void)
 				get_timing_fmt(&rx.pre_video_params);
 				if((rx.pre_video_params.sw_vic == HDMI_MAX_IS_UNSUPPORT)||
 					(rx.pre_video_params.sw_vic == HDMI_Unkown)){
+					hdmirx_print("[HDMIRX State] stable->unkown vic\n");
 					rx.state = HDMIRX_HWSTATE_TIMINGCHANGE;
 					rx.pre_state = HDMIRX_HWSTATE_SIG_STABLE;
 					break;

@@ -75,9 +75,14 @@ MODULE_PARM_DESC(atv_unstable_in_cnt, "atv_unstable_in_cnt");
 static int atv_unstable_out_cnt = 50;
 module_param(atv_unstable_out_cnt, int, 0664);
 MODULE_PARM_DESC(atv_unstable_out_cnt, "atv_unstable_out_cnt");
-static int hdmi_unstable_out_cnt = 1;//25;
+
+static int hdmi_unstable_out_cnt = 3;//25;
 module_param(hdmi_unstable_out_cnt, int, 0664);
 MODULE_PARM_DESC(hdmi_unstable_out_cnt, "hdmi_unstable_out_cnt");
+
+static int hdmi_stable_out_cnt = 1;//25;
+module_param(hdmi_stable_out_cnt, int, 0664);
+MODULE_PARM_DESC(hdmi_stable_out_cnt, "hdmi_stable_out_cnt");
 
 static int atv_stable_out_cnt = 10;
 module_param(atv_stable_out_cnt, int, 0664);
@@ -345,7 +350,7 @@ void tvin_smr(struct vdin_dev_s *devp)
                             if (sm_ops->fmt_changed(devp->frontend)) {
                                     fmt_changed = true;
                                     if (sm_debug_enable)
-                                            pr_info("[smr.%d] warning: format changed\n",devp->index);
+                                            pr_info("[smr1.%d] warning: format changed\n",devp->index);
                             }
 
                             if (nosig || fmt_changed)
@@ -415,7 +420,7 @@ void tvin_smr(struct vdin_dev_s *devp)
                                     fmt_changed = true;
                                     if (sm_debug_enable && !sm_print_fmt_chg)
                                     {
-                                            pr_info("[smr.%d] warning: format changed\n",devp->index);
+                                            pr_info("[smr2.%d] warning: format changed\n",devp->index);
                                             sm_print_fmt_chg = 1;
                                     }
                             }
@@ -595,6 +600,7 @@ void tvin_smr(struct vdin_dev_s *devp)
                     if (sm_p->back_stable_counter >= unstable_in_cnt)
                     {
 						//must wait enough time for cvd signal lock
+						printk("sm_p->back_stable_counter = %d",sm_p->back_stable_counter);
                         sm_p->back_stable_counter = 0;
                         sm_p->state_counter	= 0;
                         if (sm_ops->get_fmt) {
@@ -653,7 +659,7 @@ void tvin_smr(struct vdin_dev_s *devp)
                 if (sm_ops->fmt_changed(devp->frontend)) {
                     fmt_changed = true;
                     if (sm_debug_enable)
-                            pr_info("[smr.%d] warning: format changed\n",devp->index);
+                            pr_info("[smr3.%d] warning: format changed\n",devp->index);
                 }
 
                 if (nosig || fmt_changed)
@@ -725,7 +731,7 @@ void tvin_smr(struct vdin_dev_s *devp)
 	                fmt_changed = true;
 	                if (sm_debug_enable && !sm_print_fmt_chg)
 	                {
-	                    pr_info("[smr.%d] warning: format changed\n",devp->index);
+	                    pr_info("[smr4.%d] warning: format changed\n",devp->index);
 	                    sm_print_fmt_chg = 1;
 	                }
 	            }
@@ -750,7 +756,7 @@ void tvin_smr(struct vdin_dev_s *devp)
 					#endif
 	                	stable_out_cnt = sm_p->atv_stable_out_cnt;
 					else if ((port >= TVIN_PORT_HDMI0) && (port <= TVIN_PORT_HDMI7))
-						stable_out_cnt = hdmi_unstable_out_cnt;
+						stable_out_cnt = hdmi_stable_out_cnt;
 					else
 						stable_out_cnt = other_stable_out_cnt;
 	                if (sm_p->state_counter >= stable_out_cnt)

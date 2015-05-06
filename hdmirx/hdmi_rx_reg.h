@@ -37,6 +37,12 @@
 /** PHY Gen3 Clock measurement lock threshold - default 8*/
 #define LOCK_THRES                       0x63//0x08
 
+#define HDMIRX_PHY_MAIN_FSM_OVERRIDE2	(0x08UL)
+#define HDMIRX_PHY_CH0_EQ_CTRL3			(0x3eUL)
+#define HDMIRX_PHY_CH1_EQ_CTRL3			(0x5eUL)
+#define HDMIRX_PHY_CH2_EQ_CTRL3			(0x7eUL)
+
+
 #define OVL_PROT_CTRL                   (0x0DUL)
 #define HDMIRX_PHY_CDR_CTRL_CNT					(0x0EUL) //HDMI2.0
 #define HDMIRX_PHY_VOLTAGE_LEVEL		(0x22UL)

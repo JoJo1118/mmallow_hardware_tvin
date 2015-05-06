@@ -1497,7 +1497,7 @@ void HPD_controller(void)
 	uint32_t tmp_5v = 0;
 
 	tmp_5v = hdmirx_rd_top(HDMIRX_TOP_HPD_PWR5V);
-	//port A
+
 	if((tmp_5v>>20)&0x01){
 		if(rx.portA_pow5v_state<pow5v_max_cnt)
 			rx.portA_pow5v_state ++;
@@ -1505,7 +1505,6 @@ void HPD_controller(void)
 		if(rx.portA_pow5v_state>0)
 			rx.portA_pow5v_state --;
 	}
-	//port B
 	if((tmp_5v>>21)&0x01){
 		if(rx.portB_pow5v_state<pow5v_max_cnt)
 			rx.portB_pow5v_state ++;
@@ -1513,7 +1512,6 @@ void HPD_controller(void)
 		if(rx.portB_pow5v_state>0)
 			rx.portB_pow5v_state --;
 	}
-	//port C
 	if((tmp_5v>>22)&0x01){
 		if(rx.portC_pow5v_state<pow5v_max_cnt)
 			rx.portC_pow5v_state ++;
@@ -1521,74 +1519,66 @@ void HPD_controller(void)
 		if(rx.portC_pow5v_state>0)
 			rx.portC_pow5v_state --;
 	}
-	//port D
-	if((tmp_5v>>23)&0x01){
-		if(rx.portD_pow5v_state<pow5v_max_cnt)
-			rx.portD_pow5v_state ++;
-	}else{
-		if(rx.portD_pow5v_state>0)
-			rx.portD_pow5v_state --;
-	}
-	#if 1
-	//port A
-	if((rx.portA_pow5v_state == 0)&&(rx.portA_pow5v_state_pre==1)){
-		if(multi_port_edid_enable){
+
+	if(multi_port_edid_enable)
+	{
+		if((rx.portA_pow5v_state == 0)&&(rx.portA_pow5v_state_pre==1)) {
 			hdmirx_set_hpd(0, 0);
 			rx.portA_pow5v_state_pre = 0;
-		}
-		if(rx.port == 0)
-			rx.current_port_tx_5v_status = 0;
-	}else if ((rx.portA_pow5v_state == pow5v_max_cnt)&&(rx.portA_pow5v_state_pre==0)){
-		if(multi_port_edid_enable){
+			if(rx.port == 0)
+				rx.current_port_tx_5v_status = 0;
+		}else if((rx.portA_pow5v_state == pow5v_max_cnt)&&(rx.portA_pow5v_state_pre==0)){
 			hdmirx_set_hpd(0, 1);
 			rx.portA_pow5v_state_pre = 1;
+			if(rx.port == 0)
+				rx.current_port_tx_5v_status = 1;
 		}
-		if(rx.port == 0)
-			rx.current_port_tx_5v_status = 1;
-	}
-	//port B
-	if((rx.portB_pow5v_state == 0)&&(rx.portB_pow5v_state_pre==1)){
-		if(multi_port_edid_enable){
+
+		if((rx.portB_pow5v_state == 0)&&(rx.portB_pow5v_state_pre==1)){
 			hdmirx_set_hpd(1, 0);
 			rx.portB_pow5v_state_pre = 0;
-		}
-		if(rx.port == 1)
-			rx.current_port_tx_5v_status = 0;
-	}else if ((rx.portB_pow5v_state == pow5v_max_cnt)&&(rx.portB_pow5v_state_pre==0)){
-		if(multi_port_edid_enable){
+			if(rx.port == 1)
+				rx.current_port_tx_5v_status = 0;
+		}else if ((rx.portB_pow5v_state == pow5v_max_cnt)&&(rx.portB_pow5v_state_pre==0)){
 			hdmirx_set_hpd(1, 1);
 			rx.portB_pow5v_state_pre = 1;
+			if(rx.port == 1)
+				rx.current_port_tx_5v_status = 1;
 		}
-		if(rx.port == 1)
-			rx.current_port_tx_5v_status = 1;
-	}
-	//port C
-	if((rx.portC_pow5v_state == 0)&&(rx.portC_pow5v_state_pre==1)){
-		if(multi_port_edid_enable){
+
+		if((rx.portC_pow5v_state == 0)&&(rx.portC_pow5v_state_pre==1)){
 			hdmirx_set_hpd(2, 0);
 			rx.portC_pow5v_state_pre = 0;
-		}
-		if(rx.port == 2)
-			rx.current_port_tx_5v_status = 0;
-	}else if ((rx.portC_pow5v_state == pow5v_max_cnt)&&(rx.portC_pow5v_state_pre==0)){
-		if(multi_port_edid_enable){
+			if(rx.port == 2)
+				rx.current_port_tx_5v_status = 0;
+		}else if ((rx.portC_pow5v_state == pow5v_max_cnt)&&(rx.portC_pow5v_state_pre==0)){
 			hdmirx_set_hpd(2, 1);
 			rx.portC_pow5v_state_pre = 1;
+			if(rx.port == 2)
+				rx.current_port_tx_5v_status = 1;
 		}
-		if(rx.port == 2)
-			rx.current_port_tx_5v_status = 1;
 	}
-	//port D
-	/*
-	if(rx.portD_pow5v_state == 0)&&(rx.portD_pow5v_state_pre==1){
-		hdmirx_set_hpd(3, 0);
-		rx.portD_pow5v_state_pre = 0;
-	}else if ((rx.portD_pow5v_state == 10)&&(rx.portD_pow5v_state_pre==0)){
-		hdmirx_set_hpd(3, 1);
-		rx.portD_pow5v_state_pre = 1;
+	else
+	{
+		if(rx.port == 0){
+			if(rx.portA_pow5v_state == pow5v_max_cnt)
+				rx.current_port_tx_5v_status = 1;
+			else
+				rx.current_port_tx_5v_status = 0;
+		}
+		else if(rx.port == 1){
+			if(rx.portB_pow5v_state == pow5v_max_cnt)
+				rx.current_port_tx_5v_status = 1;
+			else
+				rx.current_port_tx_5v_status = 0;
+		}
+		else if(rx.port == 2){
+			if(rx.portC_pow5v_state == pow5v_max_cnt)
+				rx.current_port_tx_5v_status = 1;
+			else
+				rx.current_port_tx_5v_status = 0;
+		}
 	}
-	*/
-	#endif
 }
 /*
 static bool doublecheck_repetition(int size)
@@ -2730,6 +2720,7 @@ int hdmirx_debug(const char* buf, int size)
 	else if(strncmp(tmpbuf, "reset", 5) == 0){
 		if(tmpbuf[5] == '0') {
 		    printk(" hdmirx hw config \n");
+			memcpy(&rx.hdcp, &init_hdcp_data, sizeof(struct hdmi_rx_ctrl_hdcp));
 		    hdmirx_hw_config();
 		    //hdmi_rx_ctrl_edid_update();
 		    //hdmirx_config_video(&rx.video_params);
@@ -2762,8 +2753,12 @@ int hdmirx_debug(const char* buf, int size)
 		dump_reg();
 	}else if (strncmp(tmpbuf, "edid", 4) == 0){
 		dump_edid_reg();
-	}else if (strncmp(tmpbuf, "hdcp123", 4) == 0){
+	}else if (strncmp(tmpbuf, "hdcp123", 7) == 0){
 		dump_hdcp_data();
+	}else if (strncmp(tmpbuf, "loadkey", 7) == 0){
+		printk("load hdcp key\n");
+		memcpy(&rx.hdcp, &init_hdcp_data, sizeof(struct hdmi_rx_ctrl_hdcp));
+		hdmirx_hw_config();
 	}else if (strncmp(tmpbuf, "timer_state", 11) == 0){
 		timer_state();
 	}else if (strncmp(tmpbuf, "debug1", 6) == 0){

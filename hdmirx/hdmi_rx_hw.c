@@ -128,7 +128,7 @@ int mpll_ctl_setting = 0x200;//0x302;
 MODULE_PARM_DESC(mpll_ctl_setting, "\n mpll_ctl_setting \n");
 module_param(mpll_ctl_setting, int, 0664);
 
-bool new_phy_config = true;
+bool new_phy_config = false;
 MODULE_PARM_DESC(new_phy_config, "\n new_phy_config \n");
 module_param(new_phy_config, bool, 0664);
 
@@ -458,6 +458,11 @@ void hdmirx_phy_init(int rx_port_sel, int dcm)
 		hdmirx_wr_phy(HDMIRX_PHY_VOLTAGE_LEVEL,0x010a);
 		hdmirx_wr_phy(HDMIRX_PHY_MPLL_CTRL, mpll_ctl_setting);
 	}
+
+	hdmirx_wr_phy(HDMIRX_PHY_CH0_EQ_CTRL3, 4);
+	hdmirx_wr_phy(HDMIRX_PHY_CH1_EQ_CTRL3, 4);
+	hdmirx_wr_phy(HDMIRX_PHY_CH2_EQ_CTRL3, 4);
+	hdmirx_wr_phy(HDMIRX_PHY_MAIN_FSM_OVERRIDE2, 0x40);
 
 #if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 	// Write PHY register 0x0e, MHL&HDMI select

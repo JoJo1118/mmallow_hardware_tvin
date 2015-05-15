@@ -990,20 +990,26 @@ unsigned int get_vic_from_timing(struct hdmi_rx_ctrl_video* video_par)
 #endif
 unsigned int get_index_from_ref(struct hdmi_rx_ctrl_video* video_par)
 {
-    int i;
-    for(i = 0; freq_ref[i].vic; i++){
-        if((abs(video_par->hactive - freq_ref[i].active_pixels) <= diff_pixel_th) &&
-           ((abs(video_par->vactive - freq_ref[i].active_lines) <= diff_line_th) ||
-            (abs(video_par->vactive - freq_ref[i].active_lines_fp) <= diff_line_th) ||
-            (abs(video_par->vactive - freq_ref[i].active_lines_alternative) <= diff_line_th)
-           )) {
-           if((abs(video_par->refresh_rate - freq_ref[i].frame_rate) <= diff_frame_th) ||
-		   	(freq_ref[i].frame_rate == 0))
-            	break;
-        }
-    }
-    return i;
+	int i;
+	for(i = 0; freq_ref[i].vic; i++){
+		if((abs(video_par->hactive - freq_ref[i].active_pixels) <= diff_pixel_th) &&
+		   ((abs(video_par->vactive - freq_ref[i].active_lines) <= diff_line_th) ||
+			(abs(video_par->vactive - freq_ref[i].active_lines_fp) <= diff_line_th) ||
+			(abs(video_par->vactive - freq_ref[i].active_lines_alternative) <= diff_line_th)
+		   )) {
+		   if((abs(video_par->refresh_rate - freq_ref[i].frame_rate) <= diff_frame_th) ||
+			(freq_ref[i].frame_rate == 0)){
+				if((HDMI_1360_768 == freq_ref[i].vic) || (HDMI_1366_768 == freq_ref[i].vic)){
+					if(abs(video_par->hactive - freq_ref[i].active_pixels) <= 2)
+						break;
+				 }else
+					break;
+			}
+		}
+	}
+	return i;
 }
+
 
 enum tvin_sig_fmt_e hdmirx_hw_get_fmt(void)
 {

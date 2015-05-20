@@ -1140,7 +1140,7 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 #if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV
 	p = vf_get_provider_by_name(provider_name);
 	sub_recv = vf_get_receiver(provider_vdin0);
-	if((devp->index == 0) && (p != NULL) && ((0 != strncasecmp(sub_recv->name,"deinterlace",11)))) {
+	if((devp->index == 0) && (p != NULL) && (((0 != strncasecmp(sub_recv->name,"deinterlace",11)))||((READ_VCBUS_REG_BITS(VDIN_WR_CTRL, 25,1) == 1)))) {
 		#ifdef CONFIG_VSYNC_RDMA
 		if(vdin0_sw_reset_flag != 1)
 			vdin0_sw_reset_flag = 1;

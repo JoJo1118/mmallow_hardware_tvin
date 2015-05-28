@@ -374,6 +374,12 @@ struct rx {
 
 };
 
+typedef struct _hdcp_ksv
+{
+	uint32_t bksv0;
+	uint32_t bksv1;
+} _hdcp_ksv;
+
 extern bool multi_port_edid_enable;
 extern struct rx rx;
 extern int hdmirx_log_flag;

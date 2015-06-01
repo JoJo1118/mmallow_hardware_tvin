@@ -255,8 +255,8 @@ static unsigned int noise3=0;
 static short print_cnt=0;
 
 /*****************************the  version of changing log************************/
-static char last_version_s[]="2013-11-4||10-13";
-static char version_s[] = "2014-11-17||10-13";
+static char last_version_s[]="2014-11-17||10-13";
+static char version_s[] = "2015-06-01|17-18";
 /***************************************************************************/
 void get_cvd_version(char **ver,char **last_ver)
 {
@@ -1928,7 +1928,7 @@ inline void tvafe_cvd2_adj_pga(struct tvafe_cvd2_s *cvd2)
 			step = 2;
 		else
 			step = 1;
-		if((delta_dg > CVD2_DGAIN_MIDDLE)||(delta_dg == 0))
+		if((delta_dg > CVD2_DGAIN_MIDDLE)||((delta_dg == 0) && (tmp > (CVD2_DGAIN_MIDDLE >> 2))))
 			step = pga_delta_val;
 		if (dg_ave > CVD2_DGAIN_LIMITH)
 		{
@@ -2023,7 +2023,7 @@ inline void tvafe_cvd2_adj_pga(struct tvafe_cvd2_s *cvd2)
 			step = 2;
 		else
 			step = 1;
-		if((delta_dg > CVD2_DGAIN_MIDDLE)||(delta_dg == 0))
+		if((delta_dg > CVD2_DGAIN_MIDDLE)||((delta_dg == 0)&&(tmp > (CVD2_DGAIN_MIDDLE >> 2))))
 			step = pga_delta_val;
 		if (dg_ave > CVD2_DGAIN_LIMITH)
 		{

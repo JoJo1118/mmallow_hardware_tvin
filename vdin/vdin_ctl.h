@@ -130,6 +130,10 @@ typedef struct vdin_hist_cfg_s {
 // *****************************************************************************
 extern void vdin_set_vframe_prop_info(struct vframe_s *vf, struct vdin_dev_s *devp);
 extern void vdin_get_format_convert(struct vdin_dev_s *devp);
+extern enum vdin_format_convert_e  vdin_get_format_convert_matrix0(struct vdin_dev_s *devp);
+extern enum vdin_format_convert_e  vdin_get_format_convert_matrix1(struct vdin_dev_s *devp);
+extern void vdin_set_prob_xy(unsigned int offset,unsigned int x,unsigned int y,vdin_dev_t *devp);
+extern void vdin_get_prob_rgb(unsigned int offset,unsigned int *r,unsigned int *g,unsigned int *b);
 extern void vdin_set_all_regs(struct vdin_dev_s *devp);
 extern void vdin_set_default_regmap(unsigned int offset);
 extern void vdin_set_def_wr_canvas(struct vdin_dev_s *devp);

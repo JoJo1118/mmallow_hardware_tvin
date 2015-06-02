@@ -73,6 +73,30 @@ static bool cm_enable = 1;
 module_param(cm_enable, bool, 0644);
 MODULE_PARM_DESC(cm_enable,"cm_enable");
 
+static bool rgb_info_enable = 0;
+module_param(rgb_info_enable, bool, 0644);
+MODULE_PARM_DESC(rgb_info_enable,"rgb_info_enable");
+
+static unsigned int rgb_info_x = 0;
+module_param(rgb_info_x, uint, 0644);
+MODULE_PARM_DESC(rgb_info_x,"rgb_info_x");
+
+static unsigned int rgb_info_y = 0;
+module_param(rgb_info_y, uint, 0644);
+MODULE_PARM_DESC(rgb_info_y,"rgb_info_y");
+
+static unsigned int rgb_info_r = 0;
+module_param(rgb_info_r, uint, 0644);
+MODULE_PARM_DESC(rgb_info_r,"rgb_info_r");
+
+static unsigned int rgb_info_g = 0;
+module_param(rgb_info_g, uint, 0644);
+MODULE_PARM_DESC(rgb_info_g,"rgb_info_g");
+
+static unsigned int rgb_info_b = 0;
+module_param(rgb_info_b, uint, 0644);
+MODULE_PARM_DESC(rgb_info_b,"rgb_info_b");
+
 /***************************Local defines**********************************/
 #define BBAR_BLOCK_THR_FACTOR           3
 #define BBAR_LINE_THR_FACTOR            7
@@ -398,6 +422,54 @@ inline void vdin_get_format_convert(struct vdin_dev_s *devp)
 	}
 }
 
+enum vdin_format_convert_e  vdin_get_format_convert_matrix0(struct vdin_dev_s *devp)
+{
+	enum vdin_format_convert_e format_convert = VDIN_FORMAT_CONVERT_MAX;
+
+	if(devp->prop.dest_cfmt == TVIN_NV21)
+		format_convert = VDIN_FORMAT_CONVERT_RGB_NV21;
+	else if(devp->prop.dest_cfmt == TVIN_NV12)
+		format_convert = VDIN_FORMAT_CONVERT_RGB_NV12;
+	else if(devp->prop.dest_cfmt == TVIN_RGB444)
+		format_convert = VDIN_FORMAT_CONVERT_RGB_RGB;
+	else if(devp->prop.dest_cfmt == TVIN_YUV444)
+		format_convert = VDIN_FORMAT_CONVERT_RGB_YUV444;
+	else
+		format_convert = VDIN_FORMAT_CONVERT_RGB_YUV422;
+	return format_convert;
+}
+
+enum vdin_format_convert_e  vdin_get_format_convert_matrix1(struct vdin_dev_s *devp)
+{
+	enum vdin_format_convert_e format_convert = VDIN_FORMAT_CONVERT_MAX;
+
+	switch(devp->prop.color_format){
+		case TVIN_YUV422:
+		case TVIN_YUYV422:
+		case TVIN_YVYU422:
+		case TVIN_UYVY422:
+		case TVIN_VYUY422:
+		case TVIN_YUV444:
+			format_convert = VDIN_FORMAT_CONVERT_YUV_RGB;
+			break;
+		case TVIN_RGB444:
+			format_convert = VDIN_FORMAT_CONVERT_RGB_RGB;
+			break;
+		default:
+			format_convert = VDIN_FORMAT_CONVERT_MAX;
+			break;
+	}
+	return format_convert;
+}
+
+void vdin_get_prob_rgb(unsigned int offset,unsigned int *r,unsigned int *g,unsigned int *b)
+{
+#if defined(VDIN_V1)
+	*b = rgb_info_b = ((RD_BITS(VDIN_MATRIX_PROBE_COLOR, 0,10) << 8) >> 10);
+	*g = rgb_info_g = ((RD_BITS(VDIN_MATRIX_PROBE_COLOR, 10,10) << 8) >> 10);
+	*r =  rgb_info_r = ((RD_BITS(VDIN_MATRIX_PROBE_COLOR, 20,10) << 8) >> 10);
+#endif
+}
 
 void vdin_set_meas_mux(unsigned int offset, enum tvin_port_e port_)
 {
@@ -839,9 +911,49 @@ static inline void vdin_set_color_matrix0(unsigned int offset, tvin_format_t *tv
 }
 void vdin_set_matrix(struct vdin_dev_s *devp)
 {
+	enum vdin_format_convert_e format_convert_matrix0,format_convert_matrix1;
+#if defined(VDIN_V1)//avoid make warning to error for m6
+	unsigned int offset = devp->addr_offset;
+#endif
+	if (rgb_info_enable == 0){
+		//vdin_set_color_matrix1(devp->addr_offset, devp->fmt_info_p, devp->format_convert);
+		vdin_set_color_matrix0(devp->addr_offset, devp->fmt_info_p, devp->format_convert);
+	} else {
+		format_convert_matrix0 = vdin_get_format_convert_matrix0(devp);
+		format_convert_matrix1 = vdin_get_format_convert_matrix1(devp);
+		vdin_set_color_matrix1(devp->addr_offset, devp->fmt_info_p, format_convert_matrix1);
+		vdin_set_color_matrix0(devp->addr_offset, devp->fmt_info_p,format_convert_matrix0);
+		//set xy
+#if defined(VDIN_V1)
+		WR_BITS(VDIN_MATRIX_PROBE_POS, rgb_info_y,0,13);
+		WR_BITS(VDIN_MATRIX_PROBE_POS, rgb_info_x,16,13);
+		WR_BITS(VDIN_MATRIX_CTRL, 1,6,1);//1:probe pixel data after matrix
+		WR_BITS(VDIN_MATRIX_CTRL, 1,4,2);//1:select matrix 1
+#endif
+	}
+}
 
-	//vdin_set_color_matrix1(devp->addr_offset, devp->fmt_info_p, devp->format_convert);
-	vdin_set_color_matrix0(devp->addr_offset, devp->fmt_info_p, devp->format_convert);
+void vdin_set_prob_xy(unsigned int offset,unsigned int x,unsigned int y,vdin_dev_t *devp)
+{
+	enum vdin_format_convert_e format_convert_matrix0,format_convert_matrix1;
+	//set matrix
+	rgb_info_enable = 1;
+	format_convert_matrix0 = vdin_get_format_convert_matrix0(devp);
+	format_convert_matrix1 = vdin_get_format_convert_matrix1(devp);
+	vdin_set_color_matrix1(devp->addr_offset, devp->fmt_info_p, format_convert_matrix1);
+	vdin_set_color_matrix0(devp->addr_offset, devp->fmt_info_p,format_convert_matrix0);
+	//set position
+	rgb_info_x = x;
+	if(devp->fmt_info_p->scan_mode == TVIN_SCAN_MODE_INTERLACED)
+		rgb_info_y = y/2;
+	else
+		rgb_info_y = y;
+#if defined(VDIN_V1)	
+	WR_BITS(VDIN_MATRIX_PROBE_POS, rgb_info_y,0,13);
+	WR_BITS(VDIN_MATRIX_PROBE_POS, rgb_info_x,16,13);
+	WR_BITS(VDIN_MATRIX_CTRL, 1,6,1);//1:probe pixel data after matrix
+	WR_BITS(VDIN_MATRIX_CTRL, 1,4,2);//1:select matrix 1
+#endif
 }
 
 void vdin_set_matrixs(struct vdin_dev_s *devp, unsigned char id, enum vdin_format_convert_e csc)
@@ -1298,7 +1410,8 @@ void vdin_set_all_regs(struct vdin_dev_s *devp)
 {
 
 	/* matrix sub-module */
-	vdin_set_color_matrix0(devp->addr_offset, devp->fmt_info_p, devp->format_convert);
+	//vdin_set_color_matrix0(devp->addr_offset, devp->fmt_info_p, devp->format_convert);
+	vdin_set_matrix(devp);
 
 	/* bbar sub-module */
 	vdin_set_bbar(devp->addr_offset, devp->v_active, devp->h_active);

@@ -418,7 +418,16 @@ static ssize_t vdin_attr_store(struct device *dev,struct device_attribute *attr,
                 devp->flags |= VDIN_FLAG_FORCE_RECYCLE;
         }else if(!strcmp(parm[0],"read_pic")){
         	vdin_write_mem(devp,parm[1],parm[2]);
-}
+	}else if(!strcmp(parm[0],"rgb_xy")){
+		unsigned int x, y;
+		x = simple_strtoul(parm[1],NULL,10);
+		y = simple_strtoul(parm[2],NULL,10);
+		vdin_set_prob_xy(devp->addr_offset,x,y,devp);
+	}else if(!strcmp(parm[0],"rgb_info")){
+		unsigned int r, g,b;
+		vdin_get_prob_rgb(devp->addr_offset,&r,&g,&b);
+		printk("rgb_info-->r:%d,g:%d,b:%d\n",r,g,b);
+	}
 
 
         kfree(buf_orig);

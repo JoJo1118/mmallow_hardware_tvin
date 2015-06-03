@@ -823,7 +823,7 @@ static inline void vdin_set_color_matrix0(unsigned int offset, tvin_format_t *tv
 		case VDIN_FORMAT_CONVERT_RGB_YUV422:
 		case VDIN_FORMAT_CONVERT_RGB_NV12:
 		case VDIN_FORMAT_CONVERT_RGB_NV21:
-			matrix_csc = VDIN_MATRIX_RGBS_YUV601;
+			matrix_csc = VDIN_MATRIX_RGB_YUV601;
 			break;
 		case VDIN_FORMAT_CONVERT_GBR_YUV422:
 			matrix_csc = VDIN_MATRIX_GBR_YUV601;

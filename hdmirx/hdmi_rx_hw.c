@@ -120,17 +120,22 @@ static int scramble_sel = 1;
 MODULE_PARM_DESC(scramble_sel, "\n scramble_sel \n");
 module_param(scramble_sel, int, 0664);
 
-bool multi_port_edid_enable = 0;
+bool multi_port_edid_enable = true;
 MODULE_PARM_DESC(multi_port_edid_enable, "\n multi_port_edid_enable \n");
 module_param(multi_port_edid_enable, bool, 0664);
 
-int mpll_ctl_setting = 0x200;//0x302;
+static int mpll_ctl_setting = 0x200;//0x302;
 MODULE_PARM_DESC(mpll_ctl_setting, "\n mpll_ctl_setting \n");
 module_param(mpll_ctl_setting, int, 0664);
 
-bool new_phy_config = false;
+static bool new_phy_config = false;
 MODULE_PARM_DESC(new_phy_config, "\n new_phy_config \n");
 module_param(new_phy_config, bool, 0664);
+
+static bool hdcp_enable = 1;
+MODULE_PARM_DESC(hdcp_enable, "\n hdcp_enable \n");
+module_param(hdcp_enable, bool, 0664);
+
 
 
 /**

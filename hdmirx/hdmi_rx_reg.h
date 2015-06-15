@@ -27,20 +27,38 @@
  */
 #define _BIT(n)			MSK(1, (n))
 
-
+/** PHY Gen3 Clock measurement lock threshold - default 8*/
+#define LOCK_THRES                       0x63//0x08
 /** register address: PHY Gen3 clock measurement unit configuration */
 #define REG_HDMI_PHY_CMU_CONFIG			(0x02UL)
 /** register address: PHY Gen3 system configuration */
 #define REG_HDMI_PHY_SYSTEM_CONFIG		(0x03UL)
+#define HDMIRX_PHY_MAINFSM_CTL			(0x05UL)
 /** register address: PHY Gen3 main FSM status 1 */
 #define REG_HDMI_PHY_MAINFSM_STATUS1	   (0x09UL)
-/** PHY Gen3 Clock measurement lock threshold - default 8*/
-#define LOCK_THRES                       0x63//0x08
 
+
+#define HDMIRX_PHY_RESISTOR_CALIBRATION_1 (0x10UL)
 #define HDMIRX_PHY_MAIN_FSM_OVERRIDE2	(0x08UL)
-#define HDMIRX_PHY_CH0_EQ_CTRL3			(0x3eUL)
-#define HDMIRX_PHY_CH1_EQ_CTRL3			(0x5eUL)
-#define HDMIRX_PHY_CH2_EQ_CTRL3			(0x7eUL)
+#define HDMIRX_PHY_CH0_EQ_CTRL3			(0x3EUL)
+#define HDMIRX_PHY_CH1_EQ_CTRL3			(0x5EUL)
+#define HDMIRX_PHY_CH2_EQ_CTRL3			(0x7EUL)
+
+#define HDMIRX_PHY_EQCTRL1_CH0			(0x32UL)
+#define HDMIRX_PHY_EQCTRL1_CH1			(0x52UL)
+#define HDMIRX_PHY_EQCTRL1_CH2			(0x72UL)
+
+#define HDMIRX_PHY_EQCTRL4_CH0			(0x3FUL)
+#define HDMIRX_PHY_EQCTRL4_CH1			(0x5FUL)
+#define HDMIRX_PHY_EQCTRL4_CH2			(0x7FUL)
+
+#define HDMIRX_PHY_EQCTRL2_CH0			(0x33UL)
+#define HDMIRX_PHY_EQCTRL2_CH1			(0x53UL)
+#define HDMIRX_PHY_EQCTRL2_CH2			(0x73UL)
+
+#define HDMIRX_PHY_EQSTAT3_CH0			(0x42UL)
+#define HDMIRX_PHY_EQSTAT3_CH1			(0x62UL)
+#define HDMIRX_PHY_EQSTAT3_CH2			(0x82UL)
 
 
 #define OVL_PROT_CTRL                   (0x0DUL)

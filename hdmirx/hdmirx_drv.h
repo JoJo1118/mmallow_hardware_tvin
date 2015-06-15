@@ -19,7 +19,7 @@
 #include "../tvin_global.h"
 #include "../tvin_format_table.h"
 
-#define HDMIRX_VER "Ref.2015/05/06b"
+#define HDMIRX_VER "Ref.2015/06/15"
 
 #define HDMI_STATE_CHECK_FREQ     (20*5)
 #define ABS(x) ((x)<0 ? -(x) : (x))
@@ -383,7 +383,7 @@ typedef struct _hdcp_ksv
 extern bool multi_port_edid_enable;
 extern struct rx rx;
 extern int hdmirx_log_flag;
-extern int hdcp_enable;
+
 extern int hdmirx_print_flag;
 extern bool irq_ctrl_reg_en; /* enable/disable reg rd/wr in irq  */
 

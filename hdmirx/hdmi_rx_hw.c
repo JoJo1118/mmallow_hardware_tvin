@@ -570,8 +570,12 @@ void hdmirx_audiopll_control(bool enable)
 		WRITE_CBUS_REG(HHI_HDMIRX_AUD_PLL_CNTL,0x40000000);
 		WRITE_CBUS_REG(HHI_ADC_PLL_CNTL4,0x805);
 		hdmirx_wr_top(HDMIRX_TOP_ACR_CNTL_STAT,hdmirx_rd_top(HDMIRX_TOP_ACR_CNTL_STAT)|(1<<11));
+		WRITE_CBUS_REG(AUD_RESAMPLE_CTRL0,(READ_CBUS_REG(AUD_RESAMPLE_CTRL0) | 0x10000000) & 0x7fffffff);
 	}else{
-		WRITE_CBUS_REG(HHI_HDMIRX_AUD_PLL_CNTL,0x20000000); //disable pll, into reset mode
+		//disable pll, into reset mode
+		WRITE_CBUS_REG(HHI_HDMIRX_AUD_PLL_CNTL,0x20000000);
+		//reset resample module
+		WRITE_CBUS_REG(AUD_RESAMPLE_CTRL0,(READ_CBUS_REG(AUD_RESAMPLE_CTRL0) | 0x80000000) & 0xefffffff);
 	}
 }
 #endif

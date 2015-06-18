@@ -85,7 +85,7 @@ MODULE_PARM_DESC(force_hdmi_5v_high, "\n force_hdmi_5v_high \n");
 module_param(force_hdmi_5v_high, bool, 0664);
 
 static int sig_lost_lock_cnt = 0;	//signal ready PLL lock --> unlock
-static int sig_lost_lock_max = 3;	//10->6 tiammao box timingchange issue
+static int sig_lost_lock_max = 2;	//10->6 tiammao box timingchange issue
 MODULE_PARM_DESC(sig_lost_lock_max, "\n sig_lost_lock_max \n");
 module_param(sig_lost_lock_max, int, 0664);
 
@@ -100,12 +100,12 @@ MODULE_PARM_DESC(hpd_wait_max, "\n hpd_wait_max \n");
 module_param(hpd_wait_max, int, 0664);
 
 static int sig_unstable_cnt = 0;
-static int sig_unstable_max = 30;
+static int sig_unstable_max = 50;
 MODULE_PARM_DESC(sig_unstable_max, "\n sig_unstable_max \n");
 module_param(sig_unstable_max, int, 0664);
 
 static int sig_unready_cnt = 0;
-static int sig_unready_max = 5;//10;
+static int sig_unready_max = 2;//5;//10;
 MODULE_PARM_DESC(sig_unready_max, "\n sig_unready_max \n");
 module_param(sig_unready_max, int, 0664);
 
@@ -113,7 +113,7 @@ static bool enable_hpd_reset = false;
 MODULE_PARM_DESC(enable_hpd_reset, "\n enable_hpd_reset \n");
 module_param(enable_hpd_reset, bool, 0664);
 
-static int pow5v_max_cnt = 5;
+static int pow5v_max_cnt = 10;
 MODULE_PARM_DESC(pow5v_max_cnt, "\n pow5v_max_cnt \n");
 module_param(pow5v_max_cnt, int, 0664);
 
@@ -1780,7 +1780,7 @@ void hdmirx_hw_monitor(void)
 			rx.state = HDMIRX_HWSTATE_SIG_UNSTABLE;
 		}
 		rx.pre_state = HDMIRX_HWSTATE_INIT;
-		hdmirx_print("Hdmirx driver version: %s\n", HDMIRX_VER);
+		//hdmirx_print("Hdmirx driver version: %s\n", HDMIRX_VER);
 		break;
 	case HDMIRX_HWSTATE_HDMI5V_LOW:
 		if(rx.current_port_tx_5v_status){
@@ -1797,9 +1797,9 @@ void hdmirx_hw_monitor(void)
 	case HDMIRX_HWSTATE_HDMI5V_HIGH:
 		if(!rx.current_port_tx_5v_status){
 			rx.no_signal = true;
-			rx.state = HDMIRX_HWSTATE_INIT;
+			rx.state = HDMIRX_HWSTATE_HDMI5V_LOW;
 			rx.pre_state = HDMIRX_HWSTATE_HDMI5V_HIGH;
-			hdmirx_print("\n[HDMIRX State] 5v high->init\n");
+			hdmirx_print("\n[HDMIRX State] 5v high->HPD_LOW\n");
 		} else {
 			//if(!multi_port_edid_enable){
 				hdmirx_set_hpd(rx.port, 1);    //hpd high
@@ -1813,10 +1813,10 @@ void hdmirx_hw_monitor(void)
 	case HDMIRX_HWSTATE_HPD_READY:
 		if(!rx.current_port_tx_5v_status){
 			rx.no_signal = true;
-			rx.state = HDMIRX_HWSTATE_INIT;
+			rx.state = HDMIRX_HWSTATE_HDMI5V_LOW;
 			rx.pre_state = HDMIRX_HWSTATE_HPD_READY;
 			//hdmirx_set_hpd(rx.port, 0);
-			hdmirx_print("\n[HDMIRX State] hpd ready ->init\n");
+			hdmirx_print("\n[HDMIRX State] hpd ready ->HPD_LOW\n");
 		} else {
 			if(hpd_wait_cnt++ <= hpd_wait_max)  //delay 300ms
 				break;
@@ -1836,8 +1836,8 @@ void hdmirx_hw_monitor(void)
 	case HDMIRX_HWSTATE_SIG_UNSTABLE:
 		if(rx.current_port_tx_5v_status == 0){
 			rx.no_signal = true;
-			hdmirx_print("[HDMIRX State] unstable->init\n");
-			rx.state = HDMIRX_HWSTATE_INIT;
+			hdmirx_print("[HDMIRX State] unstable->HPD_LOW\n");
+			rx.state = HDMIRX_HWSTATE_HDMI5V_LOW;
 			rx.pre_state = HDMIRX_HWSTATE_SIG_UNSTABLE;
 			break;
 		}
@@ -1878,8 +1878,8 @@ void hdmirx_hw_monitor(void)
 	case HDMIRX_HWSTATE_SIG_STABLE:
 		if(rx.current_port_tx_5v_status == 0){
 			rx.no_signal = true;
-			hdmirx_print("[HDMIRX State] stable->init\n");
-			rx.state = HDMIRX_HWSTATE_INIT;
+			hdmirx_print("[HDMIRX State] stable->HPD_LOW\n");
+			rx.state = HDMIRX_HWSTATE_HDMI5V_LOW;
 			rx.pre_state = HDMIRX_HWSTATE_SIG_STABLE;
 			break;
 		}
@@ -1943,14 +1943,14 @@ void hdmirx_hw_monitor(void)
 	case HDMIRX_HWSTATE_SIG_READY:
 		if(rx.current_port_tx_5v_status == 0){
 			rx.no_signal = true;
-			hdmirx_print("[HDMIRX State] ready->init\n");
+			hdmirx_print("[HDMIRX State] ready->HPD_LOW\n");
 			hdmirx_audio_enable(0);
 			hdmirx_audio_fifo_rst();
 			#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 			hdmirx_audiopll_control(0);
 			hdmirx_module_control(0);
 			#endif
-			rx.state = HDMIRX_HWSTATE_INIT;
+			rx.state = HDMIRX_HWSTATE_HDMI5V_LOW;
 			rx.pre_state = HDMIRX_HWSTATE_SIG_READY;
 			break;
 		}

@@ -134,6 +134,9 @@ static bool current_port_hpd_ctl = false;
 MODULE_PARM_DESC(current_port_hpd_ctl, "\n current_port_hpd_ctl \n");
 module_param(current_port_hpd_ctl, bool, 0664);
 
+static int force_format = 0;
+MODULE_PARM_DESC(force_format, "\n force_format \n");
+module_param(force_format, int, 0664);
 /* timing diff offset */
 static int diff_pixel_th = 30;
 static int diff_line_th = 20;
@@ -834,27 +837,17 @@ bool hdmirx_hw_check_frame_skip(void)
 int hdmirx_hw_get_color_fmt(void)
 {
 	int color_format = 0;
-	static int color_format_table[5] = {0xff,0xff,0xff,0xff,0xff};
-	static int idx = 0;
-	int format = 0xff;
+	int format = rx.pre_video_params.video_format;
+
+	if(force_format&0x10){
+		format = force_format&0xf;
+	}
 	if (rx.change > 0)
 	    return last_color_fmt;
-	//---------colorspace stable patch----------//
-	idx++;
-	if(idx>=5)
-		idx=0;
-	color_format_table[idx] = rx.pre_video_params.video_format;
 
-	if((color_format_table[0]==color_format_table[1])&&
-		(color_format_table[1]==color_format_table[2])&&
-		(color_format_table[2]==color_format_table[3])&&
-		(color_format_table[3]==color_format_table[4])){
-		format = color_format_table[2];
-	}else
-		return last_color_fmt;
 	switch(format){
 	case 1:
-		color_format = 1;//3; /* YUV422 *//but done yuv422->444 automatically in top level
+		color_format = 3; /* YUV422 */ // yuv422->444 automatically in top level
 		break;
 	case 2:
 		color_format = 1; /* YUV444*/
@@ -3047,10 +3040,10 @@ void hdmirx_hw_uninit(void)
 	if(!multi_port_edid_enable){
 		hdmirx_set_hpd(rx.port, 0);
 	}
+#ifndef CEC_FUNC_ENABLE
     hdmirx_wr_top(HDMIRX_TOP_INTR_MASKN, 0);
-
     hdmirx_interrupts_cfg(false);
-
+#endif
     audio_status_init();
 
     rx.ctrl.status = 0;
@@ -3064,6 +3057,8 @@ void hdmirx_hw_uninit(void)
 void hdmirx_hw_enable(void)
 {
 	hdmirx_set_pinmux();
+	hdmirx_hw_probe();
+	hdmirx_default_hpd(1);
 }
 
 void hdmirx_hw_disable(unsigned char flag)

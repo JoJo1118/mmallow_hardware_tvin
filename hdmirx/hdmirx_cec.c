@@ -138,18 +138,18 @@ int cec_init(void)
 #if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 	unsigned int data32;
 	//set cec clk 32768k
-	//Wr_reg_bits(HHI_CLK_32K_CNTL, 1, 16, 2);
-	//Wr_reg_bits(HHI_CLK_32K_CNTL, 1, 18, 1);
-	// HDMI IP CEC clock = 24M/732=32786.9Hz
     data32  = 0;
     data32 |= 0         << 16;  // [17:16] clk_sel: 0=oscin; 1=slow_oscin; 2=fclk_div3; 3=fclk_div5.
     data32 |= 1         << 15;  // [   15] clk_en
     data32 |= (732-1)   << 0;   // [13: 0] clk_div
     WRITE_MPEG_REG(HHI_32K_CLK_CNTL,    data32);
+
 #else
 	Wr_reg_bits(HHI_CLK_32K_CNTL, 1, 16, 2);
 	Wr_reg_bits(HHI_CLK_32K_CNTL, 1, 18, 1);
 #endif
+	//cec_clk_en
+	hdmirx_wr_top(HDMIRX_TOP_CLK_CNTL,hdmirx_rd_top(HDMIRX_TOP_CLK_CNTL)| _BIT(2));
 	//set logic addr
 	hdmirx_wr_dwc(HDMIRX_DWC_CEC_ADDR_L, 0x00000001);
 	hdmirx_wr_dwc(HDMIRX_DWC_CEC_ADDR_H, 0x00000000);

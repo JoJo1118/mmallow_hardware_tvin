@@ -948,7 +948,7 @@ void vdin_set_prob_xy(unsigned int offset,unsigned int x,unsigned int y,vdin_dev
 		rgb_info_y = y/2;
 	else
 		rgb_info_y = y;
-#if defined(VDIN_V1)	
+#if defined(VDIN_V1)
 	WR_BITS(VDIN_MATRIX_PROBE_POS, rgb_info_y,0,13);
 	WR_BITS(VDIN_MATRIX_PROBE_POS, rgb_info_x,16,13);
 	WR_BITS(VDIN_MATRIX_CTRL, 1,6,1);//1:probe pixel data after matrix
@@ -1051,16 +1051,16 @@ static inline void vdin_set_wr_ctrl(unsigned int offset, unsigned int v, unsigne
 		case VDIN_FORMAT_CONVERT_RGB_YUV422:
 			write_format444 = 0;
 			break;
-                case VDIN_FORMAT_CONVERT_YUV_NV12:
+        case VDIN_FORMAT_CONVERT_YUV_NV12:
 		case VDIN_FORMAT_CONVERT_RGB_NV12:
 			write_format444 = 2;
 			swap_cbcr = 1;
 			break;
-                case VDIN_FORMAT_CONVERT_YUV_NV21:
+        case VDIN_FORMAT_CONVERT_YUV_NV21:
 		case VDIN_FORMAT_CONVERT_RGB_NV21:
-                        write_format444 = 2;
+            write_format444 = 2;
 			swap_cbcr = 0;
-                        break;
+            break;
 		default:
 			write_format444 = 1;
 			break;
@@ -1082,7 +1082,9 @@ static inline void vdin_set_wr_ctrl(unsigned int offset, unsigned int v, unsigne
 		WR_BITS(VDIN_WR_CTRL, 2, HCONV_MODE_BIT, HCONV_MODE_WID);
 		//chroma canvas
 		//WR_BITS(VDIN_WR_CTRL2, def_canvas_id+1, WRITE_CHROMA_CANVAS_ADDR_BIT, WRITE_CHROMA_CANVAS_ADDR_WID);
-	}else{
+	} else if(write_format444 == 1) {
+		WR_BITS(VDIN_WR_CTRL, 3, VCONV_MODE_BIT, VCONV_MODE_WID);//output all cbcr
+	} else{
 		// swap_cbcr
 		WR_BITS(VDIN_WR_CTRL, 0, SWAP_CBCR_BIT, SWAP_CBCR_WID);
 		//chroma canvas
@@ -1099,9 +1101,9 @@ static inline void vdin_set_wr_ctrl(unsigned int offset, unsigned int v, unsigne
 	WR_BITS(VDIN_WR_CTRL, 1, WR_REQ_URGENT_BIT, WR_REQ_URGENT_WID);
 	// req_en
 	WR_BITS(VDIN_WR_CTRL, 1, WR_REQ_EN_BIT, WR_REQ_EN_WID);
-        #if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV  
-        //dis ctrl reg wpulse   
-        WR_BITS(VDIN_WR_CTRL, 1, 10, 1);        
+        #if MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV
+        //dis ctrl reg wpulse
+        WR_BITS(VDIN_WR_CTRL, 1, 10, 1);
         #endif
 }
 

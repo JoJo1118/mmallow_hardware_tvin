@@ -70,7 +70,7 @@ extern void hdmirx_wr_top (unsigned long addr, unsigned long data);
 int resume_flag = 0;
 static int force_colorspace = 0;
 //int cur_colorspace = 0xff;
-static int hdmi_yuv444_enable = 0;
+static int hdmi_yuv444_enable = 1;
 
 
 MODULE_PARM_DESC(resume_flag, "\n resume_flag \n");
@@ -169,12 +169,14 @@ int hdmirx_dec_open(struct tvin_frontend_s *fe, enum tvin_port_e port)
 
 #endif
 	open_flage = 1;
-	/* timer */
+#ifndef CEC_FUNC_ENABLE
+	/* timer *///move to dev_probe
 	init_timer(&devp->timer);
 	devp->timer.data = (ulong)devp;
 	devp->timer.function = hdmirx_timer_handler;
 	devp->timer.expires = jiffies + TIMER_STATE_CHECK;
 	add_timer(&devp->timer);
+#endif
 	pr_info("%s port:%x ok\n",__FUNCTION__, port);
 	return 0;
 }
@@ -214,7 +216,9 @@ void hdmirx_dec_close(struct tvin_frontend_s *fe)
 	//open_flage = 0;
 	devp = container_of(fe, struct hdmirx_dev_s, frontend);
 	parm = &devp->param;
+#ifndef CEC_FUNC_ENABLE
 	del_timer_sync(&devp->timer);
+#endif
 	hdmirx_hw_uninit();
 	hdmirx_hw_disable(0);
 	parm->info.fmt = TVIN_SIG_FMT_NULL;
@@ -361,16 +365,18 @@ void hdmirx_get_sig_property(struct tvin_frontend_s *fe, struct tvin_sig_propert
 	switch (hdmirx_hw_get_color_fmt()) {
 	case 1:
 		prop->color_format = TVIN_YUV444;
-		if(hdmi_yuv444_enable)
+		if(hdmi_yuv444_enable){
 			prop->dest_cfmt = TVIN_YUV444;
+		}
 		break;
 	case 3:
-		prop->color_format = TVIN_YUYV422;
+		prop->color_format = TVIN_YUV422;
 		break;
 	case 0:
 		prop->color_format = TVIN_RGB444;
-		if(hdmi_yuv444_enable)
+		if(hdmi_yuv444_enable){
 			prop->dest_cfmt = TVIN_YUV444;
+		}
 		break;
 	default:
 		prop->color_format = TVIN_RGB444;
@@ -927,9 +933,15 @@ static int hdmirx_probe(struct platform_device *pdev)
 
 	hdmirx_hw_enable();
     /* set all hpd status  */
-	hdmirx_default_hpd(0);
-
+	//hdmirx_default_hpd(0);
+#ifdef CEC_FUNC_ENABLE
 	dev_set_drvdata(hdevp->dev, hdevp);
+	init_timer(&hdevp->timer);
+	hdevp->timer.data = (ulong)hdevp;
+	hdevp->timer.function = hdmirx_timer_handler;
+	hdevp->timer.expires = jiffies + TIMER_STATE_CHECK;
+	add_timer(&hdevp->timer);
+#endif
 	pr_info("hdmirx: driver probe ok\n");
 	return 0;
 

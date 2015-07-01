@@ -1136,13 +1136,13 @@ void hdmirx_set_pinmux(void)
     WRITE_CBUS_REG(PERIPHS_PIN_MUX_10, READ_CBUS_REG(PERIPHS_PIN_MUX_10 ) &
                 (~((1<<2)|(1<<5)|(1<<8)|(1<<11))));
 
-
-
     WRITE_CBUS_REG(PREG_PAD_GPIO0_EN_N, READ_CBUS_REG(PREG_PAD_GPIO0_EN_N) &
                 (~((1<<5)|(1<<9)|(1<<13)|(1<<17))));
 
-    //WRITE_CBUS_REG(PREG_PAD_GPIO0_O, READ_CBUS_REG(PREG_PAD_GPIO0_O) |
-                //((1<<5)|(1<<9)|(1<<13)|(1<<17)));
+    //WRITE_CBUS_REG(PREG_PAD_GPIO0_O, READ_CBUS_REG(PREG_PAD_GPIO0_O) &
+                //(~((1<<5)|(1<<9)|(1<<13)|(1<<17))));
+	WRITE_CBUS_REG(PREG_PAD_GPIO0_O, READ_CBUS_REG(PREG_PAD_GPIO0_O) |
+                ((1<<1)|(1<<5)|(1<<9)|(1<<13)));
 #endif
 
 #if 0
@@ -1296,9 +1296,7 @@ void clk_init(void)
 
 
     /* DWC clock enable */
-
     Wr_reg_bits(HHI_GCLK_MPEG0, 1, 21, 1);  // Turn on clk_hdmirx_pclk, also = sysclk
-
     // Enable APB3 fail on error
     *((volatile unsigned long *) P_HDMIRX_CTRL_PORT)          |= (1 << 15);   // APB3 to HDMIRX-TOP err_en
     *((volatile unsigned long *) (P_HDMIRX_CTRL_PORT+0x10))   |= (1 << 15);   // APB3 to HDMIRX-DWC err_en
@@ -1323,6 +1321,7 @@ void clk_init(void)
     data32 |= 2             << 0;   // [ 6: 0] HDMIRX audmeas clock divider: 510/3 = 170MHz
     WRITE_MPEG_REG(HHI_HDMIRX_AUD_CLK_CNTL, data32);
 
+
     data32  = 0;
     data32 |= 1 << 17;  // [17]     audfifo_rd_en
     data32 |= 1 << 16;  // [16]     pktfifo_rd_en
@@ -1330,6 +1329,7 @@ void clk_init(void)
     data32 |= 0 << 1;   // [1]      bus_clk_inv
     data32 |= 0 << 0;   // [0]      hdmi_clk_inv
     hdmirx_wr_top(HDMIRX_TOP_CLK_CNTL, data32);    // DEFAULT: {32'h0}
+
 }
 
 #if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
@@ -1439,66 +1439,31 @@ void hdmirx_hw_config(void)
 	hdmirx_print("%s  %d Done! \n", __func__, rx.port);
 }
 
-void hdmirx_hw_reset(void)
+void hdmirx_hw_probe(void)
 {
-    hdmirx_print("%s %d\n", __func__, rx.port);
-    //WRITE_CBUS_REG(RESET0_REGISTER, 0x8); //reset HDMIRX module
-    //mdelay(10);
-    //clk_init();
-    hdmirx_wr_top(HDMIRX_TOP_INTR_MASKN, 0); //disable top interrupt gate
-    hdmirx_wr_top( HDMIRX_TOP_SW_RESET, 0x3f);
-    mdelay(1);
-    control_reset(0);
-#if (MESON_CPU_TYPE < MESON_CPU_TYPE_MESONG9TV)
-    hdmirx_wr_top( HDMIRX_TOP_PORT_SEL,   (1<<rx.port));  //G9 EDID multiplex mode
-#endif
-	hdmirx_interrupts_cfg(false); //disable dwc interrupt
-    if(hdcp_enable){
-        hdmi_rx_ctrl_hdcp_config(&rx.hdcp);
-    } else {
-        hdmirx_wr_bits_dwc( HDMIRX_DWC_HDCP_CTRL, HDCP_ENABLE, 0);
-    }
+	hdmirx_wr_top(HDMIRX_TOP_MEM_PD,	0);//1
+	hdmirx_wr_top(HDMIRX_TOP_SW_RESET,	0);//release IP from reset
 
-    /*phy config*/
-    //hdmirx_phy_restart();
-    //hdmi_rx_phy_fast_switching(1);
-    hdmirx_phy_init(rx.port, 0); //port, dcm
-    /**/
+    //Wr_reg_bits(HHI_GCLK_MPEG0, 1, 21, 1);  // Turn on clk_hdmirx_pclk, also = sysclk //1
+    // Enable APB3 fail on error
+    //*((volatile unsigned long *) P_HDMIRX_CTRL_PORT)          |= (1 << 15);   // APB3 to HDMIRX-TOP err_en
+    //*((volatile unsigned long *) (P_HDMIRX_CTRL_PORT+0x10))   |= (1 << 15);   // APB3 to HDMIRX-DWC err_en
 
-    /* control config */
-    control_init(rx.port);
-	hdmirx_audio_init();
-    packet_init();
-    hdmirx_audio_fifo_rst();
-    hdmirx_packet_fifo_rst();
-    /**/
-    control_reset(1);
-
-    /*enable irq */
-    hdmirx_wr_top(HDMIRX_TOP_INTR_STAT_CLR, ~0);
-    hdmirx_wr_top(HDMIRX_TOP_INTR_MASKN, 0x00001fff);
-    //hdmirx_interrupts_hpd(true);
-    /**/
-
-#ifndef USE_GPIO_FOR_HPD
-    //hdmi_rx_ctrl_hpd(true);
-    //hdmirx_wr_top( HDMIRX_TOP_HPD_PWR5V, (1<<5)|(1<<4)); //invert HDP output
-#endif
-#ifdef CEC_FUNC_ENABLE
+    //turn on clocks: md, cfg...
+	//turn on cfg_clk
+    WRITE_MPEG_REG(HHI_HDMIRX_CLK_CNTL,	0x100);
+	hdmirx_wr_top(HDMIRX_DWC_DMI_DISABLE_IF,0x29);//bit0,bit3,bit5
+	#ifdef CEC_FUNC_ENABLE
 	cec_init();
-#endif
-    /* wait at least 4 video frames (at 24Hz) : 167ms for the mode detection
-    recover the video mode */
-    mdelay(200);
+	#endif
+	hdmi_rx_ctrl_edid_update();
 
-    /* Check If HDCP engine is in Idle state, if not wait for authentication time.
-    200ms is enough if no Ri errors */
-    if (hdmirx_rd_dwc(0xe0) != 0)
-    {
-        mdelay(200);
-    }
-
+	hdmirx_wr_top(HDMIRX_TOP_PORT_SEL, 0x10);
+	hdmirx_wr_top(HDMIRX_TOP_INTR_STAT_CLR, ~0);
+	hdmirx_wr_top(HDMIRX_TOP_INTR_MASKN, 0x00001fff);
+	hdmirx_print("%s Done! \n", __func__);
 }
+
 
 /***********************
    get infor and config:

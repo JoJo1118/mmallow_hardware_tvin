@@ -35,6 +35,7 @@
 #include <asm/div64.h>
 #include <linux/of.h>
 #include <linux/of_fdt.h>
+#include <linux/dma-contiguous.h>
 /* Amlogic Headers */
 #include <linux/amlogic/amports/canvas.h>
 #include <mach/am_regs.h>
@@ -521,6 +522,31 @@ static void vdin_vf_init(struct vdin_dev_s *devp)
 	}
 }
 
+#ifdef CONFIG_CMA
+void vdin_cma_alloc(struct vdin_dev_s *devp)
+{
+	unsigned int mem_size_m = devp->cma_mem_size;
+	devp->venc_pages = dma_alloc_from_contiguous(&(devp->this_pdev->dev), (mem_size_m * SZ_1M) >> PAGE_SHIFT, 0);
+	if (devp->venc_pages) {
+		devp->mem_start = page_to_phys(devp->venc_pages);
+		devp->mem_size  = mem_size_m * SZ_1M;
+		pr_info("vdin%d mem_start = 0x%x, mem_size = 0x%x\n", devp->index,
+			devp->mem_start,devp->mem_size);
+		pr_info("vdin%d cma alloc ok!\n", devp->index);
+	} else {
+		pr_err("\nvdin cma mem undefined2.\n");
+	}
+}
+
+void vdin_cma_release(struct vdin_dev_s *devp)
+{
+	if (devp->venc_pages && devp->cma_mem_size) {
+		dma_release_from_contiguous(&(devp->this_pdev->dev), devp->venc_pages, (devp->cma_mem_size * SZ_1M)>>PAGE_SHIFT);
+		pr_info("vdin%d cma release ok!\n", devp->index);
+	}
+}
+#endif
+
 /*
  * 1. config canvas for video frame.
  * 2. enable hw work, including:
@@ -581,6 +607,9 @@ void vdin_start_dec(struct vdin_dev_s *devp)
     vdin_wr_reverse(devp->addr_offset,devp->parm.h_reverse,devp->parm.v_reverse);
 #endif
 
+#ifdef CONFIG_CMA
+	vdin_cma_alloc(devp);
+#endif
 	/* h_active/v_active will be used by bellow calling */
 	if (canvas_config_mode == 1) {
 		vdin_canvas_start_config(devp);
@@ -684,6 +713,9 @@ void vdin_stop_dec(struct vdin_dev_s *devp)
 		devp->frontend->dec_ops->stop(devp->frontend, devp->parm.port);
 	vdin_set_default_regmap(devp->addr_offset);
 	vdin_hw_disable(devp->addr_offset);
+#ifdef CONFIG_CMA
+	vdin_cma_release(devp);
+#endif
 	disable_irq_nosync(devp->irq);
 	/* reset default canvas  */
 	vdin_set_def_wr_canvas(devp);
@@ -1602,8 +1634,8 @@ static int vdin_open(struct inode *inode, struct file *file)
 
 	/* remove the hardware limit to vertical [0-max]*/
         WRITE_VCBUS_REG(VPP_PREBLEND_VD1_V_START_END, 0x00000fff);
-	if(vdin_dbg_en)
-		pr_info("open device %s ok\n", dev_name(devp->dev));
+	//if(vdin_dbg_en)
+	pr_info("open device %s ok\n", dev_name(devp->dev));
 	return ret;
 }
 
@@ -1626,8 +1658,8 @@ static int vdin_release(struct inode *inode, struct file *file)
 
 	/* reset the hardware limit to vertical [0-1079]  */
         WRITE_VCBUS_REG(VPP_PREBLEND_VD1_V_START_END, 0x00000437);
-	if(vdin_dbg_en)
-		pr_info("close device %s ok\n", dev_name(devp->dev));
+	//if(vdin_dbg_en)
+	pr_info("close device %s ok\n", dev_name(devp->dev));
 	return 0;
 }
 
@@ -2030,9 +2062,10 @@ static int vdin_drv_probe(struct platform_device *pdev)
 	struct vdin_dev_s *vdevp;
 	struct resource *res;
 	const void *name;
-	int offset,size;
+	int offset,size,mem_size_m,mem_cma_en;
 	struct device_node *of_node = pdev->dev.of_node;
-
+	mem_cma_en = 0;
+	
 	/* malloc vdev */
 	vdevp = kmalloc(sizeof(struct vdin_dev_s), GFP_KERNEL);
 	if (!vdevp) {
@@ -2070,63 +2103,78 @@ static int vdin_drv_probe(struct platform_device *pdev)
 		goto fail_create_dev_file;
 	}
 	/* get memory address from resource */
-#if 0
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-#else
+#ifdef CONFIG_USE_OF
 	res = &memobj;
 	ret = find_reserve_block(pdev->dev.of_node->name,0);
 	if(ret < 0) {
-	        name = of_get_property(of_node, "share-memory-name", NULL);
-	        if(!name) {
-	                pr_err("\nvdin memory resource undefined1.\n");
-	                ret = -EFAULT;
-	                goto fail_get_resource_mem;
-	        }
-	        else {
-	                ret= find_reserve_block_by_name((char *)name);
-	                if(ret<0) {
-	                        pr_err("\nvdin memory resource undefined2.\n");
-	                        ret = -EFAULT;
-	                        goto fail_get_resource_mem;
-	                }
-	                name = of_get_property(of_node, "share-memory-offset", NULL);
-	                if(name)
-	                        offset = of_read_ulong(name,1);
-	                else {
-	                        pr_err("\nvdin memory resource undefined3.\n");
-	                        ret = -EFAULT;
-	                        goto fail_get_resource_mem;
-	                }
-	                        name = of_get_property(of_node, "share-memory-size", NULL);
-	                if(name)
-	                        size = of_read_ulong(name,1);
-	                else {
-	                        pr_err("\nvdin memory resource undefined4.\n");
-	                        ret = -EFAULT;
-	                        goto fail_get_resource_mem;
-	                }
+#ifdef CONFIG_CMA
+		if (of_node) {
+			ret = of_property_read_u32(of_node, "max_size", &mem_size_m);
+			if (ret) {
+				pr_err("\nvdin cma mem undefined1.\n");
+			}
+			else {
+				vdevp->cma_mem_size = mem_size_m;
+				vdevp->this_pdev = pdev;
+				mem_cma_en = 1;
+			}
+		}
+#endif
+		if (mem_cma_en != 1) {
+		        name = of_get_property(of_node, "share-memory-name", NULL);
+		        if(!name) {
+		                pr_err("\nvdin memory resource undefined1.\n");
+		                ret = -EFAULT;
+		                goto fail_get_resource_mem;
+		        }
+		        else {
+		                ret= find_reserve_block_by_name((char *)name);
+		                if(ret<0) {
+		                        pr_err("\nvdin memory resource undefined2.\n");
+		                        ret = -EFAULT;
+		                        goto fail_get_resource_mem;
+		                }
+		                name = of_get_property(of_node, "share-memory-offset", NULL);
+		                if(name)
+		                        offset = of_read_ulong(name,1);
+		                else {
+		                        pr_err("\nvdin memory resource undefined3.\n");
+		                        ret = -EFAULT;
+		                        goto fail_get_resource_mem;
+		                }
+		                        name = of_get_property(of_node, "share-memory-size", NULL);
+		                if(name)
+		                        size = of_read_ulong(name,1);
+		                else {
+		                        pr_err("\nvdin memory resource undefined4.\n");
+		                        ret = -EFAULT;
+		                        goto fail_get_resource_mem;
+		                }
 
-	                res->start = (phys_addr_t)get_reserve_block_addr(ret)+offset;
-	                res->end = res->start+ size-1;
-
+		                res->start = (phys_addr_t)get_reserve_block_addr(ret)+offset;
+		                res->end = res->start+ size-1;
+		        }
 	        }
 	}
 	else {
 	        res->start = (phys_addr_t)get_reserve_block_addr(ret);
 	        res->end = res->start+ (phys_addr_t)get_reserve_block_size(ret)-1;
         }
+#else
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 #endif
 	if (!res) {
 		pr_err("%s: can't get mem resource\n", __func__);
 		ret = -ENXIO;
 		goto fail_get_resource_mem;
 	}
-
-	vdevp->mem_start = res->start;
-	vdevp->mem_size  = res->end - res->start + 1;
-	pr_info("vdin%d mem_start = 0x%x, mem_size = 0x%x\n", vdevp->index,
-			vdevp->mem_start,vdevp->mem_size);
-
+	
+	if (mem_cma_en != 1) {
+		vdevp->mem_start = res->start;
+		vdevp->mem_size  = res->end - res->start + 1;
+		pr_info("vdin%d mem_start = 0x%x, mem_size = 0x%x\n", vdevp->index,
+				vdevp->mem_start,vdevp->mem_size);
+	}
 
 	/* get irq from resource */
 	#ifdef CONFIG_USE_OF

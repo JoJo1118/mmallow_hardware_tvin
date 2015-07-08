@@ -38,7 +38,7 @@
 #include "vdin_vf.h"
 #include "vdin_regs.h"
 
-#define VDIN_VER "Ref.2015/04/23b"
+#define VDIN_VER "Ref.2015/07/08b"
 
 /*the counter of vdin*/
 #define VDIN_MAX_DEVS			2
@@ -191,6 +191,11 @@ typedef struct vdin_dev_s {
         unsigned int                    start_time;//ms vdin start time
         bool                            send2di;
         vdin_debug_t                    debug;
+#ifdef CONFIG_CMA
+	struct platform_device	*this_pdev;
+	struct page 			*venc_pages;
+	unsigned int			cma_mem_size;//MBYTE
+#endif
 } vdin_dev_t;
 
 extern int vdin_create_class_files(struct class *vdin_clsp);

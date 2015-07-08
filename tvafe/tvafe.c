@@ -27,7 +27,7 @@
 #include <linux/mm.h>
 #include <linux/of.h>
 #include <linux/of_fdt.h>
-
+#include <linux/dma-contiguous.h>
 /* Amlogic headers */
 #include <linux/amlogic/amports/canvas.h>
 #include <mach/am_regs.h>
@@ -67,8 +67,8 @@ MODULE_PARM_DESC(vga_yuv422_enable, "vga_yuv422_enable");
 
 
 /*****************************the  version of changing log************************/
-static char last_version_s[]="2013-11-4||10-13";
-static char version_s[] = "2013-11-29||11-28";
+static char last_version_s[]="2013-11-29||11-28";
+static char version_s[] = "2015-07-08||17-23";
 /***************************************************************************/
 void get_afe_version(char **ver, char **last_ver)
 {
@@ -492,6 +492,31 @@ int tvafe_dec_support(struct tvin_frontend_s *fe, enum tvin_port_e port)
 	return 0;
 }
 
+#ifdef CONFIG_CMA
+void tvafe_cma_alloc(struct tvafe_dev_s *devp)
+{
+	unsigned int mem_size_m = devp->cma_mem_size;
+	devp->venc_pages = dma_alloc_from_contiguous(&(devp->this_pdev->dev), (mem_size_m * SZ_1M) >> PAGE_SHIFT, 0);
+	if (devp->venc_pages) {
+		devp->mem.start = page_to_phys(devp->venc_pages);
+		devp->mem.size  = mem_size_m * SZ_1M;
+		pr_info("tvafe mem_start = 0x%x, mem_size = 0x%x\n",devp->mem.start,devp->mem.size);
+		pr_info("tvafe cma alloc ok!\n");
+	} else {
+		pr_err("\ntvafe cma mem undefined2.\n");
+	}
+}
+
+void tvafe_cma_release(struct tvafe_dev_s *devp)
+{
+	if (devp->venc_pages && devp->cma_mem_size) {
+		dma_release_from_contiguous(&(devp->this_pdev->dev), devp->venc_pages, (devp->cma_mem_size * SZ_1M)>>PAGE_SHIFT);
+		pr_info("tvafe cma release ok!\n");
+	}
+}
+#endif
+
+
 /*
  * tvafe open port and init register
  */
@@ -517,6 +542,9 @@ int tvafe_dec_open(struct tvin_frontend_s *fe, enum tvin_port_e port)
 		return 1;
 	}
 	#endif
+#ifdef CONFIG_CMA
+	tvafe_cma_alloc(devp);
+#endif
 	/* init variable */
 	memset(tvafe, 0, sizeof(struct tvafe_info_s));
 	/**enable and reset tvafe clock**/
@@ -670,7 +698,9 @@ void tvafe_dec_close(struct tvin_frontend_s *fe)
 		return;
 	}
 #endif
-
+#ifdef CONFIG_CMA
+	tvafe_cma_release(devp);
+#endif
 	del_timer_sync(&devp->timer);
 
 	/**set cvd2 reset to high**/
@@ -1562,16 +1592,17 @@ static void tvafe_delete_device(int minor)
 
 typedef int (*hook_func_t)(void);
 extern void aml_fe_hook_cvd(hook_func_t atv_mode,hook_func_t cvd_hv_lock);
-
+static struct resource tvafe_memobj;
 static int tvafe_drv_probe(struct platform_device *pdev)
 {
 	int ret = 0;
 	struct tvafe_dev_s *tdevp;
 	struct device_node *of_node = pdev->dev.of_node;
 	const void *name;
-	int offset,size;
-	//struct resource *res;
+	int offset,size,mem_size_m,mem_cma_en;
+	struct resource *res;
 	//struct tvin_frontend_s * frontend;
+	mem_cma_en = 0;
 
 	/* allocate memory for the per-device structure */
 	tdevp = kmalloc(sizeof(struct tvafe_dev_s), GFP_KERNEL);
@@ -1629,39 +1660,55 @@ static int tvafe_drv_probe(struct platform_device *pdev)
 
 	/* get device memory */
 #ifdef CONFIG_USE_OF
+	res = &tvafe_memobj;
 	ret = find_reserve_block(pdev->dev.of_node->name,0);
 	if(ret < 0) {
-		name = of_get_property(of_node, "share-memory-name", NULL);
-		if(!name){
-		        pr_err("\ntvafe memory resource undefined1.\n");
-		        ret = -EFAULT;
-		        goto fail_get_resource_mem;
-		}else {
-		        ret= find_reserve_block_by_name(name);
-		        if(ret<0) {
-		                pr_err("\ntvafe memory resource undefined2.\n");
-		                ret = -EFAULT;
-		                goto fail_get_resource_mem;
-		        }
-		        name = of_get_property(of_node, "share-memory-offset", NULL);
-		        if(name)
-		                offset = of_read_ulong(name,1);
-		        else {
-		                pr_err("\ntvafe memory resource undefined3.\n");
-		                ret = -EFAULT;
-		                goto fail_get_resource_mem;
-		        }
-		        name = of_get_property(of_node, "share-memory-size", NULL);
-		        if(name)
-		                size = of_read_ulong(name,1);
-		        else {
-		                pr_err("\ntvafe memory resource undefined4.\n");
-		                ret = -EFAULT;
-		                goto fail_get_resource_mem;
-		        }
+#ifdef CONFIG_CMA
+		if (of_node) {
+			ret = of_property_read_u32(of_node, "max_size", &mem_size_m);
+			if (ret) {
+				pr_err("\nvdin cma mem undefined1.\n");
+			}
+			else {
+				tdevp->cma_mem_size = mem_size_m;
+				tdevp->this_pdev = pdev;
+				mem_cma_en = 1;
+			}
+		}
+#endif
+		if (mem_cma_en != 1) {
+			name = of_get_property(of_node, "share-memory-name", NULL);
+			if(!name){
+			        pr_err("\ntvafe memory resource undefined1.\n");
+			        ret = -EFAULT;
+			        goto fail_get_resource_mem;
+			}else {
+			        ret= find_reserve_block_by_name(name);
+			        if(ret<0) {
+			                pr_err("\ntvafe memory resource undefined2.\n");
+			                ret = -EFAULT;
+			                goto fail_get_resource_mem;
+			        }
+			        name = of_get_property(of_node, "share-memory-offset", NULL);
+			        if(name)
+			                offset = of_read_ulong(name,1);
+			        else {
+			                pr_err("\ntvafe memory resource undefined3.\n");
+			                ret = -EFAULT;
+			                goto fail_get_resource_mem;
+			        }
+			        name = of_get_property(of_node, "share-memory-size", NULL);
+			        if(name)
+			                size = of_read_ulong(name,1);
+			        else {
+			                pr_err("\ntvafe memory resource undefined4.\n");
+			                ret = -EFAULT;
+			                goto fail_get_resource_mem;
+			        }
 
-		        tdevp->mem.start = (phys_addr_t)get_reserve_block_addr(ret)+offset;
-		        tdevp->mem.size = size;
+			        tdevp->mem.start = (phys_addr_t)get_reserve_block_addr(ret)+offset;
+			        tdevp->mem.size = size;
+			}
 		}
 	}
 	else {
@@ -1678,9 +1725,11 @@ static int tvafe_drv_probe(struct platform_device *pdev)
 	tdevp->mem.start = res->start;
 	tdevp->mem.size = res->end - res->start + 1;
 #endif
-	pr_info(" tvafe cvd memory addr is:0x%x, cvd mem_size is:0x%x . \n",
-			tdevp->mem.start,
-			tdevp->mem.size);
+	if (mem_cma_en != 1) {
+		pr_info(" tvafe cvd memory addr is:0x%x, cvd mem_size is:0x%x . \n",
+				tdevp->mem.start,
+				tdevp->mem.size);
+	}
 #ifdef CONFIG_USE_OF
 	if(of_property_read_u32_array(pdev->dev.of_node, "tvafe_pin_mux",
 				(u32*)tvafe_pinmux.pin, TVAFE_SRC_SIG_MAX_NUM)){

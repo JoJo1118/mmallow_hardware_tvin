@@ -71,6 +71,11 @@ typedef struct tvafe_dev_s {
 	struct tvafe_cvd2_mem_s     mem;
 
 	struct tvafe_info_s         tvafe;
+#ifdef CONFIG_CMA
+	struct platform_device	*this_pdev;
+	struct page 			*venc_pages;
+	unsigned int			cma_mem_size;//MBYTE
+#endif
 
 } tvafe_dev_t;
 

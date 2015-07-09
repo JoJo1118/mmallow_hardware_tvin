@@ -331,6 +331,7 @@ static inline void vdin_set_source_type(struct vdin_dev_s *devp, struct vframe_s
 		case TVIN_PORT_HDMI5:
 		case TVIN_PORT_HDMI6:
 		case TVIN_PORT_HDMI7:
+		case TVIN_PORT_DVIN0://external hdmiin used default
 			vf->source_type = VFRAME_SOURCE_TYPE_HDMI;
 			break;
 		default:
@@ -1353,6 +1354,8 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 		curr_wr_vf->height = devp->v_active<<1;
 	else
 		curr_wr_vf->height = devp->v_active;
+	/* debug for video latency */
+	curr_wr_vf->ready_jiffies64 = jiffies_64;
 	curr_wr_vfe->flag |= VF_FLAG_NORMAL_FRAME;
 	if(devp->flags&VDIN_FLAG_RDMA_ENABLE)
 		devp->last_wr_vfe = curr_wr_vfe;
@@ -1533,6 +1536,8 @@ irqreturn_t vdin_v4l2_isr(int irq, void *dev_id)
 		        goto irq_handled;
                 }
 	}
+	/* debug for video latency */
+	curr_wr_vf->ready_jiffies64 = jiffies_64;
 	if(curr_wr_vfe){
 		curr_wr_vfe->flag |= VF_FLAG_NORMAL_FRAME;
 		//provider_vf_put(curr_wr_vfe, devp->vfp);

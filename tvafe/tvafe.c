@@ -1603,6 +1603,7 @@ static int tvafe_drv_probe(struct platform_device *pdev)
 	struct resource *res;
 	//struct tvin_frontend_s * frontend;
 	mem_cma_en = 0;
+	mem_size_m = 0;
 
 	/* allocate memory for the per-device structure */
 	tdevp = kmalloc(sizeof(struct tvafe_dev_s), GFP_KERNEL);

@@ -2065,6 +2065,7 @@ static int vdin_drv_probe(struct platform_device *pdev)
 	int offset,size,mem_size_m,mem_cma_en;
 	struct device_node *of_node = pdev->dev.of_node;
 	mem_cma_en = 0;
+	mem_size_m = 0;
 	
 	/* malloc vdev */
 	vdevp = kmalloc(sizeof(struct vdin_dev_s), GFP_KERNEL);

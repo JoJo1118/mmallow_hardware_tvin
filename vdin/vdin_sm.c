@@ -451,6 +451,7 @@ void tvin_smr(struct vdin_dev_s *devp)
                                     {
                                             tvin_smr_init_counter(devp->index);
                                             sm_p->state = TVIN_SM_STATUS_UNSTABLE;
+					    info->status   = TVIN_SIG_STATUS_UNSTABLE;
                                             if (sm_debug_enable)
                                                     pr_info("[smr.%d] stable --> unstable\n",devp->index);
                                             sm_print_nosig  = 0;
@@ -763,6 +764,7 @@ void tvin_smr(struct vdin_dev_s *devp)
 	                {
 	                    tvin_smr_init_counter(devp->index);
 	                    sm_p->state = TVIN_SM_STATUS_UNSTABLE;
+			    info->status = TVIN_SIG_STATUS_UNSTABLE;
 	                    if (sm_debug_enable)
 	                        pr_info("[smr.%d] stable --> unstable\n",devp->index);
 	                    sm_print_nosig  = 0;

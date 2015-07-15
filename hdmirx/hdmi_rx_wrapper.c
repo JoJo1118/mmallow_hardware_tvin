@@ -85,7 +85,7 @@ MODULE_PARM_DESC(force_hdmi_5v_high, "\n force_hdmi_5v_high \n");
 module_param(force_hdmi_5v_high, bool, 0664);
 
 static int sig_lost_lock_cnt = 0;	//signal ready PLL lock --> unlock
-static int sig_lost_lock_max = 2;	//10->6 tiammao box timingchange issue
+static int sig_lost_lock_max = 4;	//10->6 tiammao box timingchange issue
 MODULE_PARM_DESC(sig_lost_lock_max, "\n sig_lost_lock_max \n");
 module_param(sig_lost_lock_max, int, 0664);
 
@@ -105,7 +105,7 @@ MODULE_PARM_DESC(sig_unstable_max, "\n sig_unstable_max \n");
 module_param(sig_unstable_max, int, 0664);
 
 static int sig_unready_cnt = 0;
-static int sig_unready_max = 2;//5;//10;
+static int sig_unready_max = 8;//5;//10;
 MODULE_PARM_DESC(sig_unready_max, "\n sig_unready_max \n");
 module_param(sig_unready_max, int, 0664);
 
@@ -134,6 +134,10 @@ static bool current_port_hpd_ctl = false;
 MODULE_PARM_DESC(current_port_hpd_ctl, "\n current_port_hpd_ctl \n");
 module_param(current_port_hpd_ctl, bool, 0664);
 
+static bool reset_phy_enable = true;
+MODULE_PARM_DESC(reset_phy_enable, "\n reset_phy_enable \n");
+module_param(reset_phy_enable, bool, 0664);
+
 static int force_format = 0;
 MODULE_PARM_DESC(force_format, "\n force_format \n");
 module_param(force_format, int, 0664);
@@ -152,13 +156,21 @@ static int port_map = 0x3210;
 MODULE_PARM_DESC(port_map, "\n port_map \n");
 module_param(port_map, int, 0664);
 
-static int cfg_clk = 24000; //510/20*1000
+static int cfg_clk = 51000; //510/20*1000
 MODULE_PARM_DESC(cfg_clk, "\n cfg_clk \n");
 module_param(cfg_clk, int, 0664);
 
 static int lock_thres = LOCK_THRES;
 MODULE_PARM_DESC(lock_thres, "\n lock_thres \n");
 module_param(lock_thres, int, 0664);
+
+static bool use_tx_avmute_timingchange = false;
+MODULE_PARM_DESC(use_tx_avmute_timingchange, "\n use_tx_avmute_timingchange \n");
+module_param(use_tx_avmute_timingchange, bool, 0664);
+
+static bool use_tx_avmute_sourcechange = false;
+MODULE_PARM_DESC(use_tx_avmute_sourcechange, "\n use_tx_avmute_sourcechange \n");
+module_param(use_tx_avmute_sourcechange, bool, 0664);
 
 static int fast_switching = 0;//1;
 MODULE_PARM_DESC(fast_switching, "\n fast_switching \n");
@@ -1777,10 +1789,10 @@ void hdmirx_hw_monitor(void)
 		break;
 	case HDMIRX_HWSTATE_HDMI5V_LOW:
 		if(rx.current_port_tx_5v_status){
-			//if(!multi_port_edid_enable){
+			if(!multi_port_edid_enable){
 				if(hpd_wait_cnt++ < hpd_wait_max)  //waiting hpd low 100ms at least
 					break;
-			//}
+			}
 			rx.state = HDMIRX_HWSTATE_HDMI5V_HIGH;
 			rx.pre_state = HDMIRX_HWSTATE_HDMI5V_LOW;
 			hpd_wait_cnt = 0;
@@ -1794,9 +1806,9 @@ void hdmirx_hw_monitor(void)
 			rx.pre_state = HDMIRX_HWSTATE_HDMI5V_HIGH;
 			hdmirx_print("\n[HDMIRX State] 5v high->HPD_LOW\n");
 		} else {
-			//if(!multi_port_edid_enable){
+			if(!multi_port_edid_enable){
 				hdmirx_set_hpd(rx.port, 1);    //hpd high
-			//}
+			}
 			rx.state = HDMIRX_HWSTATE_HPD_READY;
 			rx.pre_state = HDMIRX_HWSTATE_HDMI5V_HIGH;
 			//rx.no_signal = false;
@@ -1821,7 +1833,8 @@ void hdmirx_hw_monitor(void)
 		break;
 	case HDMIRX_HWSTATE_TIMINGCHANGE:
 		hdmirx_print("[HDMIRX State] HDMIRX_HWSTATE_TIMINGCHANGE\n");
-		hdmirx_phy_init(rx.port, 0);
+		if(reset_phy_enable)
+			hdmirx_phy_init(rx.port, 0);
 		pre_tmds_clk_div4 = 0;
 		rx.state = HDMIRX_HWSTATE_SIG_UNSTABLE;
 		rx.pre_state = HDMIRX_HWSTATE_TIMINGCHANGE;
@@ -1843,9 +1856,10 @@ void hdmirx_hw_monitor(void)
 
 				rx.state = HDMIRX_HWSTATE_SIG_STABLE;
 				rx.pre_state = HDMIRX_HWSTATE_SIG_UNSTABLE;
-				hdmirx_module_control(1);
-				if(reset_sw)
+				if(reset_sw){
+					hdmirx_module_control(1);
 					hdmirx_DWC_reset();
+				}
 				sig_pll_unlock_cnt = 0;
 				sig_pll_lock_cnt = 0;
 				rx.no_signal = false;
@@ -1941,7 +1955,9 @@ void hdmirx_hw_monitor(void)
 			hdmirx_audio_fifo_rst();
 			#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 			hdmirx_audiopll_control(0);
-			hdmirx_module_control(0);
+			if(reset_sw){
+				hdmirx_module_control(0);
+			}
 			#endif
 			rx.state = HDMIRX_HWSTATE_HDMI5V_LOW;
 			rx.pre_state = HDMIRX_HWSTATE_SIG_READY;
@@ -1951,9 +1967,19 @@ void hdmirx_hw_monitor(void)
 		    if (sig_lost_lock_cnt++ >= sig_lost_lock_max) {
 		        rx.state = HDMIRX_HWSTATE_SIG_UNSTABLE;
 				rx.pre_state = HDMIRX_HWSTATE_SIG_READY;
+				#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
+				if(use_tx_avmute_timingchange){
+					aml_write_reg32(P_HDMITX_ADDR_PORT+0x10,0x1018);
+					aml_write_reg32(P_HDMITX_ADDR_PORT+0x14,0x2);
+					//aml_write_reg32(P_HDMITX_ADDR_PORT+0x10,0x1018);
+					//aml_write_reg32(P_HDMITX_ADDR_PORT+0x14,0x1);
+		    	}
+				#endif
 				audio_sample_rate = 0;
 				#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
-				hdmirx_module_control(0);
+				if(reset_sw){
+					hdmirx_module_control(0);
+				}
 				hdmirx_audiopll_control(0);
 				#endif
 				hdmirx_audio_enable(0);
@@ -1979,7 +2005,17 @@ void hdmirx_hw_monitor(void)
 		            sig_unready_cnt = 0;
 					audio_sample_rate = 0;
 					#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
-					hdmirx_module_control(0);
+					if(use_tx_avmute_timingchange){
+						aml_write_reg32(P_HDMITX_ADDR_PORT+0x10,0x1018);
+						aml_write_reg32(P_HDMITX_ADDR_PORT+0x14,0x2);
+						//aml_write_reg32(P_HDMITX_ADDR_PORT+0x10,0x1018);
+						//aml_write_reg32(P_HDMITX_ADDR_PORT+0x14,0x1);
+					}
+					#endif
+					#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
+					if(reset_sw){
+						hdmirx_module_control(0);
+					}
 					hdmirx_audiopll_control(0);
 					#endif
 					hdmirx_audio_enable(0);
@@ -1998,7 +2034,17 @@ void hdmirx_hw_monitor(void)
 		            sig_unready_cnt = 0;
 					audio_sample_rate = 0;
 					#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
-					hdmirx_module_control(0);
+					if(use_tx_avmute_timingchange){
+						aml_write_reg32(P_HDMITX_ADDR_PORT+0x10,0x1018);
+						aml_write_reg32(P_HDMITX_ADDR_PORT+0x14,0x2);
+						//aml_write_reg32(P_HDMITX_ADDR_PORT+0x10,0x1018);
+						//aml_write_reg32(P_HDMITX_ADDR_PORT+0x14,0x1);
+					}
+					#endif
+					#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
+					if(reset_sw){
+						hdmirx_module_control(0);
+					}
 					hdmirx_audiopll_control(0);
 					#endif
 					hdmirx_audio_enable(0);
@@ -3057,7 +3103,14 @@ void hdmirx_hw_init(tvin_port_t port)
 	//hdmirx_set_pinmux();
 	//hdmirx_default_hpd(1);
 	//mdelay(30);
-
+	#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
+	if(use_tx_avmute_sourcechange){
+		aml_write_reg32(P_HDMITX_ADDR_PORT+0x10,0x1018);
+		aml_write_reg32(P_HDMITX_ADDR_PORT+0x14,0x2);
+		//aml_write_reg32(P_HDMITX_ADDR_PORT+0x10,0x1018);
+		//aml_write_reg32(P_HDMITX_ADDR_PORT+0x14,0x1);
+	}
+	#endif
     hdmirx_print("%s %d\n", __func__, rx.port);
 
 }
@@ -3075,6 +3128,14 @@ void hdmirx_hw_uninit(void)
 	if(!multi_port_edid_enable){
 		hdmirx_set_hpd(rx.port, 0);
 	}
+	#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
+	if(use_tx_avmute_sourcechange){
+		aml_write_reg32(P_HDMITX_ADDR_PORT+0x10,0x1018);
+		aml_write_reg32(P_HDMITX_ADDR_PORT+0x14,0x2);
+		//aml_write_reg32(P_HDMITX_ADDR_PORT+0x10,0x1018);
+		//aml_write_reg32(P_HDMITX_ADDR_PORT+0x14,0x1);
+	}
+	#endif
 #ifndef CEC_FUNC_ENABLE
     hdmirx_wr_top(HDMIRX_TOP_INTR_MASKN, 0);
     hdmirx_interrupts_cfg(false);

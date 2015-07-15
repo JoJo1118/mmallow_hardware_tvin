@@ -136,6 +136,9 @@ static bool hdcp_enable = 1;
 MODULE_PARM_DESC(hdcp_enable, "\n hdcp_enable \n");
 module_param(hdcp_enable, bool, 0664);
 
+static bool use_audioresample_reset = false;
+MODULE_PARM_DESC(use_audioresample_reset, "\n use_audioresample_reset \n");
+module_param(use_audioresample_reset, bool, 0664);
 
 
 /**
@@ -393,7 +396,7 @@ void hdmirx_phy_init(int rx_port_sel, int dcm)
     // PDDQ = 1'b1; PHY_RESET = 1'b1;
     data32  = 0;
     data32 |= 1             << 6;   // [6]      physvsretmodez
-    data32 |= 1             << 4;   // [5:4]    cfgclkfreq
+    data32 |= 2             << 4;   // [5:4]    cfgclkfreq  //51Mhz
     data32 |= rx_port_sel   << 2;   // [3:2]    portselect
     data32 |= 1             << 1;   // [1]      phypddq
     data32 |= 1             << 0;   // [0]      phyreset
@@ -403,7 +406,7 @@ void hdmirx_phy_init(int rx_port_sel, int dcm)
     // PDDQ = 1'b1; PHY_RESET = 1'b0;
     data32  = 0;
     data32 |= 1             << 6;   // [6]      physvsretmodez
-    data32 |= 1             << 4;   // [5:4]    cfgclkfreq
+    data32 |= 2             << 4;   // [5:4]    cfgclkfreq
     data32 |= rx_port_sel   << 2;   // [3:2]    portselect
     data32 |= 1             << 1;   // [1]      phypddq
     data32 |= 0             << 0;   // [0]      phyreset
@@ -482,7 +485,7 @@ void hdmirx_phy_init(int rx_port_sel, int dcm)
     // PDDQ = 1'b0; PHY_RESET = 1'b0;
     data32  = 0;
     data32 |= 1             << 6;   // [6]      physvsretmodez
-    data32 |= 1             << 4;   // [5:4]    cfgclkfreq
+    data32 |= 2             << 4;   // [5:4]    cfgclkfreq
     data32 |= rx_port_sel   << 2;   // [3:2]    portselect
     data32 |= 0             << 1;   // [1]      phypddq
     data32 |= 0             << 0;   // [0]      phyreset
@@ -570,12 +573,16 @@ void hdmirx_audiopll_control(bool enable)
 		WRITE_CBUS_REG(HHI_HDMIRX_AUD_PLL_CNTL,0x40000000);
 		WRITE_CBUS_REG(HHI_ADC_PLL_CNTL4,0x805);
 		hdmirx_wr_top(HDMIRX_TOP_ACR_CNTL_STAT,hdmirx_rd_top(HDMIRX_TOP_ACR_CNTL_STAT)|(1<<11));
-		WRITE_CBUS_REG(AUD_RESAMPLE_CTRL0,(READ_CBUS_REG(AUD_RESAMPLE_CTRL0) | 0x10000000) & 0x7fffffff);
+		if(use_audioresample_reset) {
+			WRITE_CBUS_REG(AUD_RESAMPLE_CTRL0,(READ_CBUS_REG(AUD_RESAMPLE_CTRL0) | 0x10000000) & 0x7fffffff);
+		}
 	}else{
 		//disable pll, into reset mode
 		WRITE_CBUS_REG(HHI_HDMIRX_AUD_PLL_CNTL,0x20000000);
-		//reset resample module
-		WRITE_CBUS_REG(AUD_RESAMPLE_CTRL0,(READ_CBUS_REG(AUD_RESAMPLE_CTRL0) | 0x80000000) & 0xefffffff);
+		if(use_audioresample_reset) {
+			//reset resample module
+			WRITE_CBUS_REG(AUD_RESAMPLE_CTRL0,(READ_CBUS_REG(AUD_RESAMPLE_CTRL0) | 0x80000000) & 0xefffffff);
+		}
 	}
 }
 #endif
@@ -1302,14 +1309,18 @@ void clk_init(void)
     *((volatile unsigned long *) (P_HDMIRX_CTRL_PORT+0x10))   |= (1 << 15);   // APB3 to HDMIRX-DWC err_en
 
     //turn on clocks: md, cfg...
-
+	//G9 clk tree
+	//fclk_div5 510M ----- mux sel = 3
+	//fclk_div3 850M ----- mux sel = 2
+	//fclk_div4 637M ----- mux sel = 1
+	//XTAL 		24M  ----- mux sel = 0
     data32  = 0;
     data32 |= 0 << 25;  // [26:25] HDMIRX mode detection clock mux select: osc_clk
     data32 |= 1 << 24;  // [24]    HDMIRX mode detection clock enable
     data32 |= 0 << 16;  // [22:16] HDMIRX mode detection clock divider
-    data32 |= 0 << 9;   // [10: 9] HDMIRX config clock mux select: fclk_div5=400MHz
+    data32 |= 3 << 9;   // [10: 9] HDMIRX config clock mux select:
     data32 |= 1 << 8;   // [    8] HDMIRX config clock enable
-    data32 |= 0 << 0;   // [ 6: 0] HDMIRX config clock divider: 400/4=100MHz
+    data32 |= 9 << 0;   // [ 6: 0] HDMIRX config clock divider:
     WRITE_MPEG_REG(HHI_HDMIRX_CLK_CNTL,     data32);
 
     data32  = 0;

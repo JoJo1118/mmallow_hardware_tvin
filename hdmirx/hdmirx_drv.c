@@ -21,6 +21,7 @@
 #include <linux/fs.h>
 #include <linux/device.h>
 #include <linux/cdev.h>
+#include <linux/switch.h>
 #include <linux/platform_device.h>
 #include <linux/interrupt.h>
 #include <linux/errno.h>
@@ -71,6 +72,13 @@ int resume_flag = 0;
 static int force_colorspace = 0;
 //int cur_colorspace = 0xff;
 static int hdmi_yuv444_enable = 1;
+
+static unsigned int plug_event = 0;
+static uint32_t pre_pwr5v = 0;
+static struct timer_list cable_plug_timer;
+static struct switch_dev hdmiin_sdev = {
+	.name = "sigin",
+};
 
 
 MODULE_PARM_DESC(resume_flag, "\n resume_flag \n");
@@ -135,6 +143,29 @@ void hdmirx_timer_handler(unsigned long arg)
 #endif
 	devp->timer.expires = jiffies + TIMER_STATE_CHECK;
 	add_timer(&devp->timer);
+}
+
+static void cable_plug_timer_cb(unsigned long arg)
+{
+	struct timer_list *timer = (struct timer_list *)arg;
+	unsigned int plugged = 0;
+	uint32_t pwr5v = hdmirx_rd_top(HDMIRX_TOP_HPD_PWR5V) >> 20;
+
+	if (pre_pwr5v != 0) {
+		if (pre_pwr5v != pwr5v) {
+			plugged = pwr5v & (pwr5v ^ pre_pwr5v);
+			if (!plugged) {
+				plugged = -(pre_pwr5v & (pwr5v ^ pre_pwr5v));
+			}
+			pr_info("hdmirx: plugged %d\n", plugged);
+			switch_set_state(&hdmiin_sdev, plugged);
+			pre_pwr5v = pwr5v;
+		}
+	} else {
+		pre_pwr5v = pwr5v;
+	}
+	timer->expires = jiffies + TIMER_STATE_CHECK;
+	add_timer(timer);
 }
 
 int hdmirx_dec_support(struct tvin_frontend_s *fe, enum tvin_port_e port)
@@ -942,6 +973,15 @@ static int hdmirx_probe(struct platform_device *pdev)
 	hdevp->timer.expires = jiffies + TIMER_STATE_CHECK;
 	add_timer(&hdevp->timer);
 #endif
+	if (plug_event) {
+		init_timer(&cable_plug_timer);
+		cable_plug_timer.data = (ulong)&cable_plug_timer;
+		cable_plug_timer.function = cable_plug_timer_cb;
+		cable_plug_timer.expires = jiffies + TIMER_STATE_CHECK;
+		add_timer(&cable_plug_timer);
+	} else {
+		printk("[%s:%d]!plug_event\n", __func__, __LINE__);
+	}
 	pr_info("hdmirx: driver probe ok\n");
 	return 0;
 
@@ -1135,6 +1175,8 @@ static int __init hdmirx_init(void)
 		ret = -ENODEV;
 		goto fail_pdrv_register;
 	}
+
+	switch_dev_register(&hdmiin_sdev);
 	pr_info("hdmirx: hdmirx_init.\n");
 
 	hdmirx_irq_init();
@@ -1152,6 +1194,7 @@ fail_alloc_cdev_region:
 static void __exit hdmirx_exit(void)
 {
 	class_destroy(hdmirx_clsp);
+	switch_dev_unregister(&hdmiin_sdev);
 	unregister_chrdev_region(hdmirx_devno, 1);
 	platform_driver_unregister(&hdmirx_driver);
 	pr_info("hdmirx: hdmirx_exit.\n");
@@ -1230,6 +1273,14 @@ static  int __init hdmirx_boot_para_setup(char *s)
 
 __setup("hdmirx=",hdmirx_boot_para_setup);
 #endif
+
+static int __init hdmirx_plug_event_setup(char *s)
+{
+	printk("hdmi in plug event: %s\n", s);
+	plug_event = simple_strtoul(s, NULL, 10);
+	return 0;
+}
+__setup("hdmiinplugevent=", hdmirx_plug_event_setup);
 
 module_init(hdmirx_init);
 module_exit(hdmirx_exit);

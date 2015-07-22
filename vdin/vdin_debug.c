@@ -427,6 +427,11 @@ static ssize_t vdin_attr_store(struct device *dev,struct device_attribute *attr,
 		unsigned int r, g,b;
 		vdin_get_prob_rgb(devp->addr_offset,&r,&g,&b);
 		printk("rgb_info-->r:%d,g:%d,b:%d\n",r,g,b);
+	}else if(!strcmp(parm[0],"mpeg2vdin")){
+		devp->h_active = simple_strtoul(parm[1],NULL,10);
+		devp->v_active = simple_strtoul(parm[2],NULL,10);
+		vdin_set_mpegin(devp);
+		printk("mpeg2vdin:h_active:%d,v_active:%d\n",devp->h_active,devp->v_active);
 	}
 
 

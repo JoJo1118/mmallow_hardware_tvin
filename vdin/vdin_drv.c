@@ -895,7 +895,7 @@ static int vdin_func(int no, vdin_arg_t *arg)
 		if(vdin_dbg_en)
 		        pr_err("[vdin..]%s vdin%d has't registered,please register.\n",__func__,no);
                 return -1;
-        }else if(!(devp->flags&VDIN_FLAG_DEC_STARTED)&&(parm->cmd != VDIN_CMD_MPEGIN_START)){
+        }else if(((!(devp->flags&VDIN_FLAG_DEC_STARTED))&&(parm->cmd != VDIN_CMD_MPEGIN_START))){
         	if(vdin_dbg_en)
 			;//pr_err("[vdin..]%s vdin%d has't started.\n",__func__,no);
 		return -1;
@@ -917,11 +917,18 @@ static int vdin_func(int no, vdin_arg_t *arg)
 			break;
 		case VDIN_CMD_MPEGIN_START:
 			devp->h_active = parm->h_active;
-			devp->v_active = parm->v_active;
+			devp->v_active = parm->v_active;	
+			#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8)
+			switch_vpu_mem_pd_vmod(devp->addr_offset?VPU_VIU_VDIN1:VPU_VIU_VDIN0,VPU_MEM_POWER_ON);
+			#endif
 			vdin_set_mpegin(devp);
+			pr_info("%s:VDIN_CMD_MPEGIN_START :h_active:%d,v_active:%d\n",
+				__func__,devp->h_active,devp->v_active);
 			if(!(devp->flags & VDIN_FLAG_DEC_STARTED)){
 				devp->curr_wr_vfe = kmalloc(sizeof(vf_entry_t),GFP_KERNEL);
 				devp->flags |= VDIN_FLAG_DEC_STARTED;
+			} else {
+				pr_info("%s:warning:VDIN_CMD_MPEGIN_START already\n",__func__);
 			}
 			break;
 		case VDIN_CMD_GET_HISTGRAM:
@@ -938,10 +945,16 @@ static int vdin_func(int no, vdin_arg_t *arg)
 			break;
 		case VDIN_CMD_MPEGIN_STOP:
 			if(devp->flags & VDIN_FLAG_DEC_STARTED){
+				pr_info("%s:warning:VDIN_CMD_MPEGIN_STOP\n",__func__);
+				#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8)
+				switch_vpu_mem_pd_vmod(devp->addr_offset?VPU_VIU_VDIN1:VPU_VIU_VDIN0,VPU_MEM_POWER_DOWN);
+				#endif
 				vdin_hw_disable(devp->addr_offset);
 				kfree(devp->curr_wr_vfe);
 				devp->curr_wr_vfe = NULL;
 				devp->flags &= (~VDIN_FLAG_DEC_STARTED);
+			} else {
+				pr_info("%s:warning:VDIN_CMD_MPEGIN_STOP already\n",__func__);
 			}
 			break;
 		case VDIN_CMD_FORCE_GO_FIELD:

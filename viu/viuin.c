@@ -31,6 +31,7 @@
 #include <linux/amlogic/amports/canvas.h>
 #include <linux/amlogic/amports/vframe.h>
 #include <linux/amlogic/amports/vframe_provider.h>
+#include <linux/amlogic/vout/vout_notify.h>
 #include <linux/amlogic/tvin/tvin_v4l2.h>
 #include <mach/am_regs.h>
 #ifdef CONFIG_GAMMA_AUTO_TUNE
@@ -660,7 +661,7 @@ static int viuin_isr(struct tvin_frontend_s *fe, unsigned int hcnt64)
 }
 
 static struct tvin_decoder_ops_s viu_dec_ops ={
-        .support            = viuin_support,
+	.support            = viuin_support,
 	.open               = viuin_open,
 	.start              = viuin_start,
 	.stop               = viuin_stop,
@@ -670,24 +671,19 @@ static struct tvin_decoder_ops_s viu_dec_ops ={
 
 static void viuin_sig_propery(struct tvin_frontend_s *fe, struct tvin_sig_property_s *prop)
 {
-        viuin_t *devp = container_of(fe,viuin_t,frontend);
-
-        #if ((MESON_CPU_TYPE == MESON_CPU_TYPE_MESON6) || (MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8)\
-			||(MESON_CPU_TYPE == MESON_CPU_TYPE_MESON8B)||( MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV))
-        prop->color_format = TVIN_YUV422;
-        #else
-        prop->color_format = TVIN_RGB444;
-        #endif
-        prop->dest_cfmt = devp->parm.dfmt;
-
-        prop->scaling4w = devp->parm.dest_hactive;
+	const vinfo_t *info;
+	viuin_t *devp = container_of(fe,viuin_t,frontend);
+	info = get_current_vinfo();
+	prop->color_format = info->viu_color_fmt;
+	prop->dest_cfmt = devp->parm.dfmt;
+	prop->scaling4w = devp->parm.dest_hactive;
 	prop->scaling4h = devp->parm.dest_vactive;
 
 	prop->vs = v_cut_offset;
 	prop->ve = 0;
 	prop->hs = 0;
 	prop->he = 0;
-        prop->decimation_ratio = 0;
+	prop->decimation_ratio = 0;
 }
 
 static bool viu_check_frame_skip(struct tvin_frontend_s *fe)

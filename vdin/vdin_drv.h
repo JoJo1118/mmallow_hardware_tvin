@@ -192,9 +192,10 @@ typedef struct vdin_dev_s {
         bool                            send2di;
         vdin_debug_t                    debug;
 #ifdef CONFIG_CMA
-	struct platform_device	*this_pdev;
-	struct page 			*venc_pages;
-	unsigned int			cma_mem_size;//MBYTE
+	struct platform_device	*this_pdev[2];
+	struct page 			*venc_pages[2];
+	unsigned int			cma_mem_size[2];//MBYTE
+	unsigned int			cma_mem_alloc[2];
 #endif
 } vdin_dev_t;
 

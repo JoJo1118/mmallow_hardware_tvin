@@ -528,10 +528,13 @@ static void vdin_vf_init(struct vdin_dev_s *devp)
 #ifdef CONFIG_CMA
 void vdin_cma_alloc(struct vdin_dev_s *devp)
 {
-	unsigned int mem_size_m = devp->cma_mem_size;
-	devp->venc_pages = dma_alloc_from_contiguous(&(devp->this_pdev->dev), (mem_size_m * SZ_1M) >> PAGE_SHIFT, 0);
+	unsigned int mem_size_m = devp->cma_mem_size[devp->index];
+	if (devp->cma_mem_alloc[devp->index] == 1)
+		return;
+	devp->cma_mem_alloc[devp->index] = 1;
+	devp->venc_pages[devp->index] = dma_alloc_from_contiguous(&(devp->this_pdev[devp->index]->dev), (mem_size_m * SZ_1M) >> PAGE_SHIFT, 0);
 	if (devp->venc_pages) {
-		devp->mem_start = page_to_phys(devp->venc_pages);
+		devp->mem_start = page_to_phys(devp->venc_pages[devp->index]);
 		devp->mem_size  = mem_size_m * SZ_1M;
 		pr_info("vdin%d mem_start = 0x%x, mem_size = 0x%x\n", devp->index,
 			devp->mem_start,devp->mem_size);
@@ -543,8 +546,9 @@ void vdin_cma_alloc(struct vdin_dev_s *devp)
 
 void vdin_cma_release(struct vdin_dev_s *devp)
 {
-	if (devp->venc_pages && devp->cma_mem_size) {
-		dma_release_from_contiguous(&(devp->this_pdev->dev), devp->venc_pages, (devp->cma_mem_size * SZ_1M)>>PAGE_SHIFT);
+	if (devp->venc_pages[devp->index] && devp->cma_mem_size[devp->index] && (devp->cma_mem_alloc[devp->index] == 1)) {
+		devp->cma_mem_alloc[devp->index] = 0;
+		dma_release_from_contiguous(&(devp->this_pdev[devp->index]->dev), devp->venc_pages[devp->index], (devp->cma_mem_size[devp->index] * SZ_1M)>>PAGE_SHIFT);
 		pr_info("vdin%d cma release ok!\n", devp->index);
 	}
 }
@@ -2140,8 +2144,9 @@ static int vdin_drv_probe(struct platform_device *pdev)
 				pr_err("\nvdin cma mem undefined1.\n");
 			}
 			else {
-				vdevp->cma_mem_size = mem_size_m;
-				vdevp->this_pdev = pdev;
+				vdevp->cma_mem_size[vdevp->index] = mem_size_m;
+				vdevp->this_pdev[vdevp->index] = pdev;
+				vdevp->cma_mem_alloc[vdevp->index] = 0;
 				mem_cma_en = 1;
 			}
 		}

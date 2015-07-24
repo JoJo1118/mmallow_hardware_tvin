@@ -891,6 +891,16 @@ static void memp_set(int type)
                 aml_set_reg32_mask(P_VPU_VD1_MMC_CTRL, 1<<12);       //           arb0
                 aml_set_reg32_mask(P_VPU_VD2_MMC_CTRL, 1<<12);       //           arb0
                 aml_set_reg32_mask(P_VPU_DI_IF1_MMC_CTRL, 1<<12);    //           arb0
+#if MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9BB
+				/* move to vdin arb */
+                aml_set_reg32_mask(P_VPU_DI_MEM_MMC_CTRL, 1<<12);    //           arb1
+                aml_set_reg32_mask(P_VPU_DI_INP_MMC_CTRL, 1<<12);    //           arb1
+                aml_set_reg32_mask(P_VPU_DI_MTNRD_MMC_CTRL, 1<<12);  //           arb0
+                aml_set_reg32_mask(P_VPU_DI_CHAN2_MMC_CTRL, 1<<12);  //           arb1
+                aml_set_reg32_mask(P_VPU_DI_MTNWR_MMC_CTRL, 1<<12);  //           arb1
+                aml_set_reg32_mask(P_VPU_DI_NRWR_MMC_CTRL, 1<<12);   //           arb1
+                aml_set_reg32_mask(P_VPU_DI_DIWR_MMC_CTRL, 1<<12);   //           arb1
+#else
                 aml_clr_reg32_mask(P_VPU_DI_MEM_MMC_CTRL, 1<<12);    //           arb1
                 aml_clr_reg32_mask(P_VPU_DI_INP_MMC_CTRL, 1<<12);    //           arb1
                 aml_set_reg32_mask(P_VPU_DI_MTNRD_MMC_CTRL, 1<<12);  //           arb0
@@ -898,7 +908,7 @@ static void memp_set(int type)
                 aml_clr_reg32_mask(P_VPU_DI_MTNWR_MMC_CTRL, 1<<12);  //           arb1
                 aml_clr_reg32_mask(P_VPU_DI_NRWR_MMC_CTRL, 1<<12);   //           arb1
                 aml_clr_reg32_mask(P_VPU_DI_DIWR_MMC_CTRL, 1<<12);   //           arb1
-
+#endif
                 aml_set_reg32_mask(P_VPU_TVD3D_MMC_CTRL, 1<<14);     //           arb2
                 aml_set_reg32_mask(P_VPU_TVD3D_MMC_CTRL, 1<<15);     //           urgent
                 aml_set_reg32_mask(P_VPU_TVDVBI_MMC_CTRL, 1<<14);    //           arb2

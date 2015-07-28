@@ -1140,8 +1140,8 @@ void hdmirx_set_pinmux(void)
         WRITE_CBUS_REG(PAD_PULL_UP_REG2, READ_CBUS_REG(PAD_PULL_UP_REG2) |
 	            ((1<<0)|(1<<4)|(1<<8)|(1<<12)));
 
-    WRITE_CBUS_REG(PERIPHS_PIN_MUX_10, READ_CBUS_REG(PERIPHS_PIN_MUX_10 ) &
-                (~((1<<2)|(1<<5)|(1<<8)|(1<<11))));
+    //WRITE_CBUS_REG(PERIPHS_PIN_MUX_10, READ_CBUS_REG(PERIPHS_PIN_MUX_10 ) &
+                //(~((1<<2)|(1<<5)|(1<<8)|(1<<11))));
 
     WRITE_CBUS_REG(PREG_PAD_GPIO0_EN_N, READ_CBUS_REG(PREG_PAD_GPIO0_EN_N) &
                 (~((1<<5)|(1<<9)|(1<<13)|(1<<17))));
@@ -1149,7 +1149,7 @@ void hdmirx_set_pinmux(void)
     //WRITE_CBUS_REG(PREG_PAD_GPIO0_O, READ_CBUS_REG(PREG_PAD_GPIO0_O) &
                 //(~((1<<5)|(1<<9)|(1<<13)|(1<<17))));
 	WRITE_CBUS_REG(PREG_PAD_GPIO0_O, READ_CBUS_REG(PREG_PAD_GPIO0_O) |
-                ((1<<1)|(1<<5)|(1<<9)|(1<<13)));
+                ((1<<17)|(1<<5)|(1<<9)|(1<<13)));
 #endif
 
 #if 0
@@ -1194,17 +1194,17 @@ void hdmirx_set_pinmux(void)
                   |(1<<13))));
     WRITE_CBUS_REG(PERIPHS_PIN_MUX_11, READ_CBUS_REG(PERIPHS_PIN_MUX_11 ) &
                 (~(
-                  (1<<24)
-                  |(1<<23)
+                  //(1<<24)
+                  (1<<23)
                   |(1<<22)
                   |(1<<21)
-                  |(1<<20)
+                 // |(1<<20)
                   |(1<<19)
-                  |(1<<12)
-                  |(1<<11)
-                  |(1<<10)
-                  |(1<<9)
-                  |(1<<8)
+                 // |(1<<12)
+                 // |(1<<11)
+                 // |(1<<10)
+                 // |(1<<9)
+                 // |(1<<8)
                   |(1<<7)
                   |(1<<6)
                   |(1<<5)
@@ -1230,9 +1230,8 @@ void hdmirx_set_pinmux(void)
 
     WRITE_CBUS_REG(PREG_PAD_GPIO0_EN_N, READ_CBUS_REG(PREG_PAD_GPIO0_EN_N) &
                 (~((1<<5)|(1<<9)|(1<<13)|(1<<17))));
-
-    WRITE_CBUS_REG(PREG_PAD_GPIO0_O, READ_CBUS_REG(PREG_PAD_GPIO0_O) |
-                ((1<<5)|(1<<9)|(1<<13)|(1<<17)));
+    //WRITE_CBUS_REG(PREG_PAD_GPIO0_EN_N, READ_CBUS_REG(PREG_PAD_GPIO0_EN_N) |
+                //((1<<5)|(1<<9)|(1<<13)|(1<<17)));
 #endif
 
 #if 0
@@ -1463,7 +1462,9 @@ void hdmirx_hw_probe(void)
     //turn on clocks: md, cfg...
 	//turn on cfg_clk
     WRITE_MPEG_REG(HHI_HDMIRX_CLK_CNTL,	0x100);
+
 	hdmirx_wr_top(HDMIRX_DWC_DMI_DISABLE_IF,0x29);//bit0,bit3,bit5
+	hdmirx_wr_top(HDMIRX_TOP_EDID_GEN_CNTL,0x1e109);
 	#ifdef CEC_FUNC_ENABLE
 	cec_init();
 	#endif

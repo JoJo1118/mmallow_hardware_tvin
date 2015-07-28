@@ -116,6 +116,9 @@ static bool vdin_dbg_en = 0;
 module_param(vdin_dbg_en,bool,0664);
 MODULE_PARM_DESC(vdin_dbg_en,"enable/disable vdin debug information");
 
+static bool time_en = 0;
+module_param(time_en,bool,0664);
+MODULE_PARM_DESC(time_en,"enable/disable vdin debug information");
 static bool invert_top_bot = false;
 module_param(invert_top_bot,bool,0644);
 MODULE_PARM_DESC(invert_top_bot,"invert field type top or bottom");
@@ -652,10 +655,10 @@ void vdin_start_dec(struct vdin_dev_s *devp)
 #endif
 	vdin_hw_enable(devp->addr_offset);
 	vdin_set_all_regs(devp);
-
+#ifdef TVAFE_VGA_SUPPORT
 	if ((devp->parm.port >= TVIN_PORT_VGA0) && (devp->parm.port <= TVIN_PORT_VGA7))
 		vdin_set_matrix_blank(devp);
-
+#endif
 	if (!(devp->parm.flag & TVIN_PARM_FLAG_CAP) &&
 			devp->frontend->dec_ops && devp->frontend->dec_ops->start)
 		devp->frontend->dec_ops->start(devp->frontend, devp->parm.info.fmt);
@@ -692,6 +695,9 @@ void vdin_start_dec(struct vdin_dev_s *devp)
 	}
 	#endif
 	irq_cnt = 0;
+	if(time_en)
+		pr_info("vdin.%d start time: %ums, run time:%ums.\n",devp->index,jiffies_to_msecs(jiffies),
+			jiffies_to_msecs(jiffies)-devp->start_time);
 }
 
 /*
@@ -707,18 +713,17 @@ void vdin_stop_dec(struct vdin_dev_s *devp)
 	/* avoid null pointer oops */
 	if (!devp || !devp->frontend)
 		return;
-	vf_unreg_provider(&devp->vprov);
+	disable_irq_nosync(devp->irq);
+	vdin_hw_disable(devp->addr_offset);
 	if (!(devp->parm.flag & TVIN_PARM_FLAG_CAP) &&
 			devp->frontend->dec_ops && devp->frontend->dec_ops->stop)
 		devp->frontend->dec_ops->stop(devp->frontend, devp->parm.port);
 	vdin_set_default_regmap(devp->addr_offset);
-	vdin_hw_disable(devp->addr_offset);
+	vdin_set_def_wr_canvas(devp);
+	vf_unreg_provider(&devp->vprov);
 #ifdef CONFIG_CMA
 	vdin_cma_release(devp);
 #endif
-	disable_irq_nosync(devp->irq);
-	/* reset default canvas  */
-	vdin_set_def_wr_canvas(devp);
 	#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8)
 	switch_vpu_mem_pd_vmod(devp->addr_offset?VPU_VIU_VDIN1:VPU_VIU_VDIN0,VPU_MEM_POWER_DOWN);
 	#endif
@@ -726,8 +731,9 @@ void vdin_stop_dec(struct vdin_dev_s *devp)
 	devp->flags &= (~VDIN_FLAG_RDMA_ENABLE);
 	ignore_frames = 0;
 	devp->cycle = 0;
-	if(vdin_dbg_en)
-		pr_info("%s ok\n", __func__);
+	if(time_en)
+		pr_info("vdin.%d stop time %ums,run time:%ums.\n",devp->index,jiffies_to_msecs(jiffies),
+			jiffies_to_msecs(jiffies)-devp->start_time);
 }
 //@todo
 
@@ -849,7 +855,7 @@ int stop_tvin_service(int no)
 	free_irq(devp->irq,(void *)devp);
 #endif
 	end_time = jiffies_to_msecs(jiffies);
-	if(vdin_dbg_en)
+	if(time_en)
 		pr_info("[vdin]:vdin start time:%ums,stop time:%ums,run time:%u.\n",devp->start_time,end_time,end_time-devp->start_time);
 	return 0;
 }
@@ -1679,7 +1685,7 @@ static int vdin_release(struct inode *inode, struct file *file)
 static long vdin_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	long ret = 0;
-	unsigned int delay_cnt = 0;
+//	unsigned int delay_cnt = 0;
 	vdin_dev_t *devp = NULL;
 	void __user *argp = (void __user *)arg;
 
@@ -1704,6 +1710,8 @@ static long vdin_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 				mutex_unlock(&devp->fe_lock);
 				break;
 			}
+			if(time_en)
+				pr_info("TVIN_IOC_OPEN %ums.\n",jiffies_to_msecs(jiffies));
 			if (devp->flags & VDIN_FLAG_DEC_OPENED) {
 				pr_err("TVIN_IOC_OPEN(%d) port %s opend already\n",
 						parm.index, tvin_port_str(parm.port));
@@ -1738,6 +1746,10 @@ static long vdin_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 				ret = -EBUSY;
 				mutex_unlock(&devp->fe_lock);
 				break;
+			}
+			if(time_en) {
+				devp->start_time = jiffies_to_msecs(jiffies);
+				pr_info("TVIN_IOC_START_DEC %ums.\n",devp->start_time);
 			}
 			if ((devp->parm.info.status != TVIN_SIG_STATUS_STABLE) ||
 					(devp->parm.info.fmt == TVIN_SIG_FMT_NULL))
@@ -1785,13 +1797,11 @@ static long vdin_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 				mutex_unlock(&devp->fe_lock);
 				break;
 			}
-			devp->flags |= VDIN_FLAG_DEC_STOP_ISR;
-			delay_cnt = 7;
-			while ((devp->flags & VDIN_FLAG_DEC_STOP_ISR) && delay_cnt)
-			{
-				mdelay(10);
-				delay_cnt--;
+			if(time_en) {
+				devp->start_time = jiffies_to_msecs(jiffies);
+				pr_info("TVIN_IOC_STOP_DEC %ums.\n",devp->start_time);
 			}
+			devp->flags |= VDIN_FLAG_DEC_STOP_ISR;
 			vdin_stop_dec(devp);
                         /*
 			if (devp->flags & VDIN_FLAG_FORCE_UNSTABLE)
@@ -1849,6 +1859,8 @@ static long vdin_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 				mutex_unlock(&devp->fe_lock);
 				break;
 			}
+			if(time_en)
+				pr_info("TVIN_IOC_CLOSE %ums.\n",jiffies_to_msecs(jiffies));
 			vdin_close_fe(devp);
 			devp->flags &= (~VDIN_FLAG_DEC_OPENED);
 			if(vdin_dbg_en)

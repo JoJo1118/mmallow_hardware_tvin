@@ -385,7 +385,7 @@ void tvin_smr(struct vdin_dev_s *devp)
                                             sm_p->state       = TVIN_SM_STATUS_STABLE;
                                             info->status        = TVIN_SIG_STATUS_STABLE;
                                             if (sm_debug_enable)
-                                                    pr_info("[smr.%d] prestable --> stable\n",devp->index);
+                                                    pr_info("[smr.%d] %ums prestable --> stable\n",devp->index,jiffies_to_msecs(jiffies));
                                             sm_print_nosig  = 0;
                                             sm_print_notsup = 0;
                                     }
@@ -395,7 +395,7 @@ void tvin_smr(struct vdin_dev_s *devp)
                                     sm_p->state       = TVIN_SM_STATUS_STABLE;
                                     info->status        = TVIN_SIG_STATUS_STABLE;
                                     if (sm_debug_enable)
-                                            pr_info("[smr.%d] prestable --> stable\n",devp->index);
+                                            pr_info("[smr.%d] %ums prestable --> stable\n",devp->index,jiffies_to_msecs(jiffies));
                                     sm_print_nosig  = 0;
                                     sm_print_notsup = 0;
                             }
@@ -695,7 +695,7 @@ void tvin_smr(struct vdin_dev_s *devp)
                         sm_p->state       = TVIN_SM_STATUS_STABLE;
                         info->status        = TVIN_SIG_STATUS_STABLE;
                         if (sm_debug_enable)
-                                pr_info("[smr.%d] prestable --> stable\n",devp->index);
+                                pr_info("[smr.%d] %ums prestable --> stable\n",devp->index,jiffies_to_msecs(jiffies));
                         sm_print_nosig  = 0;
                         sm_print_notsup = 0;
                     }
@@ -705,7 +705,7 @@ void tvin_smr(struct vdin_dev_s *devp)
                     sm_p->state	= TVIN_SM_STATUS_STABLE;
                     info->status = TVIN_SIG_STATUS_STABLE;
                     if (sm_debug_enable)
-                        pr_info("[smr.%d] prestable --> stable\n",devp->index);
+                        pr_info("[smr.%d] %ums prestable --> stable\n",devp->index,jiffies_to_msecs(jiffies));
                     sm_print_nosig  = 0;
                     sm_print_notsup = 0;
                 }

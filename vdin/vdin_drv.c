@@ -529,6 +529,8 @@ static void vdin_vf_init(struct vdin_dev_s *devp)
 void vdin_cma_alloc(struct vdin_dev_s *devp)
 {
 	unsigned int mem_size_m = devp->cma_mem_size[devp->index];
+	if (devp->cma_config_en == 0)
+		return;
 	if (devp->cma_mem_alloc[devp->index] == 1)
 		return;
 	devp->cma_mem_alloc[devp->index] = 1;
@@ -546,6 +548,8 @@ void vdin_cma_alloc(struct vdin_dev_s *devp)
 
 void vdin_cma_release(struct vdin_dev_s *devp)
 {
+	if (devp->cma_config_en == 0)
+			return;
 	if (devp->venc_pages[devp->index] && devp->cma_mem_size[devp->index] && (devp->cma_mem_alloc[devp->index] == 1)) {
 		devp->cma_mem_alloc[devp->index] = 0;
 		dma_release_from_contiguous(&(devp->this_pdev[devp->index]->dev), devp->venc_pages[devp->index], (devp->cma_mem_size[devp->index] * SZ_1M)>>PAGE_SHIFT);
@@ -2091,9 +2095,8 @@ static int vdin_drv_probe(struct platform_device *pdev)
 	struct vdin_dev_s *vdevp;
 	struct resource *res;
 	const void *name;
-	int offset,size,mem_size_m,mem_cma_en;
+	int offset,size,mem_size_m;
 	struct device_node *of_node = pdev->dev.of_node;
-	mem_cma_en = 0;
 	mem_size_m = 0;
 	
 	/* malloc vdev */
@@ -2147,11 +2150,11 @@ static int vdin_drv_probe(struct platform_device *pdev)
 				vdevp->cma_mem_size[vdevp->index] = mem_size_m;
 				vdevp->this_pdev[vdevp->index] = pdev;
 				vdevp->cma_mem_alloc[vdevp->index] = 0;
-				mem_cma_en = 1;
+				vdevp->cma_config_en = 1;
 			}
 		}
 #endif
-		if (mem_cma_en != 1) {
+		if (vdevp->cma_config_en != 1) {
 		        name = of_get_property(of_node, "share-memory-name", NULL);
 		        if(!name) {
 		                pr_err("\nvdin memory resource undefined1.\n");
@@ -2200,7 +2203,7 @@ static int vdin_drv_probe(struct platform_device *pdev)
 		goto fail_get_resource_mem;
 	}
 	
-	if (mem_cma_en != 1) {
+	if (vdevp->cma_config_en != 1) {
 		vdevp->mem_start = res->start;
 		vdevp->mem_size  = res->end - res->start + 1;
 		pr_info("vdin%d mem_start = 0x%x, mem_size = 0x%x\n", vdevp->index,

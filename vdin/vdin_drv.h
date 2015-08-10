@@ -191,6 +191,7 @@ typedef struct vdin_dev_s {
         unsigned int                    start_time;//ms vdin start time
         bool                            send2di;
         vdin_debug_t                    debug;
+	unsigned int			cma_config_en;
 #ifdef CONFIG_CMA
 	struct platform_device	*this_pdev[2];
 	struct page 			*venc_pages[2];

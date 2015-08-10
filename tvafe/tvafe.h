@@ -71,6 +71,7 @@ typedef struct tvafe_dev_s {
 	struct tvafe_cvd2_mem_s     mem;
 
 	struct tvafe_info_s         tvafe;
+	unsigned int			cma_config_en;
 #ifdef CONFIG_CMA
 	struct platform_device	*this_pdev;
 	struct page 			*venc_pages;

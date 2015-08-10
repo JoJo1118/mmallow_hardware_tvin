@@ -496,6 +496,8 @@ int tvafe_dec_support(struct tvin_frontend_s *fe, enum tvin_port_e port)
 void tvafe_cma_alloc(struct tvafe_dev_s *devp)
 {
 	unsigned int mem_size_m = devp->cma_mem_size;
+	if (devp->cma_config_en == 0)
+		return;
 	devp->venc_pages = dma_alloc_from_contiguous(&(devp->this_pdev->dev), (mem_size_m * SZ_1M) >> PAGE_SHIFT, 0);
 	if (devp->venc_pages) {
 		devp->mem.start = page_to_phys(devp->venc_pages);
@@ -509,6 +511,8 @@ void tvafe_cma_alloc(struct tvafe_dev_s *devp)
 
 void tvafe_cma_release(struct tvafe_dev_s *devp)
 {
+	if (devp->cma_config_en == 0)
+		return;
 	if (devp->venc_pages && devp->cma_mem_size) {
 		dma_release_from_contiguous(&(devp->this_pdev->dev), devp->venc_pages, (devp->cma_mem_size * SZ_1M)>>PAGE_SHIFT);
 		pr_info("tvafe cma release ok!\n");
@@ -1599,10 +1603,9 @@ static int tvafe_drv_probe(struct platform_device *pdev)
 	struct tvafe_dev_s *tdevp;
 	struct device_node *of_node = pdev->dev.of_node;
 	const void *name;
-	int offset,size,mem_size_m,mem_cma_en;
+	int offset,size,mem_size_m;
 	struct resource *res;
 	//struct tvin_frontend_s * frontend;
-	mem_cma_en = 0;
 	mem_size_m = 0;
 
 	/* allocate memory for the per-device structure */
@@ -1673,11 +1676,11 @@ static int tvafe_drv_probe(struct platform_device *pdev)
 			else {
 				tdevp->cma_mem_size = mem_size_m;
 				tdevp->this_pdev = pdev;
-				mem_cma_en = 1;
+				tdevp->cma_config_en = 1;
 			}
 		}
 #endif
-		if (mem_cma_en != 1) {
+		if (tdevp->cma_config_en != 1) {
 			name = of_get_property(of_node, "share-memory-name", NULL);
 			if(!name){
 			        pr_err("\ntvafe memory resource undefined1.\n");
@@ -1726,7 +1729,7 @@ static int tvafe_drv_probe(struct platform_device *pdev)
 	tdevp->mem.start = res->start;
 	tdevp->mem.size = res->end - res->start + 1;
 #endif
-	if (mem_cma_en != 1) {
+	if (tdevp->cma_config_en != 1) {
 		pr_info(" tvafe cvd memory addr is:0x%x, cvd mem_size is:0x%x . \n",
 				tdevp->mem.start,
 				tdevp->mem.size);

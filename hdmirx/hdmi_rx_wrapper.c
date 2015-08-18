@@ -122,9 +122,13 @@ static int sig_unstable_reset_hpd_max = 5;
 MODULE_PARM_DESC(sig_unstable_reset_hpd_max, "\n sig_unstable_reset_hpd_max \n");
 module_param(sig_unstable_reset_hpd_max, int, 0664);
 
-static int rgb_quant_range = 0;
+int rgb_quant_range = 0;
 MODULE_PARM_DESC(rgb_quant_range, "\n rgb_quant_range \n");
 module_param(rgb_quant_range, int, 0664);
+
+int yuv_quant_range = 0;
+MODULE_PARM_DESC(yuv_quant_range, "\n yuv_quant_range \n");
+module_param(yuv_quant_range, int, 0664);
 
 static int it_content = 0;
 MODULE_PARM_DESC(it_content, "\n it_content \n");
@@ -1994,6 +1998,7 @@ void hdmirx_hw_monitor(void)
 		    sig_lost_lock_cnt = 0;
 		    hdmirx_get_video_info(&rx.ctrl, &rx.cur_video_params);
 			rgb_quant_range = rx.cur_video_params.rgb_quant_range;
+			yuv_quant_range = rx.cur_video_params.yuv_quant_range;
 			it_content = rx.cur_video_params.it_content;
 		    /* video info change */
 		    if ((!is_timing_stable(&rx.pre_video_params, &rx.cur_video_params)) ||

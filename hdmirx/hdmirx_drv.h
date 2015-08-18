@@ -208,6 +208,8 @@ struct hdmi_rx_ctrl_video
 	unsigned ext_colorimetry;
 	/** AVI Q1-0, RGB quantization range */
 	unsigned rgb_quant_range;
+	/** AVI Q1-0, YUV quantization range */
+	unsigned yuv_quant_range;
 	/** AVI SC1-0, non-uniform scaling information */
 	unsigned n_uniform_scale;
 	/** AVI VIC6-0, video mode identification code */
@@ -383,6 +385,9 @@ typedef struct _hdcp_ksv
 extern bool multi_port_edid_enable;
 extern struct rx rx;
 extern int hdmirx_log_flag;
+
+extern int rgb_quant_range;
+extern int yuv_quant_range;
 
 extern int hdmirx_print_flag;
 extern bool irq_ctrl_reg_en; /* enable/disable reg rd/wr in irq  */

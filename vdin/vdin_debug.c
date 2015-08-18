@@ -434,7 +434,6 @@ static ssize_t vdin_attr_store(struct device *dev,struct device_attribute *attr,
 		printk("mpeg2vdin:h_active:%d,v_active:%d\n",devp->h_active,devp->v_active);
 	}
 
-
         kfree(buf_orig);
         return len;
 }

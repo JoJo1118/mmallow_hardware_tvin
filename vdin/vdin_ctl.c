@@ -702,7 +702,7 @@ void vdin_set_cutwin(struct vdin_dev_s *devp)
 
 
 
-static inline void vdin_set_color_matrix1(unsigned int offset, tvin_format_t *tvin_fmt_p, enum vdin_format_convert_e format_convert)
+static inline void vdin_set_color_matrix1(unsigned int offset, tvin_format_t *tvin_fmt_p, enum vdin_format_convert_e format_convert, enum tvin_port_e port, enum tvin_color_fmt_range_e color_fmt_range)
 {
 #if defined(VDIN_V1)
 	//    unsigned int offset = devp->addr_offset;
@@ -718,7 +718,13 @@ static inline void vdin_set_color_matrix1(unsigned int offset, tvin_format_t *tv
 		case VDIN_FORMAT_CONVERT_RGB_YUV422:
 		case VDIN_FORMAT_CONVERT_RGB_NV12:
 		case VDIN_FORMAT_CONVERT_RGB_NV21:
-			matrix_csc = VDIN_MATRIX_RGBS_YUV601;
+			if((port >= TVIN_PORT_HDMI0) && (port <= TVIN_PORT_HDMI7)){
+				if(color_fmt_range == TVIN_RGB_FULL)
+		            matrix_csc = VDIN_MATRIX_RGB_YUV601;
+				else
+		            matrix_csc = VDIN_MATRIX_RGBS_YUV601;
+			} else
+				matrix_csc = VDIN_MATRIX_RGB_YUV601;
 			break;
 		case VDIN_FORMAT_CONVERT_BRG_YUV422:
 			matrix_csc = VDIN_MATRIX_BRG_YUV601;
@@ -727,7 +733,13 @@ static inline void vdin_set_color_matrix1(unsigned int offset, tvin_format_t *tv
 			matrix_csc = VDIN_MATRIX_GBR_YUV601;
 			break;
 		case VDIN_FORMAT_CONVERT_RGB_YUV444:
-			matrix_csc = VDIN_MATRIX_RGB_YUV601;
+			if((port >= TVIN_PORT_HDMI0) && (port <= TVIN_PORT_HDMI7)){
+				if(color_fmt_range ==TVIN_RGB_FULL)
+                    matrix_csc = VDIN_MATRIX_RGB_YUV601;
+				else
+                    matrix_csc = VDIN_MATRIX_RGBS_YUV601;
+			} else
+				matrix_csc = VDIN_MATRIX_RGB_YUV601;
 			break;
 		case VDIN_FORMAT_CONVERT_YUV_RGB:
 			if (
@@ -762,9 +774,12 @@ static inline void vdin_set_color_matrix1(unsigned int offset, tvin_format_t *tv
          		    ((fmt_info->scan_mode == TVIN_SCAN_MODE_INTERLACED)  && (fmt_info->v_active >= 540))    // 1080i & above
 			   )
 			{
-				if (color_convert == 0)
-					matrix_csc = VDIN_MATRIX_YUV709_YUV601;
-				else if (color_convert == 1)
+				if (color_convert == 0){
+					if (color_fmt_range ==TVIN_YUV_FULL)
+						matrix_csc = VDIN_MATRIX_YUV709F_YUV601;
+					else
+						matrix_csc = VDIN_MATRIX_YUV709_YUV601;
+				}else if (color_convert == 1)
 					matrix_csc = VDIN_MATRIX_YUV709_YUV601F;
 				else if (color_convert == 2)
 					matrix_csc = VDIN_MATRIX_YUV709_YUV709F;
@@ -774,6 +789,11 @@ static inline void vdin_set_color_matrix1(unsigned int offset, tvin_format_t *tv
 					matrix_csc = VDIN_MATRIX_YUV709F_YUV601F;
 				else
 					matrix_csc = VDIN_MATRIX_YUV709_YUV601;
+			}else{
+				if (color_fmt_range ==TVIN_YUV_FULL)
+					matrix_csc = VDIN_MATRIX_YUV601F_YUV601;
+				else
+					matrix_csc = VDIN_MATRIX_NULL;
 			}
 			break;
 		default:
@@ -809,7 +829,7 @@ static inline void vdin_set_color_matrix1(unsigned int offset, tvin_format_t *tv
         #endif
 }
 
-static inline void vdin_set_color_matrix0(unsigned int offset, tvin_format_t *tvin_fmt_p, enum vdin_format_convert_e format_convert)
+static inline void vdin_set_color_matrix0(unsigned int offset, tvin_format_t *tvin_fmt_p, enum vdin_format_convert_e format_convert, enum tvin_port_e port, enum tvin_color_fmt_range_e color_fmt_range)
 {
 	enum vdin_matrix_csc_e    matrix_csc = VDIN_MATRIX_NULL;
 	struct vdin_matrix_lup_s *matrix_tbl;
@@ -823,7 +843,13 @@ static inline void vdin_set_color_matrix0(unsigned int offset, tvin_format_t *tv
 		case VDIN_FORMAT_CONVERT_RGB_YUV422:
 		case VDIN_FORMAT_CONVERT_RGB_NV12:
 		case VDIN_FORMAT_CONVERT_RGB_NV21:
-			matrix_csc = VDIN_MATRIX_RGB_YUV601;
+			if((port >= TVIN_PORT_HDMI0) && (port <= TVIN_PORT_HDMI7)){
+				if(color_fmt_range == TVIN_RGB_FULL)
+		            matrix_csc = VDIN_MATRIX_RGB_YUV601;
+				else
+			        matrix_csc = VDIN_MATRIX_RGBS_YUV601;
+			} else
+				matrix_csc = VDIN_MATRIX_RGB_YUV601;
 			break;
 		case VDIN_FORMAT_CONVERT_GBR_YUV422:
 			matrix_csc = VDIN_MATRIX_GBR_YUV601;
@@ -832,7 +858,13 @@ static inline void vdin_set_color_matrix0(unsigned int offset, tvin_format_t *tv
 			matrix_csc = VDIN_MATRIX_BRG_YUV601;
 			break;
 		case VDIN_FORMAT_CONVERT_RGB_YUV444:
-			matrix_csc = VDIN_MATRIX_RGB_YUV601;
+			if((port >= TVIN_PORT_HDMI0) && (port <= TVIN_PORT_HDMI7)){
+				if(color_fmt_range ==TVIN_RGB_FULL)
+		            matrix_csc = VDIN_MATRIX_RGB_YUV601;
+				else
+		            matrix_csc = VDIN_MATRIX_RGBS_YUV601;
+			} else
+				matrix_csc = VDIN_MATRIX_RGB_YUV601;
 			break;
 		case VDIN_FORMAT_CONVERT_YUV_RGB:
 			if (((fmt_info->scan_mode == TVIN_SCAN_MODE_PROGRESSIVE) && (fmt_info->v_active >= 720)) || //  720p & above
@@ -866,9 +898,12 @@ static inline void vdin_set_color_matrix0(unsigned int offset, tvin_format_t *tv
                		    ((fmt_info->scan_mode == TVIN_SCAN_MODE_INTERLACED)  && (fmt_info->v_active >= 540))    // 1080i & above
 			   )
 			{
-				if (color_convert == 0)
-					matrix_csc = VDIN_MATRIX_YUV709_YUV601;
-				else if (color_convert == 1)
+				if (color_convert == 0){
+					if (color_fmt_range == TVIN_YUV_FULL)
+						matrix_csc = VDIN_MATRIX_YUV709F_YUV601;
+					else
+						matrix_csc = VDIN_MATRIX_YUV709_YUV601;
+				}else if (color_convert == 1)
 					matrix_csc = VDIN_MATRIX_YUV709_YUV601F;
 				else if (color_convert == 2)
 					matrix_csc = VDIN_MATRIX_YUV709_YUV709F;
@@ -878,6 +913,11 @@ static inline void vdin_set_color_matrix0(unsigned int offset, tvin_format_t *tv
 					matrix_csc = VDIN_MATRIX_YUV709F_YUV601F;
 				else
 					matrix_csc = VDIN_MATRIX_YUV709_YUV601;
+			}else{
+				if (color_fmt_range == TVIN_YUV_FULL)
+					matrix_csc = VDIN_MATRIX_YUV601F_YUV601;
+				else
+					matrix_csc = VDIN_MATRIX_NULL;
 			}
 			break;
 		default:
@@ -916,13 +956,13 @@ void vdin_set_matrix(struct vdin_dev_s *devp)
 	unsigned int offset = devp->addr_offset;
 #endif
 	if (rgb_info_enable == 0){
-		//vdin_set_color_matrix1(devp->addr_offset, devp->fmt_info_p, devp->format_convert);
-		vdin_set_color_matrix0(devp->addr_offset, devp->fmt_info_p, devp->format_convert);
+		//vdin_set_color_matrix1(devp->addr_offset, devp->fmt_info_p, devp->format_convert,  devp->parm.port, devp->prop.color_fmt_range);
+		vdin_set_color_matrix0(devp->addr_offset, devp->fmt_info_p, devp->format_convert, devp->parm.port, devp->prop.color_fmt_range);
 	} else {
 		format_convert_matrix0 = vdin_get_format_convert_matrix0(devp);
 		format_convert_matrix1 = vdin_get_format_convert_matrix1(devp);
-		vdin_set_color_matrix1(devp->addr_offset, devp->fmt_info_p, format_convert_matrix1);
-		vdin_set_color_matrix0(devp->addr_offset, devp->fmt_info_p,format_convert_matrix0);
+		vdin_set_color_matrix1(devp->addr_offset, devp->fmt_info_p, format_convert_matrix1, devp->parm.port, devp->prop.color_fmt_range);
+		vdin_set_color_matrix0(devp->addr_offset, devp->fmt_info_p, devp->format_convert, devp->parm.port, devp->prop.color_fmt_range);
 		//set xy
 #if defined(VDIN_V1)
 		WR_BITS(VDIN_MATRIX_PROBE_POS, rgb_info_y,0,13);
@@ -940,8 +980,8 @@ void vdin_set_prob_xy(unsigned int offset,unsigned int x,unsigned int y,vdin_dev
 	rgb_info_enable = 1;
 	format_convert_matrix0 = vdin_get_format_convert_matrix0(devp);
 	format_convert_matrix1 = vdin_get_format_convert_matrix1(devp);
-	vdin_set_color_matrix1(devp->addr_offset, devp->fmt_info_p, format_convert_matrix1);
-	vdin_set_color_matrix0(devp->addr_offset, devp->fmt_info_p,format_convert_matrix0);
+	vdin_set_color_matrix1(devp->addr_offset, devp->fmt_info_p, format_convert_matrix1,  devp->parm.port, devp->prop.color_fmt_range);
+	vdin_set_color_matrix0(devp->addr_offset, devp->fmt_info_p,format_convert_matrix0, devp->parm.port, devp->prop.color_fmt_range);
 	//set position
 	rgb_info_x = x;
 	if(devp->fmt_info_p->scan_mode == TVIN_SCAN_MODE_INTERLACED)
@@ -960,10 +1000,10 @@ void vdin_set_matrixs(struct vdin_dev_s *devp, unsigned char id, enum vdin_forma
 {
 	switch(id){
 		case 0:
-			vdin_set_color_matrix0(devp->addr_offset,devp->fmt_info_p,csc);
+			vdin_set_color_matrix0(devp->addr_offset,devp->fmt_info_p,csc, devp->parm.port, devp->prop.color_fmt_range);
 			break;
 		case 1:
-			vdin_set_color_matrix1(devp->addr_offset,devp->fmt_info_p,csc);
+			vdin_set_color_matrix1(devp->addr_offset,devp->fmt_info_p,csc,  devp->parm.port, devp->prop.color_fmt_range);
 			break;
 		default:
 			break;
@@ -972,7 +1012,7 @@ void vdin_set_matrixs(struct vdin_dev_s *devp, unsigned char id, enum vdin_forma
 
 void vdin_set_matrix_blank(struct vdin_dev_s *devp)
 {
-	vdin_set_color_matrix0(devp->addr_offset, devp->fmt_info_p, VDIN_MATRIX_XXX_YUV_BLACK);
+	vdin_set_color_matrix0(devp->addr_offset, devp->fmt_info_p, VDIN_MATRIX_XXX_YUV_BLACK, devp->parm.port, devp->prop.color_fmt_range);
 }
 static inline void vdin_set_bbar(unsigned int offset, unsigned int v, unsigned int h)
 {
@@ -1412,7 +1452,7 @@ void vdin_set_all_regs(struct vdin_dev_s *devp)
 {
 
 	/* matrix sub-module */
-	//vdin_set_color_matrix0(devp->addr_offset, devp->fmt_info_p, devp->format_convert);
+	//vdin_set_color_matrix0(devp->addr_offset, devp->fmt_info_p, devp->format_convert, devp->parm.port, devp->prop.color_fmt_range);
 	vdin_set_matrix(devp);
 
 	/* bbar sub-module */

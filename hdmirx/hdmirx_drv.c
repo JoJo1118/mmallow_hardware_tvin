@@ -485,6 +485,30 @@ void hdmirx_get_sig_property(struct tvin_frontend_s *fe, struct tvin_sig_propert
 		prop->dest_cfmt = TVIN_YUV422;
 	}
 #endif
+
+	switch(prop->color_format){
+		case TVIN_YUV444:
+		case TVIN_YUV422:
+			if (yuv_quant_range == 1)
+				prop->color_fmt_range = TVIN_YUV_LIMIT;
+			else if (yuv_quant_range == 2)
+				prop->color_fmt_range = TVIN_YUV_FULL;
+			else
+				prop->color_fmt_range = TVIN_FMT_RANGE_NULL;
+		break;
+		case TVIN_RGB444:
+			if (rgb_quant_range == 1)
+				prop->color_fmt_range = TVIN_RGB_LIMIT;
+			else if (rgb_quant_range == 2)
+				prop->color_fmt_range = TVIN_RGB_FULL;
+			else
+				prop->color_fmt_range = TVIN_FMT_RANGE_NULL;
+		break;
+
+		default:
+				prop->color_fmt_range = TVIN_FMT_RANGE_NULL;
+				break;
+		}
 }
 
 bool hdmirx_check_frame_skip(struct tvin_frontend_s *fe)

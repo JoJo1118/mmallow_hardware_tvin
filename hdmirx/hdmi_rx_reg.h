@@ -504,6 +504,8 @@
 #define		EXT_COLORIMETRY			MSK(3, 20)
 /** Q1-0, RGB quantization range */
 #define		RGB_QUANT_RANGE			MSK(2, 18)
+/** Q1-0, YUV quantization range */
+#define		YUV_QUANT_RANGE			MSK(2, 30)
 /** SC1-0, non-uniform scaling information */
 #define		NON_UNIF_SCALE			MSK(2, 16)
 /** C1-0, colorimetry information */

@@ -198,6 +198,7 @@ typedef struct tvin_sig_property_s {
         unsigned int 		 vs;//for vertical start cut window
         unsigned int 		 ve;//for vertical end cut window
         unsigned int           decimation_ratio;//for decimation
+	enum tvin_color_fmt_range_e color_fmt_range;
 } tvin_sig_property_t;
 
 #define TVAFE_VF_POOL_SIZE              6//8

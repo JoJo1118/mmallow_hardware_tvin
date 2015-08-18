@@ -1496,6 +1496,7 @@ int hdmirx_packet_get_avi(struct hdmi_rx_ctrl_video *params)
 	params->it_content = hdmirx_rd_bits_dwc(HDMIRX_DWC_PDEC_AVI_PB, IT_CONTENT);
 	params->ext_colorimetry = hdmirx_rd_bits_dwc(HDMIRX_DWC_PDEC_AVI_PB, EXT_COLORIMETRY);
 	params->rgb_quant_range = hdmirx_rd_bits_dwc(HDMIRX_DWC_PDEC_AVI_PB, RGB_QUANT_RANGE);
+	params->yuv_quant_range = hdmirx_rd_bits_dwc(HDMIRX_DWC_PDEC_AVI_HB, YUV_QUANT_RANGE);
 	params->n_uniform_scale = hdmirx_rd_bits_dwc(HDMIRX_DWC_PDEC_AVI_PB, NON_UNIF_SCALE);
 	params->video_mode = hdmirx_rd_bits_dwc(HDMIRX_DWC_PDEC_AVI_PB, VID_IDENT_CODE);
 	params->pixel_repetition = hdmirx_rd_bits_dwc(HDMIRX_DWC_PDEC_AVI_HB, PIX_REP_FACTOR);

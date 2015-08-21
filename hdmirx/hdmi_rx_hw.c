@@ -1140,8 +1140,8 @@ void hdmirx_set_pinmux(void)
         WRITE_CBUS_REG(PAD_PULL_UP_REG2, READ_CBUS_REG(PAD_PULL_UP_REG2) |
 	            ((1<<0)|(1<<4)|(1<<8)|(1<<12)));
 
-    //WRITE_CBUS_REG(PERIPHS_PIN_MUX_10, READ_CBUS_REG(PERIPHS_PIN_MUX_10 ) &
-                //(~((1<<2)|(1<<5)|(1<<8)|(1<<11))));
+    WRITE_CBUS_REG(PERIPHS_PIN_MUX_10, READ_CBUS_REG(PERIPHS_PIN_MUX_10 ) &
+                (~((1<<2)|(1<<5)|(1<<8)|(1<<11))));
 
     WRITE_CBUS_REG(PREG_PAD_GPIO0_EN_N, READ_CBUS_REG(PREG_PAD_GPIO0_EN_N) &
                 (~((1<<5)|(1<<9)|(1<<13)|(1<<17))));

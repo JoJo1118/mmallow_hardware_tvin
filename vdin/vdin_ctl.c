@@ -28,7 +28,7 @@
 #include "vdin_canvas.h"
 //#include "../../../../common/drivers/amlogic/amports/ve_regs.h"
 
-#define VDIN_MEAS_24M_1MS 24000
+#define VDIN_MEAS_24M_1MS 51000
 
 #define TVIN_MAX_PIXCLK 20000
 
@@ -1696,8 +1696,8 @@ inline void vdin_set_default_regmap(unsigned int offset)
 	WR(VDIN_HIST_V_START_END, 0x00000000);
 
 
-	//set VDIN_MEAS_CLK_CNTL, select XTAL clock
-	WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000100);
+	//set VDIN_MEAS_CLK_CNTL, select fclk_div5/10 clock
+	WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000709);
 
 	// [   18]        meas.rst              = 0
 	// [   17]        meas.widen_hs_vs_en   = 1
@@ -1815,15 +1815,15 @@ void vdin_enable_module(unsigned int offset, bool enable)
 {
 	if (enable)
 	{
-		//set VDIN_MEAS_CLK_CNTL, select XTAL clock
-		WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000100);
+		//set VDIN_MEAS_CLK_CNTL, select fclk_div5/10 clock
+		WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000709);
 		//vdin_hw_enable(offset);
 		//todo: check them
 	}
 	else
 	{
-		//set VDIN_MEAS_CLK_CNTL, select XTAL clock
-		WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000000);
+		//set VDIN_MEAS_CLK_CNTL, select fclk_div5/10 clock
+		WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000609);
 		vdin_hw_disable(offset);
 	}
 }
@@ -2187,8 +2187,8 @@ inline void vdin0_output_ctl(unsigned int offset,unsigned int output_nr_flag)
 inline void vdin_set_mpegin(struct vdin_dev_s *devp)
 {
 	unsigned int offset = devp->addr_offset;
-	//set VDIN_MEAS_CLK_CNTL, select XTAL clock
-	WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000100);
+	//set VDIN_MEAS_CLK_CNTL, select fclk_div5/10 clock
+	WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000709);
 
 	WR(VDIN_COM_CTRL0,0x80000911);
 	WR(VDIN_COM_GCLK_CTRL,0x0);

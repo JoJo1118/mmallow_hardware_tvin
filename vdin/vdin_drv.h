@@ -38,11 +38,11 @@
 #include "vdin_vf.h"
 #include "vdin_regs.h"
 
-#define VDIN_VER "Ref.2015/07/24b"
+#define VDIN_VER "Ref.2015/08/27"
 
 /*the counter of vdin*/
 #define VDIN_MAX_DEVS			2
-#define VDIN_CRYSTAL                    24000000
+#define VDIN_CRYSTAL                    51000000
 /* values of vdin_dev_t.flags */
 #define VDIN_FLAG_NULL			0x00000000
 #define VDIN_FLAG_DEC_INIT		0x00000001

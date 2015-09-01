@@ -468,8 +468,10 @@ void hdmirx_get_sig_property(struct tvin_frontend_s *fe, struct tvin_sig_propert
 		prop->decimation_ratio = (hdmirx_hw_get_pixel_repeat() - 1);
 
 #if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
-	if (rx.pre_video_params.interlaced == 1)
+	if((TVIN_SIG_FMT_HDMI_1920X1080P_50HZ != sig_fmt) &&
+		(TVIN_SIG_FMT_HDMI_1920X1080P_60HZ != sig_fmt)){
 		prop->dest_cfmt = TVIN_YUV422;
+	}
 #else
 	if(TVIN_SIG_FMT_HDMI_4096_2160_00HZ == sig_fmt) {
 		prop->hs = 128;

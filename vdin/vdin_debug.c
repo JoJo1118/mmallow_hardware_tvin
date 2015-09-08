@@ -257,9 +257,13 @@ static ssize_t vdin_attr_store(struct device *dev,struct device_attribute *attr,
         parse_param(buf_orig,(char **)&parm);
 
 	    if(!strncmp(parm[0], "fps", 3)){
-		if(devp->cycle)
-			fps = (VDIN_CRYSTAL + (devp->cycle>>3))/devp->cycle;
-                pr_info("%u f/s\n",fps);
+            if(devp->cycle){
+                if ((devp->parm.port >= TVIN_PORT_HDMI0) && (devp->parm.port <= TVIN_PORT_HDMI7))
+                    fps = (VDIN_HDMI_MEAS_CLK + (devp->cycle>>3))/devp->cycle;
+                else
+                    fps = (VDIN_CRYSTAL + (devp->cycle>>3))/devp->cycle;
+            }
+            pr_info("%u f/s\n",fps);
         }
         else if(!strcmp(parm[0],"capture")){
 		if(parm[3] != NULL){

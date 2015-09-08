@@ -28,7 +28,8 @@
 #include "vdin_canvas.h"
 //#include "../../../../common/drivers/amlogic/amports/ve_regs.h"
 
-#define VDIN_MEAS_24M_1MS 51000
+#define VDIN_MEAS_24M_1MS 24000
+#define VDIN_HDMI_MEAS_51M_1MS 51000
 
 #define TVIN_MAX_PIXCLK 20000
 
@@ -1696,8 +1697,8 @@ inline void vdin_set_default_regmap(unsigned int offset)
 	WR(VDIN_HIST_V_START_END, 0x00000000);
 
 
-	//set VDIN_MEAS_CLK_CNTL, select fclk_div5/10 clock
-	WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000709);
+	//set VDIN_MEAS_CLK_CNTL, select XTAL clock
+	WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000100);
 
 	// [   18]        meas.rst              = 0
 	// [   17]        meas.widen_hs_vs_en   = 1
@@ -1815,6 +1816,23 @@ void vdin_enable_module(unsigned int offset, bool enable)
 {
 	if (enable)
 	{
+		//set VDIN_MEAS_CLK_CNTL, select XTAL clock
+		WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000100);
+		//vdin_hw_enable(offset);
+		//todo: check them
+	}
+	else
+	{
+		//set VDIN_MEAS_CLK_CNTL, select XTAL clock
+		WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000000);
+		vdin_hw_disable(offset);
+	}
+}
+
+void vdin_hdmi_enable_module(unsigned int offset, bool enable)
+{
+	if (enable)
+	{
 		//set VDIN_MEAS_CLK_CNTL, select fclk_div5/10 clock
 		WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000709);
 		//vdin_hw_enable(offset);
@@ -1827,6 +1845,7 @@ void vdin_enable_module(unsigned int offset, bool enable)
 		vdin_hw_disable(offset);
 	}
 }
+
 #if 0
 inline bool vdin_write_done_check(unsigned int offset, struct vdin_dev_s *devp)
 {
@@ -1921,13 +1940,25 @@ inline bool vdin_check_cycle(struct vdin_dev_s *devp)
 		cycle = 0xffffffff - devp->stamp + stamp + 1;
 	else
 		cycle = stamp - devp->stamp;
-	if (cycle <= VDIN_MEAS_24M_1MS)
-		return true;
-	else
-	{
-		devp->stamp = stamp;
-		devp->cycle  = cycle;
-		return false;
+
+	if((devp->parm.port >= TVIN_PORT_HDMI0) && (devp->parm.port <= TVIN_PORT_HDMI7)){
+		if (cycle <= VDIN_HDMI_MEAS_51M_1MS)
+			return true;
+		else
+		{
+			devp->stamp = stamp;
+			devp->cycle  = cycle;
+			return false;
+		}
+	} else {
+		if (cycle <= VDIN_MEAS_24M_1MS)
+			return true;
+		else
+		{
+			devp->stamp = stamp;
+			devp->cycle  = cycle;
+			return false;
+		}
 	}
 }
 inline void vdin_calculate_duration(struct vdin_dev_s *devp)
@@ -2187,8 +2218,8 @@ inline void vdin0_output_ctl(unsigned int offset,unsigned int output_nr_flag)
 inline void vdin_set_mpegin(struct vdin_dev_s *devp)
 {
 	unsigned int offset = devp->addr_offset;
-	//set VDIN_MEAS_CLK_CNTL, select fclk_div5/10 clock
-	WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000709);
+	//set VDIN_MEAS_CLK_CNTL, select XTAL clock
+	WRITE_CBUS_REG(HHI_VDIN_MEAS_CLK_CNTL, 0x00000100);
 
 	WR(VDIN_COM_CTRL0,0x80000911);
 	WR(VDIN_COM_GCLK_CTRL,0x0);

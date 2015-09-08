@@ -153,6 +153,7 @@ extern void vdin_set_canvas_id(unsigned int offset, unsigned int canvas_id);
 extern unsigned int vdin_get_chma_canvas_id(unsigned int offset);
 extern void vdin_set_chma_canvas_id(unsigned int offset, unsigned int canvas_id);
 extern void vdin_enable_module(unsigned int offset, bool enable);
+extern void vdin_hdmi_enable_module(unsigned int offset, bool enable);
 extern void vdin_set_matrix(struct vdin_dev_s *devp);
 void vdin_set_matrixs(struct vdin_dev_s *devp, unsigned char no, enum vdin_format_convert_e csc);
 extern void vdin_set_matrix_blank(struct vdin_dev_s *devp);

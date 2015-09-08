@@ -246,6 +246,9 @@ int vdin_open_fe(enum tvin_port_e port, int index,  struct vdin_dev_s *devp)
 
 	vdin_set_default_regmap(devp->addr_offset);
 
+	if ((port >= TVIN_PORT_HDMI0) && (port <= TVIN_PORT_HDMI7))
+		vdin_hdmi_enable_module(devp->addr_offset, true);
+
 	if (devp->frontend->dec_ops && devp->frontend->dec_ops->open)
 		ret = devp->frontend->dec_ops->open(devp->frontend, port);
 	/* check open status */
@@ -706,6 +709,10 @@ void vdin_start_dec(struct vdin_dev_s *devp)
 	if(time_en)
 		pr_info("vdin.%d start time: %ums, run time:%ums.\n",devp->index,jiffies_to_msecs(jiffies),
 			jiffies_to_msecs(jiffies)-devp->start_time);
+    /* hdmi source vdin meas clk is 51000000    atv av source 24000000 */
+	if ((devp->parm.port >= TVIN_PORT_HDMI0) && (devp->parm.port <= TVIN_PORT_HDMI7))
+		vdin_hdmi_enable_module(devp->addr_offset, true);
+
 }
 
 /*
@@ -777,6 +784,8 @@ int start_tvin_service(int no ,vdin_parm_t *para)
 #endif
 	/*config the vdin use default value*/
 	vdin_set_default_regmap(devp->addr_offset);
+	if ((devp->parm.port >= TVIN_PORT_HDMI0) && (devp->parm.port <= TVIN_PORT_HDMI7))
+		vdin_hdmi_enable_module(devp->addr_offset, true);
 
 	devp->parm.port = para->port;
 	devp->parm.info.fmt     = para->fmt;
@@ -1914,7 +1923,7 @@ static long vdin_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 				(devp->parm.port <= TVIN_PORT_HDMI7) )
 			{
 				if(devp->cycle)	{
-					info.fps = (VDIN_CRYSTAL + (devp->cycle>>3))/devp->cycle;
+					info.fps = (VDIN_HDMI_MEAS_CLK + (devp->cycle>>3))/devp->cycle;
 				}
 				if(vdin_dbg_en)
 					pr_info("current dvi frame ratio is %u.cycle is %u.\n",info.fps,devp->cycle);
@@ -2304,6 +2313,9 @@ static int vdin_drv_suspend(struct platform_device *pdev, pm_message_t state)
 {
 	struct vdin_dev_s *vdevp;
 	vdevp = platform_get_drvdata(pdev);
+	if ((vdevp->parm.port >= TVIN_PORT_HDMI0) && (vdevp->parm.port <= TVIN_PORT_HDMI7))
+		vdin_hdmi_enable_module(vdevp->addr_offset, false);
+	else
         vdin_enable_module(vdevp->addr_offset, false);
         pr_info("%s ok.\n",__func__);
 	return 0;
@@ -2313,6 +2325,9 @@ static int vdin_drv_resume(struct platform_device *pdev)
 {
 	struct vdin_dev_s *vdevp;
 	vdevp = platform_get_drvdata(pdev);
+	if ((vdevp->parm.port >= TVIN_PORT_HDMI0) && (vdevp->parm.port <= TVIN_PORT_HDMI7))
+		vdin_hdmi_enable_module(vdevp->addr_offset, true);
+	else
         vdin_enable_module(vdevp->addr_offset, true);
         pr_info("%s ok.\n",__func__);
 	return 0;

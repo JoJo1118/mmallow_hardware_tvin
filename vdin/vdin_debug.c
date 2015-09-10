@@ -436,7 +436,22 @@ static ssize_t vdin_attr_store(struct device *dev,struct device_attribute *attr,
 		devp->v_active = simple_strtoul(parm[2],NULL,10);
 		vdin_set_mpegin(devp);
 		printk("mpeg2vdin:h_active:%d,v_active:%d\n",devp->h_active,devp->v_active);
-	}
+	}else if(!strcmp(parm[0],"yuv_rgb_info")){
+	    unsigned int rgb_yuv0,rgb_yuv1,rgb_yuv2;
+	    vdin_get_vdin_yuv_rgb_mat0(devp->addr_offset,&rgb_yuv0,&rgb_yuv1,&rgb_yuv2);
+		printk("rgb_yuv0 :%d, rgb_yuv1 :%d , rgb_yuv2 :%d\n",rgb_yuv0,rgb_yuv1,rgb_yuv2);
+    }else if(!strcmp(parm[0],"mat0_xy")){
+        unsigned int x, y;
+		x = simple_strtoul(parm[1],NULL,10);
+		y = simple_strtoul(parm[2],NULL,10);
+		printk("pos x  :%d, pos y  :%d  \n",x,y);
+        vdin_set_prob_matrix0_xy(devp->addr_offset,x,y,devp);
+    }else if(!strcmp(parm[0],"mat0_set")){
+        unsigned int x;
+		x = simple_strtoul(parm[1],NULL,10);
+        printk("matrix set : %d \n",x);
+        vdin_set_before_after_mat0(devp->addr_offset,x,devp);
+    }
 
         kfree(buf_orig);
         return len;

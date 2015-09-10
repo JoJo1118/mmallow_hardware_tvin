@@ -1011,6 +1011,36 @@ void vdin_set_matrixs(struct vdin_dev_s *devp, unsigned char id, enum vdin_forma
 	}
 }
 
+void vdin_get_vdin_yuv_rgb_mat0(unsigned int offset,unsigned int *rgb_yuv0,unsigned int *rgb_yuv1,unsigned int *rgb_yuv2)
+{
+     *rgb_yuv0 = 0;*rgb_yuv1 = 0;*rgb_yuv2 = 0;
+#if defined(VDIN_V1)
+     *rgb_yuv0 = ((RD_BITS(VDIN_MATRIX_PROBE_COLOR, 0,10) << 8) >> 10);
+	 *rgb_yuv1 = ((RD_BITS(VDIN_MATRIX_PROBE_COLOR, 10,10) << 8) >> 10);
+	 *rgb_yuv2 = ((RD_BITS(VDIN_MATRIX_PROBE_COLOR, 20,10) << 8) >> 10);
+#endif
+}
+
+void vdin_set_prob_matrix0_xy(unsigned int offset,unsigned int x,unsigned int y,vdin_dev_t *devp)
+{
+	 if(devp->fmt_info_p->scan_mode == TVIN_SCAN_MODE_INTERLACED)
+        y = y/2;
+#if defined(VDIN_V1)
+     WR_BITS(VDIN_MATRIX_PROBE_POS, y,0,13);
+     WR_BITS(VDIN_MATRIX_PROBE_POS, x,16,13);
+#endif
+}
+
+void vdin_set_before_after_mat0(unsigned int offset,unsigned int x, vdin_dev_t *devp)
+{
+    if ((x != 0) && (x != 1))
+		return;
+#if defined(VDIN_V1)
+    WR_BITS(VDIN_MATRIX_CTRL, x, VDIN_PROBE_POST_BIT, VDIN_PROBE_POST_WID);
+#endif
+}
+
+
 void vdin_set_matrix_blank(struct vdin_dev_s *devp)
 {
 	vdin_set_color_matrix0(devp->addr_offset, devp->fmt_info_p, VDIN_MATRIX_XXX_YUV_BLACK, devp->parm.port, devp->prop.color_fmt_range);

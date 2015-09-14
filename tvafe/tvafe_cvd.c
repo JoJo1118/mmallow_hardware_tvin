@@ -255,8 +255,8 @@ static unsigned int noise3=0;
 static short print_cnt=0;
 
 /*****************************the  version of changing log************************/
-static char last_version_s[]="2015-06-01|17-18";
-static char version_s[] = "2015-07-06|15-16";
+static char last_version_s[]="2015-07-06|15-16";
+static char version_s[] = "2015-09-14|19-20";
 /***************************************************************************/
 void get_cvd_version(char **ver,char **last_ver)
 {
@@ -534,7 +534,7 @@ static void tvafe_cvd2_non_std_config(struct tvafe_cvd2_s *cvd2)
 		if (cvd2->vd_port == TVIN_PORT_CVBS0)
 #endif
 		{
-#if (defined CONFIG_AM_R840)
+#if (defined CONFIG_AM_R840) || (defined CONFIG_AM_MXL661))
 			W_APB_BIT(CVD2_VSYNC_SIGNAL_THRESHOLD, 0,
 					VS_SIGNAL_AUTO_TH_BIT, VS_SIGNAL_AUTO_TH_WID);
 #else

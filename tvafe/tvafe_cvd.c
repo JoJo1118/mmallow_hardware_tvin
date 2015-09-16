@@ -534,7 +534,7 @@ static void tvafe_cvd2_non_std_config(struct tvafe_cvd2_s *cvd2)
 		if (cvd2->vd_port == TVIN_PORT_CVBS0)
 #endif
 		{
-#if (defined CONFIG_AM_R840) || (defined CONFIG_AM_MXL661))
+#if ((defined CONFIG_AM_R840) || (defined CONFIG_AM_MXL661))
 			W_APB_BIT(CVD2_VSYNC_SIGNAL_THRESHOLD, 0,
 					VS_SIGNAL_AUTO_TH_BIT, VS_SIGNAL_AUTO_TH_WID);
 #else

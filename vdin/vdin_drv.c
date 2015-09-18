@@ -1422,8 +1422,7 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 		curr_wr_vf->height = devp->v_active<<1;
 	else
 		curr_wr_vf->height = devp->v_active;
-	/* debug for video latency */
-	curr_wr_vf->ready_jiffies64 = jiffies_64;
+
 	curr_wr_vfe->flag |= VF_FLAG_NORMAL_FRAME;
 	if(devp->flags&VDIN_FLAG_RDMA_ENABLE)
 		devp->last_wr_vfe = curr_wr_vfe;
@@ -1432,6 +1431,8 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 
 	/* prepare for next input data */
 	next_wr_vfe = provider_vf_get(devp->vfp);
+	/* debug for video latency */
+	next_wr_vfe->vf.ready_jiffies64 = jiffies_64;
 #ifdef CONFIG_VSYNC_RDMA
 	if(devp->flags&VDIN_FLAG_RDMA_ENABLE){
                 RDMA2_WR_MPEG_REG_BITS(VDIN_WR_CTRL, (next_wr_vfe->vf.canvas0Addr&0xff), WR_CANVAS_BIT, WR_CANVAS_WID);

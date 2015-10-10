@@ -139,6 +139,10 @@ module_param(hdcp_enable, bool, 0664);
 static bool use_audioresample_reset = false;
 MODULE_PARM_DESC(use_audioresample_reset, "\n use_audioresample_reset \n");
 module_param(use_audioresample_reset, bool, 0664);
+int eq_setting_ch0 = 4;
+int eq_setting_ch1 = 4;
+int eq_setting_ch2 = 4;
+//extern int eq_setting;
 
 
 /**
@@ -467,9 +471,9 @@ void hdmirx_phy_init(int rx_port_sel, int dcm)
 		hdmirx_wr_phy(HDMIRX_PHY_MPLL_CTRL, mpll_ctl_setting);
 	}
 
-	hdmirx_wr_phy(HDMIRX_PHY_CH0_EQ_CTRL3, 4);
-	hdmirx_wr_phy(HDMIRX_PHY_CH1_EQ_CTRL3, 4);
-	hdmirx_wr_phy(HDMIRX_PHY_CH2_EQ_CTRL3, 4);
+	hdmirx_wr_phy(HDMIRX_PHY_CH0_EQ_CTRL3, eq_setting_ch0);
+	hdmirx_wr_phy(HDMIRX_PHY_CH1_EQ_CTRL3, eq_setting_ch1);
+	hdmirx_wr_phy(HDMIRX_PHY_CH2_EQ_CTRL3, eq_setting_ch2);
 	hdmirx_wr_phy(HDMIRX_PHY_MAIN_FSM_OVERRIDE2, 0x40);
 
 #if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
@@ -1317,9 +1321,9 @@ void clk_init(void)
     data32 |= 0 << 25;  // [26:25] HDMIRX mode detection clock mux select: osc_clk
     data32 |= 1 << 24;  // [24]    HDMIRX mode detection clock enable
     data32 |= 0 << 16;  // [22:16] HDMIRX mode detection clock divider
-    data32 |= 3 << 9;   // [10: 9] HDMIRX config clock mux select:
+    data32 |= 0 << 9;   // [10: 9] HDMIRX config clock mux select:
     data32 |= 1 << 8;   // [    8] HDMIRX config clock enable
-    data32 |= 9 << 0;   // [ 6: 0] HDMIRX config clock divider:
+    data32 |= 0 << 0;   // [ 6: 0] HDMIRX config clock divider:
     WRITE_MPEG_REG(HHI_HDMIRX_CLK_CNTL,     data32);
 
     data32  = 0;
@@ -1463,7 +1467,7 @@ void hdmirx_hw_probe(void)
 	//turn on cfg_clk
     WRITE_MPEG_REG(HHI_HDMIRX_CLK_CNTL,	0x100);
 
-	hdmirx_wr_top(HDMIRX_DWC_DMI_DISABLE_IF,0x29);//bit0,bit3,bit5
+	hdmirx_wr_dwc(HDMIRX_DWC_DMI_DISABLE_IF,0x29);//bit0,bit3,bit5
 	hdmirx_wr_top(HDMIRX_TOP_EDID_GEN_CNTL,0x1e109);
 	#ifdef CEC_FUNC_ENABLE
 	cec_init();
@@ -1728,29 +1732,6 @@ int hdmirx_audio_init(void)
 	hdmirx_wr_dwc(HDMIRX_DWC_AUD_SAO_CTRL, data32);
 #endif
 	/* amlogic HDMIRX audio module enable*/
-#if (MESON_CPU_TYPE < MESON_CPU_TYPE_MESONG9TV)
-	WRITE_MPEG_REG(HHI_AUDCLK_PLL_CNTL,  0x60010000);
-	WRITE_MPEG_REG(HHI_AUDCLK_PLL_CNTL2, 0x814d3928);
-	WRITE_MPEG_REG(HHI_AUDCLK_PLL_CNTL3, 0x6b425012);
-	WRITE_MPEG_REG(HHI_AUDCLK_PLL_CNTL4, 0x101);
-	WRITE_MPEG_REG(HHI_AUDCLK_PLL_CNTL5, 0x8550d20);
-	if(rx.aud_info.audio_recovery_clock > (96000 + AUD_CLK_DELTA)){
-		if(rx.ctrl.tmds_clk2 <= 36000000) {
-			printk("tmds_clk2 <= 36000000\n");
-			WRITE_MPEG_REG(HHI_AUDCLK_PLL_CNTL6, 0x55013000);
-		} else if (rx.ctrl.tmds_clk2 <= 53000000) {
-			printk("tmds_clk2 <= 53000000\n");
-			WRITE_MPEG_REG(HHI_AUDCLK_PLL_CNTL6, 0x55053000);
-		} else {
-			printk("tmds_clk2 > 53000000\n");
-			WRITE_MPEG_REG(HHI_AUDCLK_PLL_CNTL6, 0x55153000);
-		}
-	} else {
-		printk("audio_recovery_clock < 98000\n");
-		WRITE_MPEG_REG(HHI_AUDCLK_PLL_CNTL6, 0x55153000);
-	}
-	WRITE_MPEG_REG(HHI_AUDCLK_PLL_CNTL, 0x00010000);  //reset
-#endif
 
 /**/
 #if 0

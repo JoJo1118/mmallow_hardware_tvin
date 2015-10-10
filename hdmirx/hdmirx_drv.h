@@ -19,7 +19,7 @@
 #include "../tvin_global.h"
 #include "../tvin_format_table.h"
 
-#define HDMIRX_VER "Ref.2015/08/31"
+#define HDMIRX_VER "Ref.2015/09/21"
 
 #define HDMI_STATE_CHECK_FREQ     (20*5)
 #define ABS(x) ((x)<0 ? -(x) : (x))
@@ -391,6 +391,10 @@ extern int yuv_quant_range;
 
 extern int hdmirx_print_flag;
 extern bool irq_ctrl_reg_en; /* enable/disable reg rd/wr in irq  */
+extern int eq_setting_ch0;
+extern int eq_setting_ch1;
+extern int eq_setting_ch2;
+extern int eq_setting;
 
 void hdmirx_wr_top (unsigned long addr, unsigned long data);
 unsigned long hdmirx_rd_top (unsigned long addr);

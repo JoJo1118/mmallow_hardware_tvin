@@ -467,7 +467,7 @@ void hdmirx_get_sig_property(struct tvin_frontend_s *fe, struct tvin_sig_propert
 	else
 		prop->decimation_ratio = (hdmirx_hw_get_pixel_repeat() - 1);
 
-#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
+#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
 	if((TVIN_SIG_FMT_HDMI_1920X1080P_50HZ != sig_fmt) &&
 		(TVIN_SIG_FMT_HDMI_1920X1080P_60HZ != sig_fmt)){
 		prop->dest_cfmt = TVIN_YUV422;

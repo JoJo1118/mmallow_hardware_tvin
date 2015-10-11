@@ -71,7 +71,7 @@ MODULE_PARM_DESC(audio_sample_rate_stable_count_th, "\n audio_sample_rate_stable
 module_param(audio_sample_rate_stable_count_th, int, 0664);
 
 static int sig_pll_unlock_cnt = 0;			//signal unstable PLL unlock
-static int sig_pll_unlock_max = 50;
+static int sig_pll_unlock_max = 100;
 MODULE_PARM_DESC(sig_pll_unlock_max, "\n sig_pll_unlock_max \n");
 module_param(sig_pll_unlock_max, int, 0664);
 
@@ -138,9 +138,9 @@ static bool current_port_hpd_ctl = false;
 MODULE_PARM_DESC(current_port_hpd_ctl, "\n current_port_hpd_ctl \n");
 module_param(current_port_hpd_ctl, bool, 0664);
 
-static bool reset_phy_enable = true;
-MODULE_PARM_DESC(reset_phy_enable, "\n reset_phy_enable \n");
-module_param(reset_phy_enable, bool, 0664);
+static int reset_phy_level = 2;
+MODULE_PARM_DESC(reset_phy_level, "\n reset_phy_level \n");
+module_param(reset_phy_level, int, 0664);
 
 static int force_format = 0;
 MODULE_PARM_DESC(force_format, "\n force_format \n");
@@ -160,7 +160,7 @@ static int port_map = 0x3210;
 MODULE_PARM_DESC(port_map, "\n port_map \n");
 module_param(port_map, int, 0664);
 
-static int cfg_clk = 51000; //510/20*1000
+static int cfg_clk = 24000; //510/20*1000
 MODULE_PARM_DESC(cfg_clk, "\n cfg_clk \n");
 module_param(cfg_clk, int, 0664);
 
@@ -256,13 +256,14 @@ static int tmds_valid_cnt_max = 20;
 MODULE_PARM_DESC(tmds_valid_cnt_max, "\n tmds_valid_cnt_max \n");
 module_param(tmds_valid_cnt_max, int, 0664);
 
-static int dwc_rst_wait_cnt_max = 30;
+static int dwc_rst_wait_cnt_max = 0;
 MODULE_PARM_DESC(dwc_rst_wait_cnt_max, "\n dwc_rst_wait_cnt_max \n");
 module_param(dwc_rst_wait_cnt_max, int, 0664);
 
-static bool need_run_EQ_workaround = true;
-MODULE_PARM_DESC(need_run_EQ_workaround, "\n need_run_EQ_workaround \n");
-module_param(need_run_EQ_workaround, int, 0664);
+static bool port0_need_run_EQ = true;
+static bool port1_need_run_EQ = true;
+static bool port2_need_run_EQ = true;
+
 
 #define FSM_LOG_ENABLE		0x01
 #define VIDEO_LOG_ENABLE	0x02
@@ -270,11 +271,10 @@ module_param(need_run_EQ_workaround, int, 0664);
 #define PACKET_LOG_ENABLE   0x08
 #define CEC_LOG_ENABLE		0x10
 #define REG_LOG_ENABLE		0x20
-
 //0x100--irq print;
 //0x200-other print
 /* bit 0, printk; bit 8 enable irq log */
-int hdmirx_log_flag = 0;
+int hdmirx_log_flag = 0x1;
 MODULE_PARM_DESC(hdmirx_log_flag, "\n hdmirx_log_flag \n");
 module_param(hdmirx_log_flag, int, 0664);
 
@@ -1002,26 +1002,26 @@ static freq_ref_t freq_ref[]=
 /* extend format */
 	{HDMI_1440x240p60,		0, 	27000, 1440, 240, 240, 240,	1, 3000},	//vic 8
 	{HDMI_1440x240p60_16x9, 0, 	27000, 1440, 240, 240, 240,	1, 3000},	//vic 9
-	{HDMI_2880x480i60,      0, 	54000, 2880, 240, 240, 240,	2, 3000},	//vic 10
-	{HDMI_2880x480i60_16x9, 0, 	54000, 2880, 240, 240, 240,	2, 3000},	//vic 11
-	{HDMI_2880x240p60,      0, 	54000, 2880, 240, 240, 240,	2, 3000},	//vic 12
-	{HDMI_2880x240p60_16x9, 0, 	54000, 2880, 240, 240, 240,	2, 3000},	//vic 13
+	{HDMI_2880x480i60,      0, 	54000, 2880, 240, 240, 240,	0, 3000},	//vic 10
+	{HDMI_2880x480i60_16x9, 0, 	54000, 2880, 240, 240, 240,	0, 3000},	//vic 11
+	{HDMI_2880x240p60,      0, 	54000, 2880, 240, 240, 240,	0, 3000},	//vic 12
+	{HDMI_2880x240p60_16x9, 0, 	54000, 2880, 240, 240, 240,	0, 3000},	//vic 13
 	{HDMI_1440x480p60,      0, 	54000, 1440, 480, 480, 480,	1, 3000},	//vic 14
 	{HDMI_1440x480p60_16x9, 0, 	54000, 1440, 480, 480, 480,	1, 3000},	//vic 15
 
 	{HDMI_1440x288p50,      0, 	27000, 1440, 288, 288, 288,	1, 2500},	//vic 23
 	{HDMI_1440x288p50_16x9, 0, 	27000, 1440, 288, 288, 288,	1, 2500},	//vic 24
-	{HDMI_2880x576i50,      0, 	54000, 2880, 288, 288, 288,	2, 2500},	//vic 25
-	{HDMI_2880x576i50_16x9, 0, 	54000, 2880, 288, 288, 288,	2, 2500},	//vic 26
-	{HDMI_2880x288p50,      0, 	54000, 2880, 288, 288, 288,	2, 2500},	//vic 27
-	{HDMI_2880x288p50_16x9, 0, 	54000, 2880, 288, 288, 288,	2, 2500},	//vic 28
+	{HDMI_2880x576i50,      0, 	54000, 2880, 288, 288, 288,	0, 2500},	//vic 25
+	{HDMI_2880x576i50_16x9, 0, 	54000, 2880, 288, 288, 288,	0, 2500},	//vic 26
+	{HDMI_2880x288p50,      0, 	54000, 2880, 288, 288, 288,	0, 2500},	//vic 27
+	{HDMI_2880x288p50_16x9, 0, 	54000, 2880, 288, 288, 288,	0, 2500},	//vic 28
 	{HDMI_1440x576p50,      0, 	54000, 1440, 576, 576, 576,	1, 2500},	//vic 29
 	{HDMI_1440x576p50_16x9, 0, 	54000, 1440, 576, 576, 576,	1, 2500},	//vic 30
 
-	{HDMI_2880x480p60,      0, 	108000, 2880, 480,  480, 480, 2, 3000},	//vic 35
-	{HDMI_2880x480p60_16x9, 0, 	108000, 2880, 480,  480, 480, 2, 3000},	//vic 36
-	{HDMI_2880x576p50,      0,	108000, 2880, 576,  576, 576, 2, 2500},	//vic 37
-	{HDMI_2880x576p50_16x9, 0,	108000, 2880, 576,  576, 576, 2, 2500},	//vic 38
+	{HDMI_2880x480p60,      0, 	108000, 2880, 480,  480, 480, 0, 3000},	//vic 35
+	{HDMI_2880x480p60_16x9, 0, 	108000, 2880, 480,  480, 480, 0, 3000},	//vic 36
+	{HDMI_2880x576p50,      0,	108000, 2880, 576,  576, 576, 0, 2500},	//vic 37
+	{HDMI_2880x576p50_16x9, 0,	108000, 2880, 576,  576, 576, 0, 2500},	//vic 38
 	{HDMI_1080i50_1250,     0,  72000, 	1920, 540,  540, 540, 0, 2500},	//vic 39
 	{HDMI_720p24,           0,  74250, 	1280, 720, 1470, 720, 0, 1200},	//vic 60
 	{HDMI_720p30,           0,  74250, 	1280, 720, 1470, 720, 0, 1500},	//vic 62
@@ -1362,7 +1362,13 @@ static bool is_packetinfo_change(struct hdmi_rx_ctrl_video *pre, struct hdmi_rx_
 	//}
 	//3. colorspace change
 	if(cur->video_format != pre->video_format){
-		printk("cur->video_format=%d,pre->video_format=%d\n",cur->video_format,pre->video_format);
+		if(hdmirx_log_flag & VIDEO_LOG_ENABLE)
+			printk("cur->video_format=%d,pre->video_format=%d\n",cur->video_format,pre->video_format);
+		return true;
+	}
+	if(cur->interlaced != pre->interlaced) {
+		if(hdmirx_log_flag & VIDEO_LOG_ENABLE)
+			printk("cur->interlaced=%d,pre->interlaced=%d\n",cur->interlaced,pre->interlaced);
 		return true;
 	}
 
@@ -1475,13 +1481,13 @@ static int get_timing_fmt(struct hdmi_rx_ctrl_video *video_par)
             video_par->sw_alternative = 1;
 		/*********** repetition Check patch start ***********/
         if(repeat_check) {
-			//if(video_par->pixel_repetition != 0) {
+			if(freq_ref[i].repetition_times != 0) {
 				if(video_par->pixel_repetition != freq_ref[i].repetition_times){
 					if(hdmirx_log_flag&PACKET_LOG_ENABLE)
 						printk("\n repetition error1 %d : %d(standard)",video_par->pixel_repetition,freq_ref[i].repetition_times);
 					video_par->pixel_repetition = freq_ref[i].repetition_times;
 				}
-			//}
+			}
 		}
 		/************ repetition Check patch end ************/
         if(hdmirx_log_flag&0x200)
@@ -1507,13 +1513,13 @@ static int get_timing_fmt(struct hdmi_rx_ctrl_video *video_par)
             video_par->sw_alternative = 1;
 		/*********** repetition Check patch start ***********/
         if(repeat_check) {
-			//if(video_par->pixel_repetition != 0) {
+			if(freq_ref[i].repetition_times != 0) {
 				if(video_par->pixel_repetition != freq_ref[i].repetition_times){
 					if(hdmirx_log_flag&PACKET_LOG_ENABLE)
 						printk("\n repetition error2 %d : %d(standard)",video_par->pixel_repetition,freq_ref[i].repetition_times);
 					video_par->pixel_repetition = freq_ref[i].repetition_times;
 				}
-			//}
+			}
 		}
 		/************ repetition Check patch end ************/
         if(hdmirx_log_flag&0x200)
@@ -1589,48 +1595,57 @@ void HPD_controller(void)
 		if(rx.portA_pow5v_state == 0){
 			if(rx.port == 0)
 				rx.current_port_tx_5v_status = 0;
-			if((current_port_hpd_ctl)&&(rx.portA_pow5v_state_pre==1)){
-				hdmirx_set_hpd(0, 0);
+			if(rx.portA_pow5v_state_pre==1){
 				rx.portA_pow5v_state_pre = 0;
+				port0_need_run_EQ = true;
+				if(current_port_hpd_ctl)
+					hdmirx_set_hpd(0, 0);
 			}
 		}else if(rx.portA_pow5v_state == pow5v_max_cnt){
 			if(rx.port == 0)
 				rx.current_port_tx_5v_status = 1;
-			if((current_port_hpd_ctl)&&(rx.portA_pow5v_state_pre==0)){
+			if(rx.portA_pow5v_state_pre==0){
 				rx.portA_pow5v_state_pre = 1;
-				hdmirx_set_hpd(0, 1);
+				if(current_port_hpd_ctl)
+					hdmirx_set_hpd(0, 1);
 			}
 		}
 		//------------port B-------------//
 		if(rx.portB_pow5v_state == 0){
 			if(rx.port == 1)
 				rx.current_port_tx_5v_status = 0;
-			if((current_port_hpd_ctl)&&(rx.portB_pow5v_state_pre==1)){
-				hdmirx_set_hpd(1, 0);
+			if(rx.portB_pow5v_state_pre==1){
 				rx.portB_pow5v_state_pre = 0;
+				port1_need_run_EQ = true;
+				if(current_port_hpd_ctl)
+					hdmirx_set_hpd(1, 0);
 			}
 		}else if(rx.portB_pow5v_state == pow5v_max_cnt){
 			if(rx.port == 1)
 				rx.current_port_tx_5v_status = 1;
-			if((current_port_hpd_ctl)&&(rx.portB_pow5v_state_pre==0)){
+			if(rx.portB_pow5v_state_pre==0){
 				rx.portB_pow5v_state_pre = 1;
-				hdmirx_set_hpd(1, 1);
+				if(current_port_hpd_ctl)
+					hdmirx_set_hpd(1, 1);
 			}
 		}
 		//-------------port C-------------//
 		if(rx.portC_pow5v_state == 0){
 			if(rx.port == 2)
 				rx.current_port_tx_5v_status = 0;
-			if((current_port_hpd_ctl)&&(rx.portC_pow5v_state_pre==1)){
-				hdmirx_set_hpd(2, 0);
+			if(rx.portC_pow5v_state_pre==1){
 				rx.portC_pow5v_state_pre = 0;
+				port2_need_run_EQ = true;
+				if(current_port_hpd_ctl)
+					hdmirx_set_hpd(2, 0);
 			}
 		}else if(rx.portC_pow5v_state == pow5v_max_cnt){
 			if(rx.port == 2)
 				rx.current_port_tx_5v_status = 1;
-			if((current_port_hpd_ctl)&&(rx.portC_pow5v_state_pre==0)){
+			if(rx.portC_pow5v_state_pre==0){
 				rx.portC_pow5v_state_pre = 1;
-				hdmirx_set_hpd(2, 1);
+				if(current_port_hpd_ctl)
+					hdmirx_set_hpd(2, 1);
 			}
 		}
 		//------------------------------//
@@ -1798,7 +1813,7 @@ void hdmirx_module_control(bool enable)
 #define MIN_SLOPE		50
 #define ACC_MIN_LIMIT	0
 #define ACC_LIMIT		370
-#define EQ_MAX_SETTING 12//for very long cable
+//#define EQ_MAX_SETTING 12//for very long cable
 #define EQ_SHORT_CABLE_BEST_SETTING	4
 #define MINDIFF 	4
 void hdmirx_phy_EQ_workaround_init(void)
@@ -1808,7 +1823,12 @@ void hdmirx_phy_EQ_workaround_init(void)
 	hdmirx_wr_phy(HDMIRX_PHY_EQCTRL1_CH0, 0x0211);
 	hdmirx_wr_phy(HDMIRX_PHY_EQCTRL1_CH1, 0x0211);
 	hdmirx_wr_phy(HDMIRX_PHY_EQCTRL1_CH2, 0x0211);
-	need_run_EQ_workaround = false;
+	if(rx.port == 0)
+		port0_need_run_EQ = false;
+	if(rx.port == 1)
+		port1_need_run_EQ = false;
+	if(rx.port == 2)
+		port2_need_run_EQ = false;
 }
 void hdmirx_phy_ConfEqualSetting(int ch0_lockVector,int ch1_lockVector,int ch2_lockVector)
 {
@@ -1881,52 +1901,148 @@ void configure_eq_setting(int rx_port_sel, int ch0Setting, int ch1Setting, int c
 #define EQ_AQUIRE_EARLY_COUNTER		4
 #define EQ_GET_CABLE_TYPE			5
 #define EQ_CONF_BEST_SETTING		6
+
+#define EQ_WAITTIME 						1		//wait time between early/late counter acquisitions
+#define EQ_SLOPEACM_MINTHRESHOLD			0		//Slope acumulator, minimum limit  to consider setting suitable for long cable
+#define EQ_SLOPEACM_LONG_CABLE_THRESHOLD	360 	//Slope acumulator threshold to considere as long cable
+#define EQ_MINSLOPE_VERYLONGCABLE			50		//minimum slope at maximum setting to consider it as a long cable
+
+#define EQ_COUNTERTHRESHOLD 				512		//threshold for equalized system
+#define EQ_MAX_SETTING 						13		//Maximum allowable setting
+#define EQ_SHORT_CABLE_BEST_SETTING 		4		//Default best setting for short cables (electrical short length)
+#define EQ_ERROR_CABLE_BEST_SETTING 		4		//Default setting when not good equalization is achieved, same as short cable
+#define EQ_BOUNDARYSPREAD			 		20		//Stop averaging (Stable measures), if early/late counter acquisitions are within the following range 1oread +-20
+#define EQ_MIN_ACQ_STABLE_DETECTION			3		//Minimum number of early/late counter acquisitions  to considere a stable acquisition
+#define EQ_WAITTIME							1		//wait time between early/late counter acquisitions
+#define EQ_SLOPEACM_MINTHRESHOLD 			0		//Slope acumulator, minimum limit  to consider setting suitable for long cable
+#define	EQ_SLOPEACM_LONG_CABLE_THRESHOLD	360		//Slope acumulator threshold to considere as long cable
+#define EQ_MINSLOPE_VERYLONGCABLE			50		//minimum slope at maximum setting to consider it as a long cable
+
 void hdmirx_phy_EQ_workaround(void)
 {
 	static int nretry = 0;
 	//static int eq_setting = 0;
-	static int ch0_early_cnt = 0;
-	static int ch1_early_cnt = 0;
-	static int ch2_early_cnt = 0;
-	static int last_ch0_early_cnt = 0;
-	static int last_ch1_early_cnt = 0;
-	static int last_ch2_early_cnt = 0;
+
+
 	static int EQ_state = EQ_DATA_INIT;
-	static int ch0_validSetting = 0;
-	static int ch1_validSetting = 0;
-	static int ch2_validSetting = 0;
+
+	//Auxiliary variable to perform early-late counters averaging
 	static int ch0_accumulator = 0;
 	static int ch1_accumulator = 0;
 	static int ch2_accumulator = 0;
+
+	//Variables to store early-late counters averaging
+	static int ch0_early_cnt = 0;
+	static int ch1_early_cnt = 0;
+	static int ch2_early_cnt = 0;
+
+	//Variables to store early-late counters slope
 	static int ch0_slope_accumulator = 0;
 	static int ch1_slope_accumulator = 0;
 	static int ch2_slope_accumulator = 0;
+
+	//Auxiliary variable to detect early-late counters trend (up/down)
+	static int last_ch0_early_cnt = 0;
+	static int last_ch1_early_cnt = 0;
+	static int last_ch2_early_cnt = 0;
+
+
+	//EQ Best Long cable setting and valid flag
+	static int ch0_eq_best_long_setting = 6;
+	static int ch1_eq_best_long_setting = 6;
+	static int ch2_eq_best_long_setting = 6;
+	static int ch0_valid_long_setting = 0;
+	static int ch1_valid_long_setting = 0;
+	static int ch2_valid_long_setting = 0;
+
+	//EQ Best Short cable setting and valid flag
+	static int ch0_eq_best_short_setting = 4;
+	static int ch1_eq_best_short_setting = 4;
+	static int ch2_eq_best_short_setting = 4;
+	static int ch0_valid_short_setting = 0;
+	static int ch1_valid_short_setting = 0;
+	static int ch2_valid_short_setting = 0;
+
+	//EQ Final Setting should be programed to the PHY
 	static int ch0_eq_best_setting = 4;
 	static int ch1_eq_best_setting = 4;
 	static int ch2_eq_best_setting = 4;
-	//static int result = 0;
+
+	//Auxiliary variables to detect stable acquisitions this will save 2mS * EQ_MAX_SETTING when good cables are used
 	static int upperBound_acqCH0, upperBound_acqCH1, upperBound_acqCH2;
 	static int lowerBound_acqCH0, lowerBound_acqCH1, lowerBound_acqCH2;
 	static int outBound_acqCH0, outBound_acqCH1, outBound_acqCH2;
-	int boundspread = 20;
-	int minACQtoStableDetection = 3;
-	int nacq = 5;
+
+	//Auxiliary variables to control algorithm status
 	static bool ch0_finish_flag = 0;
 	static bool ch1_finish_flag = 0;
 	static bool ch2_finish_flag = 0;
+	static bool ch0_error_cable_flag = 0;
+	static bool ch1_error_cable_flag = 0;
+	static bool ch2_error_cable_flag = 0;
+
+	//TMDSVALID FLAG
 	static bool tmds_valid_flag = 0;
+
+	//Auxiliary variable to control how many times Algorithm will retry if any error is detected
 	static bool minmax_err_flag = 0;
 	static int minmax_check_cnt = 0;
+
 	//static int tmds_valid_cnt = 0;
 	//static int tmds_valid_cnt_max = 10;
+	int eq_MAINFSM_STATUS1 = 0;
+
+	int nacq = 5;
+
 	switch(EQ_state){
 	case EQ_DATA_INIT:
+		//***************************   IMPORTANT   ***************************
+		//*************************** PLEASE README ***************************
+		//The following piece of code was added here to make sure that before running the algorithm
+		//all needed condition are available if not
+		//The conditions are, PHY is receiving a stable clock  [reg (MAINFSM_STATUS1) 0x09[8]=1'b1]
+		//and PLL_RATE if greater that 94.5MHz reg (MAINFSM_STATUS1) 0x09[10:9]=2'b0x]
+		//If stable clock is not asserted MAIN FSM should wait for such signal and call again the algorithm.
+		//int eq_MAINFSM_STATUS1 = 0;
+		eq_MAINFSM_STATUS1 = hdmirx_rd_phy(REG_HDMI_PHY_MAINFSM_STATUS1); // GET PHY STATUS (MAINFSM_STATUS1)
+		hdmirx_wr_phy(HDMIRX_PHY_MAIN_FSM_OVERRIDE2, 0x0); //Make sure that SW is not overriding the equalization not mandatory code (this is the default status)
+
+		if ((eq_MAINFSM_STATUS1 >> 8 & 0x1) == 0) //clock_stable = false => Main FSM should wait for clock stable
+		//Is mandatory to have a stable clock before starting to do equalization
+		{
+			rx.state = HDMIRX_HWSTATE_EQ_CALIBRATION; //You should add some extra state on MAIN FSM to wait clock_stable flag from the PHY
+													  //otherwise this will be a never end status if no clock from the source
+			rx.pre_state = HDMIRX_HWSTATE_HPD_READY;
+			break;
+		}
+		if((( eq_MAINFSM_STATUS1 >>10)& 0x1) != 0){
+			//pll_rate smaller than 94.5MHz, algorithm not needed
+			//Please make sure that PHY get the default status
+			hdmirx_wr_phy(0x33, 0x0020);	//default status for register 0x33
+			hdmirx_wr_phy(0x53, 0x0020); //default status for register 0x53
+			hdmirx_wr_phy(0x73, 0x0020); //default status for register 0x73
+
+			rx.state = HDMIRX_HWSTATE_SIG_UNSTABLE;
+			rx.pre_state = HDMIRX_HWSTATE_HPD_READY;
+			break;
+		}
+		//*************************** END  NOTICE ***************************
+
+
 		ch0_finish_flag = 0;
 		ch1_finish_flag = 0;
 		ch2_finish_flag = 0;
-		ch0_validSetting = 0;
-		ch1_validSetting = 0;
-		ch2_validSetting = 0;
+
+		ch0_error_cable_flag = 0;
+		ch1_error_cable_flag = 0;
+		ch2_error_cable_flag = 0;
+
+		ch0_valid_long_setting = 0;
+		ch1_valid_long_setting = 0;
+		ch2_valid_long_setting = 0;
+		ch0_valid_short_setting = 0;
+		ch1_valid_short_setting = 0;
+		ch2_valid_short_setting = 0;
 		ch0_accumulator = 0;
 		ch1_accumulator = 0;
 		ch2_accumulator = 0;
@@ -1934,8 +2050,10 @@ void hdmirx_phy_EQ_workaround(void)
 		ch1_slope_accumulator = 0;
 		ch2_slope_accumulator = 0;
 		eq_setting = 0;
+
 		EQ_state = EQ_SET_LOCK_VECTOR;
-		break;
+
+	break;
 	case EQ_SET_LOCK_VECTOR:
 		//tmds_valid_flag = 1;
 		ch0_early_cnt = 0;
@@ -1948,211 +2066,301 @@ void hdmirx_phy_EQ_workaround(void)
 		hdmirx_phy_ConfEqualSetting(eq_setting,eq_setting,eq_setting);
 		EQ_state = EQ_SET_FORCE_FMS_STATE;
 		//printk("set lock vector->set force FMS state\n");
-		break;
+	break;
 	case EQ_SET_FORCE_FMS_STATE:
 		hdmirx_wr_phy(HDMIRX_PHY_MAINFSM_CTL, 0x1809);
 		hdmirx_wr_phy(HDMIRX_PHY_MAINFSM_CTL, 0x1819);
 		hdmirx_wr_phy(HDMIRX_PHY_MAINFSM_CTL, 0x1809);
-		EQ_state = EQ_CHECK_TMDS_VALID;
-		//printk("set for FMS state->check TMDS valid\n");
-		break;
+		EQ_state = EQ_CHECK_TMDS_VALID;	//please make sure that there's at least 10 mS between that state and  TMDSVALID detection/test
+		if(hdmirx_log_flag&VIDEO_LOG_ENABLE)
+			printk("set for FMS state->check TMDS valid\n");
+	break;
 	case EQ_CHECK_TMDS_VALID:
-		if(!hdmirx_tmds_pll_lock()){
-			if(tmds_valid_cnt++ > tmds_valid_cnt_max){
-				printk("tmds_valid_cnt=%d\n", tmds_valid_cnt);
+		if(hdmirx_log_flag&VIDEO_LOG_ENABLE)
+			printk("check TMDS valid\n"); 	//Please check the following
+										//between the following printk instructions
+										//printk("set for FMS state->check TMDS valid\n"); AND printk("check TMDS valid\n");	you have at lest 10ms
+
+		if(!hdmirx_tmds_pll_lock()){					//Is this the tmds valid detection? ALG shouldn't wait for a long time (much more than 10mS) for TMDSVALID assertion
+			if(tmds_valid_cnt++ > tmds_valid_cnt_max){ 	//how long are you waiting for TMDSVALID? should be ~~10mS
+														//did you see any case where TMDSVALID doesn't get asserted after 10mS but get asserted after a long time?
+														//System shouldn't wait for TMDS VALID assertion more than 10mS
+														//because if TMDSVALID is not asserted means that setting is not good enough
+														//and must proceed for the next one
+														//please send to us some log file (early counters slope acumulator and setting ) where TMDS VALID just gets asserted after long time
+				if(hdmirx_log_flag&VIDEO_LOG_ENABLE)
+					printk("tmds_valid_cnt=%d\n", tmds_valid_cnt);
 				//printk("TMDS not valid\n");
 				tmds_valid_flag = 0;
 				tmds_valid_cnt = 0;
 				EQ_state = EQ_GET_CABLE_TYPE;
 			}
-		}else{
+		}
+		else{
 			tmds_valid_cnt = 0;
 			tmds_valid_flag = 1;
 			ch0_early_cnt = hdmirx_rd_phy(HDMIRX_PHY_EQSTAT3_CH0);
 			//printk("cho early cnt=[%d]\n", ch0_early_cnt);
 			ch1_early_cnt = hdmirx_rd_phy(HDMIRX_PHY_EQSTAT3_CH1);
 			ch2_early_cnt = hdmirx_rd_phy(HDMIRX_PHY_EQSTAT3_CH2);
+
 			ch0_accumulator = ch0_early_cnt;
 			ch1_accumulator = ch1_early_cnt;
 			ch2_accumulator = ch2_early_cnt;
-			upperBound_acqCH0 = ch0_accumulator + boundspread;	lowerBound_acqCH0 = ch0_accumulator - boundspread;
-			upperBound_acqCH1 = ch1_accumulator + boundspread;	lowerBound_acqCH1 = ch1_accumulator - boundspread;
-			upperBound_acqCH2 = ch2_accumulator + boundspread;	lowerBound_acqCH2 = ch1_accumulator - boundspread;
+			upperBound_acqCH0 = ch0_accumulator + EQ_BOUNDARYSPREAD; lowerBound_acqCH0 =	ch0_accumulator - EQ_BOUNDARYSPREAD;
+			upperBound_acqCH1 = ch1_accumulator + EQ_BOUNDARYSPREAD; lowerBound_acqCH1 =	ch1_accumulator - EQ_BOUNDARYSPREAD;
+			upperBound_acqCH2 = ch2_accumulator + EQ_BOUNDARYSPREAD; lowerBound_acqCH2 =	ch1_accumulator - EQ_BOUNDARYSPREAD;
 			EQ_state = EQ_AQUIRE_EARLY_COUNTER;
 			//printk("check TMDS valid->aquire early counter\n");
 		}
-		break;
+	break;
 	case EQ_AQUIRE_EARLY_COUNTER:
-		nretry ++;
-		//printk("the current eq setting is[%d]\n", eq_setting);
-			//hdmi_rx_phy_ConfEqualAutoCalib
-		hdmirx_wr_phy(HDMIRX_PHY_MAINFSM_CTL, 0x1809);
-		hdmirx_wr_phy(HDMIRX_PHY_MAINFSM_CTL, 0x1819);
-		hdmirx_wr_phy(HDMIRX_PHY_MAINFSM_CTL, 0x1809);
-		mdelay(2);
-		if (ch0_accumulator > upperBound_acqCH0 || ch0_accumulator < lowerBound_acqCH0) outBound_acqCH0++;
-		if (ch1_accumulator > upperBound_acqCH1 || ch1_accumulator < lowerBound_acqCH1) outBound_acqCH1++;
-		if (ch2_accumulator > upperBound_acqCH2 || ch2_accumulator < lowerBound_acqCH2) outBound_acqCH2++;
-
-		if (nretry == minACQtoStableDetection) // Stable detection, minimum 3 readouts
+		//***************************   IMPORTANT   ***************************
+		//*************************** PLEASE README ***************************
+		//the execution of the following loop before jumping to the MAIN FSM will save 500mS, taking into account that MAIN FSM takes 10mS to finish.
+		while(1) //Important loop to save 500mS of execution time. Loop takes a maximum time of ~5mS
 		{
-			if ( outBound_acqCH0 == 0 && outBound_acqCH1 == 0 && outBound_acqCH2 == 0)
+			nretry ++;
+			//printk("the current eq setting is[%d]\n", eq_setting);
+			//hdmi_rx_phy_ConfEqualAutoCalib
+			hdmirx_wr_phy(HDMIRX_PHY_MAINFSM_CTL, 0x1809);
+			hdmirx_wr_phy(HDMIRX_PHY_MAINFSM_CTL, 0x1819);
+			hdmirx_wr_phy(HDMIRX_PHY_MAINFSM_CTL, 0x1809);
+			mdelay(EQ_WAITTIME);	//wait EQ_WAITTIME to have a stable read from Early edge counter
+
+			//Update boundaries to detect a stable acquisitions
+			if (ch0_accumulator > upperBound_acqCH0 || ch0_accumulator < lowerBound_acqCH0)
+				outBound_acqCH0++;
+			if (ch1_accumulator > upperBound_acqCH1 || ch1_accumulator < lowerBound_acqCH1)
+				outBound_acqCH1++;
+			if (ch2_accumulator > upperBound_acqCH2 || ch2_accumulator < lowerBound_acqCH2)
+				outBound_acqCH2++;
+			if (nretry == EQ_MIN_ACQ_STABLE_DETECTION) //Finish averaging because Stable acquisitions were detected, minimum of three readings between boundaries to finish the averaging
 			{
-				//printk("STABLE ACQ\n");
-				nacq = 3;
-				//printk("3---1111early_cnt_ch0=[%d],nacq=[%d]\n", ch0_early_cnt, nacq);
+				if ( outBound_acqCH0 == 0 && outBound_acqCH1 == 0 && outBound_acqCH2== 0)
+				{
+					//printk("STABLE ACQ\n");
+					nacq = EQ_MIN_ACQ_STABLE_DETECTION;
+					//printk("3---1111early_cnt_ch0=[%d],nacq=[%d]\n", ch0_early_cnt, nacq);
+					ch0_early_cnt = ch0_accumulator / nacq;
+					if(hdmirx_log_flag&VIDEO_LOG_ENABLE)
+						printk("3early_cnt_ch0=[%d]\n", ch0_early_cnt);
+					ch1_early_cnt = ch1_accumulator / nacq;
+					if(hdmirx_log_flag&VIDEO_LOG_ENABLE)
+						printk("3early_cnt_ch1=[%d]\n", ch1_early_cnt);
+					ch2_early_cnt = ch2_accumulator / nacq;
+					if(hdmirx_log_flag&VIDEO_LOG_ENABLE)
+						printk("3early_cnt_ch2=[%d]\n", ch2_early_cnt);
+					nretry = 0;
+					EQ_state = EQ_GET_CABLE_TYPE;
+					//printk("aquire early counter->get cable type\n");
+					break;
+				}
+			}
+			else if(nretry == nacq){	//Finish averaging,  maximum number of readings achieved
+				nacq = nretry;
+				//printk("5----1111early_cnt_ch0=[%d],nacq=[%d]\n", ch0_early_cnt, nacq);
 				ch0_early_cnt = ch0_accumulator / nacq;
-				//printk("early_cnt_ch0=[%d]\n", ch0_early_cnt);
+				if(hdmirx_log_flag&VIDEO_LOG_ENABLE)
+					printk("5early_cnt_ch0=[%d]\n", ch0_early_cnt);
 				ch1_early_cnt = ch1_accumulator / nacq;
-				//printk("early_cnt_ch1=[%d]\n", ch1_early_cnt);
+				if(hdmirx_log_flag&VIDEO_LOG_ENABLE)
+					printk("5early_cnt_ch1=[%d]\n", ch1_early_cnt);
 				ch2_early_cnt = ch2_accumulator / nacq;
-				//printk("early_cnt_ch2=[%d]\n", ch2_early_cnt);
+				if(hdmirx_log_flag&VIDEO_LOG_ENABLE)
+					printk("5early_cnt_ch2=[%d]\n", ch2_early_cnt);
 				nretry = 0;
 				EQ_state = EQ_GET_CABLE_TYPE;
 				//printk("aquire early counter->get cable type\n");
-				break;
-
-			}
-		}else if(nretry == nacq){
-			//printk("5----1111early_cnt_ch0=[%d],nacq=[%d]\n", ch0_early_cnt, nacq);
-			ch0_early_cnt = ch0_accumulator / nacq;
-			//printk("early_cnt_ch0=[%d]\n", ch0_early_cnt);
-			ch1_early_cnt = ch1_accumulator / nacq;
-			//printk("early_cnt_ch1=[%d]\n", ch1_early_cnt);
-			ch2_early_cnt = ch2_accumulator / nacq;
-			//printk("early_cnt_ch2=[%d]\n", ch2_early_cnt);
-			nretry = 0;
-			EQ_state = EQ_GET_CABLE_TYPE;
-			//printk("aquire early counter->get cable type\n");
 			break;
+			}
+			//Read next set of Early edges counter
+			ch0_early_cnt = hdmirx_rd_phy(HDMIRX_PHY_EQSTAT3_CH0);
+			ch1_early_cnt = hdmirx_rd_phy(HDMIRX_PHY_EQSTAT3_CH1);
+			ch2_early_cnt = hdmirx_rd_phy(HDMIRX_PHY_EQSTAT3_CH2);
+
+			//update the averaging accumulator
+			ch0_accumulator += ch0_early_cnt;
+			ch1_accumulator += ch1_early_cnt;
+			ch2_accumulator += ch2_early_cnt;
 		}
-		ch0_early_cnt = hdmirx_rd_phy(HDMIRX_PHY_EQSTAT3_CH0);
-		//printk("cho early cnt=[%d]\n", ch0_early_cnt);
-		ch1_early_cnt = hdmirx_rd_phy(HDMIRX_PHY_EQSTAT3_CH1);
-		ch2_early_cnt = hdmirx_rd_phy(HDMIRX_PHY_EQSTAT3_CH2);
-		ch0_accumulator += ch0_early_cnt;
-		ch1_accumulator += ch1_early_cnt;
-		ch2_accumulator += ch2_early_cnt;
-		break;
+		//*************************** PLEASE README ***************************
+		//if the following break gets removed, algorithm becomes 10mS*EQ_MAX_SETTING faster
+		//break;
+
 	case EQ_GET_CABLE_TYPE:
-		{
-			int ch0_stepSlope = 0;
-			int ch1_stepSlope = 0;
-			int ch2_stepSlope = 0;
-			//printk("tmds_valid_flag=[%d]\n", tmds_valid_flag);
-			if(tmds_valid_flag == 1){
-				//printk("enter cable type detection\n");
-				if((ch0_early_cnt < last_ch0_early_cnt) && (ch0_finish_flag == 0)){
-					ch0_slope_accumulator += last_ch0_early_cnt - ch0_early_cnt;
-					if((0 == ch0_validSetting) &&
-							(ch0_early_cnt < 512) &&
-							(ch0_slope_accumulator > ACC_MIN_LIMIT)){
-						ch0_eq_best_setting = eq_setting;
-						ch0_validSetting = 1;
-					}
-					//ch0_accumulator = ch0_accumulator + (last_ch0_early_cnt - ch0_early_cnt);
-					ch0_stepSlope = last_ch0_early_cnt-ch0_early_cnt;
+	{
+		int ch0_stepSlope = 0;
+		int ch1_stepSlope = 0;
+		int ch2_stepSlope = 0;
+		//printk("tmds_valid_flag=[%d]\n", tmds_valid_flag);
+
+
+		//CABLE SETTING FOR THE BEST EQUALIZATION
+		//LONG CABLE EQUALIZATION
+		if(tmds_valid_flag == 1){
+			//printk("enter cable type detection\n");
+			if((ch0_early_cnt < last_ch0_early_cnt) && (ch0_finish_flag == 0)){
+				ch0_slope_accumulator += (last_ch0_early_cnt - ch0_early_cnt);
+				if((0 == ch0_valid_long_setting) && (ch0_early_cnt < EQ_COUNTERTHRESHOLD) && (ch0_slope_accumulator > EQ_SLOPEACM_MINTHRESHOLD)){
+					ch0_eq_best_long_setting = eq_setting;
+					ch0_valid_long_setting = 1;
 				}
-				if((ch1_early_cnt < last_ch1_early_cnt) && (ch1_finish_flag == 0)){
-					ch1_slope_accumulator += last_ch1_early_cnt - ch1_early_cnt;
-					if((0 == ch1_validSetting) &&
-							(ch1_early_cnt < 512) &&
-							(ch1_slope_accumulator > ACC_MIN_LIMIT)){
-						ch1_eq_best_setting = eq_setting;
-						ch1_validSetting = 1;
-					}
-					//ch1_accumulator = ch1_accumulator + (last_ch1_early_cnt - ch1_early_cnt);
-					ch1_stepSlope = last_ch1_early_cnt-ch1_early_cnt;
-				}
-				if((ch2_early_cnt < last_ch2_early_cnt) && (ch2_finish_flag == 0)){
-					ch2_slope_accumulator += last_ch2_early_cnt - ch2_early_cnt;
-					if((0 == ch2_validSetting) &&
-							(ch2_early_cnt < 512) &&
-							(ch2_slope_accumulator > ACC_MIN_LIMIT)){
-						ch2_eq_best_setting = eq_setting;
-						ch2_validSetting = 1;
-					}
-					//ch2_accumulator = ch2_accumulator + (last_ch2_early_cnt - ch2_early_cnt);
-					ch2_stepSlope = last_ch2_early_cnt-ch2_early_cnt;
-				}
+				//ch0_accumulator = ch0_accumulator + (last_ch0_early_cnt -	ch0_early_cnt);
+				ch0_stepSlope = last_ch0_early_cnt-ch0_early_cnt;
 			}
-			//long cable
-			if((1 == ch0_validSetting)&&(ch0_slope_accumulator > ACC_LIMIT)){
+			if((ch1_early_cnt < last_ch1_early_cnt) && (ch1_finish_flag == 0)){
+				ch1_slope_accumulator += (last_ch1_early_cnt - ch1_early_cnt);
+				if((0 == ch1_valid_long_setting) &&	(ch1_early_cnt < EQ_COUNTERTHRESHOLD) && (ch1_slope_accumulator > EQ_SLOPEACM_MINTHRESHOLD)){
+					ch1_eq_best_long_setting = eq_setting;
+					ch1_valid_long_setting = 1;
+				}
+				//ch1_accumulator = ch1_accumulator + (last_ch1_early_cnt -	ch1_early_cnt);
+				ch1_stepSlope = last_ch1_early_cnt-ch1_early_cnt;
+			}
+			if((ch2_early_cnt < last_ch2_early_cnt) && (ch2_finish_flag == 0)){
+				ch2_slope_accumulator += (last_ch2_early_cnt - ch2_early_cnt);
+				if((0 == ch2_valid_long_setting) && (ch2_early_cnt < EQ_COUNTERTHRESHOLD) &&(ch2_slope_accumulator > EQ_SLOPEACM_MINTHRESHOLD)){
+					ch2_eq_best_long_setting = eq_setting;
+					ch2_valid_long_setting = 1;
+				}
+				//ch2_accumulator = ch2_accumulator + (last_ch2_early_cnt -	ch2_early_cnt);
+				ch2_stepSlope = last_ch2_early_cnt-ch2_early_cnt;
+			}
+		}
+		//SHORT CABLE EQUALIZATION
+		if (tmds_valid_flag == 1 &&  eq_setting <= EQ_SHORT_CABLE_BEST_SETTING) {
+			if ( ch0_early_cnt < EQ_COUNTERTHRESHOLD && ch0_valid_short_setting == 0 ) {	//Short setting better than default
+				ch0_eq_best_short_setting=eq_setting;
+				ch0_valid_short_setting=1;
+			}
+			if (eq_setting == EQ_SHORT_CABLE_BEST_SETTING && ch0_valid_short_setting == 0){	//default Short setting is valid
+				ch0_eq_best_short_setting=EQ_SHORT_CABLE_BEST_SETTING;
+				ch0_valid_short_setting=1;
+			}
+
+			if ( ch1_early_cnt < EQ_COUNTERTHRESHOLD && ch1_valid_short_setting == 0) {	//Short setting better than default
+				ch1_eq_best_short_setting=eq_setting;
+				ch1_valid_short_setting=1;
+			}
+			if (eq_setting == EQ_SHORT_CABLE_BEST_SETTING && ch1_valid_short_setting == 0){	//Short setting is valid
+				ch1_eq_best_short_setting=EQ_SHORT_CABLE_BEST_SETTING;
+				ch1_valid_short_setting=1;
+			}
+
+			if ( ch2_early_cnt < EQ_COUNTERTHRESHOLD && ch2_valid_short_setting == 0) {	//Short setting better than default
+				ch2_eq_best_short_setting=eq_setting;
+				ch2_valid_short_setting=1;
+			}
+			if (eq_setting == EQ_SHORT_CABLE_BEST_SETTING && ch2_valid_short_setting == 0){	//Short setting is valid
+				ch2_eq_best_short_setting=EQ_SHORT_CABLE_BEST_SETTING;
+				ch2_valid_short_setting=1;
+			}
+		}
+
+		//CABLE DETECTION
+		//long cable
+		if((1 == ch0_valid_long_setting)&& (ch0_slope_accumulator > EQ_SLOPEACM_LONG_CABLE_THRESHOLD) && (ch0_finish_flag == 0)){
+			ch0_eq_best_setting = ch0_eq_best_long_setting;
+			ch0_finish_flag = 1;
+			if(hdmirx_log_flag&VIDEO_LOG_ENABLE)
+				printk("ch0:long cable");
+		}
+		if((1 == ch1_valid_long_setting)&& (ch1_slope_accumulator > EQ_SLOPEACM_LONG_CABLE_THRESHOLD) && (ch1_finish_flag == 0)){
+			ch1_eq_best_setting = ch1_eq_best_long_setting;
+			ch1_finish_flag = 1;
+			if(hdmirx_log_flag&VIDEO_LOG_ENABLE)
+				printk("ch1:long cable");
+		}
+		if((1 == ch2_valid_long_setting)&& (ch2_slope_accumulator > EQ_SLOPEACM_LONG_CABLE_THRESHOLD) && (ch2_finish_flag == 0)){
+			ch2_eq_best_setting = ch2_eq_best_long_setting;
+			ch2_finish_flag = 1;
+			if(hdmirx_log_flag&VIDEO_LOG_ENABLE)
+				printk("ch2:long cable");
+		}
+
+		if(eq_setting >= EQ_MAX_SETTING){	//Maximum setting achieved without long cable detection, so decision must be taken
+			if(hdmirx_log_flag&VIDEO_LOG_ENABLE)
+				printk("eq reach the max settin---%d\n", eq_setting);
+			//short cable
+			if((ch0_slope_accumulator < EQ_SLOPEACM_LONG_CABLE_THRESHOLD) && (ch0_finish_flag == 0)){
+				ch0_eq_best_setting = ch0_eq_best_short_setting;
 				ch0_finish_flag = 1;
-				//printk("ch0:long cable---eq[%d]\n", ch0_eq_best_setting);
+				if(hdmirx_log_flag&VIDEO_LOG_ENABLE)
+					printk("ch0:short cable\n");
 			}
-			if((1 == ch1_validSetting)&&(ch1_slope_accumulator > ACC_LIMIT)){
+			if((ch1_slope_accumulator < EQ_SLOPEACM_LONG_CABLE_THRESHOLD) && (ch1_finish_flag == 0)){
+				ch1_eq_best_setting = ch1_eq_best_short_setting;
 				ch1_finish_flag = 1;
-				//printk("ch1:long cable---eq[%d]\n", ch1_eq_best_setting);
+				if(hdmirx_log_flag&VIDEO_LOG_ENABLE)
+					printk("ch1:short cable\n");
 			}
-			if((1 == ch2_validSetting)&&(ch2_slope_accumulator > ACC_LIMIT)){
+			if((ch2_slope_accumulator < EQ_SLOPEACM_LONG_CABLE_THRESHOLD) && (ch2_finish_flag == 0)){
+				ch2_eq_best_setting = ch2_eq_best_short_setting;
 				ch2_finish_flag = 1;
-				//printk("ch2:long cable---eq[%d]\n", ch2_eq_best_setting);
+				if(hdmirx_log_flag&VIDEO_LOG_ENABLE)
+					printk("ch2:short cable");
 			}
-
-			if(eq_setting > EQ_MAX_SETTING){
-				//short cable
-				if((ch0_slope_accumulator < ACC_LIMIT) && (ch0_finish_flag == 0)){
-					ch0_finish_flag = 1;
-					ch0_eq_best_setting = EQ_SHORT_CABLE_BEST_SETTING;
-					//printk("ch0:short cable---eq[%d]\n", ch0_eq_best_setting);
-				}
-				if((ch1_slope_accumulator < ACC_LIMIT) && (ch1_finish_flag == 0)){
-					ch1_finish_flag = 1;
-					ch1_eq_best_setting = EQ_SHORT_CABLE_BEST_SETTING;
-					//printk("ch1:short cable---eq[%d]\n", ch1_eq_best_setting);
-				}
-				if((ch2_slope_accumulator < ACC_LIMIT) && (ch2_finish_flag == 0)){
-					ch2_finish_flag = 1;
-					ch2_eq_best_setting = EQ_SHORT_CABLE_BEST_SETTING;
-					//printk("ch2:short cable---eq[%d]\n", ch2_eq_best_setting);
-				}
-
-				//very long cable
-				if((ch0_slope_accumulator > ACC_LIMIT) && (ch0_stepSlope > MIN_SLOPE) && tmds_valid_flag && (ch0_finish_flag == 0)){
-					ch0_eq_best_setting = EQ_MAX_SETTING;
-					ch0_finish_flag = 1;
-					//printk("ch0:very long cable---eq[%d]\n", ch0_eq_best_setting);
-				}
-				if((ch1_slope_accumulator > ACC_LIMIT) && (ch1_stepSlope > MIN_SLOPE) && tmds_valid_flag && (ch1_finish_flag == 0)){
-					ch1_eq_best_setting = EQ_MAX_SETTING;
-					ch1_finish_flag = 1;
-					//printk("ch1:very long cable---eq[%d]\n", ch1_eq_best_setting);
-				}
-				if((ch2_slope_accumulator > ACC_LIMIT) && (ch2_stepSlope > MIN_SLOPE) && tmds_valid_flag && (ch2_finish_flag == 0)){
-					ch2_eq_best_setting = EQ_MAX_SETTING;
-					ch2_finish_flag = 1;
-					//printk("ch2:very long cable---eq[%d]\n", ch2_eq_best_setting);
-				}
-
-				//error cable
-				if(ch0_finish_flag == 0){
-					ch0_finish_flag = 1;
-					//printk("ch0:error cable\n");
-				}
-				if(ch1_finish_flag == 0){
-					//printk("ch1:error cable\n");
-					ch1_finish_flag = 1;
-				}
-				if(ch2_finish_flag == 0){
-					//printk("ch2:error cable\n");
-					ch2_finish_flag = 1;
-				}
+			//very long cable
+			if((ch0_slope_accumulator > EQ_SLOPEACM_LONG_CABLE_THRESHOLD) && (ch0_stepSlope > EQ_MINSLOPE_VERYLONGCABLE) && tmds_valid_flag && (ch0_finish_flag == 0)){
+				ch0_eq_best_setting = EQ_MAX_SETTING;
+				ch0_finish_flag = 1;
+				if(hdmirx_log_flag&VIDEO_LOG_ENABLE)
+					printk("ch0:very long cable\n");
 			}
-
-			if(ch0_finish_flag && ch1_finish_flag && ch2_finish_flag){
-				//printk("all chs finish the calibration\n");
-				EQ_state = EQ_CONF_BEST_SETTING;
-			}else{
-				eq_setting++;
-				EQ_state = EQ_SET_LOCK_VECTOR;
+			if((ch1_slope_accumulator > EQ_SLOPEACM_LONG_CABLE_THRESHOLD) && (ch1_stepSlope > EQ_MINSLOPE_VERYLONGCABLE) && tmds_valid_flag && (ch1_finish_flag == 0)){
+				ch1_eq_best_setting = EQ_MAX_SETTING;
+				ch1_finish_flag = 1;
+				if(hdmirx_log_flag&VIDEO_LOG_ENABLE)
+					printk("ch1:very long cable\n");
 			}
+			if((ch2_slope_accumulator > EQ_SLOPEACM_LONG_CABLE_THRESHOLD) && (ch2_stepSlope > EQ_MINSLOPE_VERYLONGCABLE) && tmds_valid_flag && (ch2_finish_flag == 0)){
+				ch2_eq_best_setting = EQ_MAX_SETTING;
+				ch2_finish_flag = 1;
+				if(hdmirx_log_flag&VIDEO_LOG_ENABLE)
+					printk("ch2:very long cable\n");
+			}
+			//error cable
+			if(ch0_finish_flag == 0){
+				ch0_eq_best_setting = EQ_ERROR_CABLE_BEST_SETTING;
+				ch0_finish_flag = 1;
+				ch0_error_cable_flag = 1;
+				if(hdmirx_log_flag&VIDEO_LOG_ENABLE)
+					printk("ch0:error cable\n");
+			}
+			if(ch1_finish_flag == 0){
+				ch1_eq_best_setting = EQ_ERROR_CABLE_BEST_SETTING;
+				ch1_finish_flag = 1;
+				ch1_error_cable_flag = 1;
+				if(hdmirx_log_flag&VIDEO_LOG_ENABLE)
+					printk("ch1:error cable\n");
+			}
+			if(ch2_finish_flag == 0){
+				ch2_eq_best_setting = EQ_ERROR_CABLE_BEST_SETTING;
+				ch2_finish_flag = 1;
+				ch2_error_cable_flag = 1;
+				if(hdmirx_log_flag&VIDEO_LOG_ENABLE)
+					printk("ch2:error cable\n");
+			}
+		}
+
+		if(ch0_finish_flag && ch1_finish_flag && ch2_finish_flag){	//Algorithm already take the decision for all Channels
+			//printk("all chs finish the calibration\n");
+			//printk("Final Settings CH0[%d],CH1[%d],CH2[%d]\n",ch0_eq_best_setting, ch1_eq_best_setting,ch2_eq_best_setting);
+			EQ_state = EQ_CONF_BEST_SETTING;
+		}
+		else{	//Updating latest acquisition memory and jump to the next setting
+			eq_setting++;
+			printk("eq=[%d]\n", eq_setting);
 			last_ch0_early_cnt = ch0_early_cnt;
 			last_ch1_early_cnt = ch1_early_cnt;
 			last_ch2_early_cnt = ch2_early_cnt;
-			//printk("acc0=%d\n", ch0_slope_accumulator);
-			break;
+			EQ_state = EQ_SET_LOCK_VECTOR;
 		}
+
+		//printk("acc0=%d\n", ch0_slope_accumulator);
+		break;
+	}
 	case EQ_CONF_BEST_SETTING:
 		//printk("best EQ ch0=%d, ch1=%d, ch2=%d",ch0_eq_best_setting,ch1_eq_best_setting,ch2_eq_best_setting);
 		//hdmirx_wr_phy(HDMIRX_PHY_MAIN_FSM_OVERRIDE2, 0x0);//0x08->0 ,auto mode
@@ -2164,61 +2372,78 @@ void hdmirx_phy_EQ_workaround(void)
 		//hdmirx_wr_phy(HDMIRX_PHY_CH1_EQ_CTRL3, ch1_eq_best_setting);
 		//hdmirx_wr_phy(HDMIRX_PHY_CH2_EQ_CTRL3, ch2_eq_best_setting);
 		//hdmirx_wr_phy(HDMIRX_PHY_MAIN_FSM_OVERRIDE2, 0x40);
-		eq_setting_ch0 = ch0_eq_best_setting;
-		eq_setting_ch1 = ch1_eq_best_setting;
-		eq_setting_ch2 = ch2_eq_best_setting;
+		//eq_setting_ch0 = ch0_eq_best_setting;
+		//eq_setting_ch1 = ch1_eq_best_setting;
+		//eq_setting_ch2 = ch2_eq_best_setting;
 		minmax_err_flag = 0;
-		if(maxvsmin(eq_setting_ch0, eq_setting_ch1, eq_setting_ch2) == 0){
-			eq_setting_ch0 = EQ_SHORT_CABLE_BEST_SETTING;
-			eq_setting_ch1 = EQ_SHORT_CABLE_BEST_SETTING;
-			eq_setting_ch2 = EQ_SHORT_CABLE_BEST_SETTING;
+		if((maxvsmin(ch0_eq_best_setting, ch1_eq_best_setting, ch2_eq_best_setting) == 0) || ch0_error_cable_flag==1 || ch1_error_cable_flag == 1 || ch2_error_cable_flag == 1 ){	//Min Max or error Cable
+			ch0_eq_best_setting = EQ_ERROR_CABLE_BEST_SETTING;
+			ch1_eq_best_setting = EQ_ERROR_CABLE_BEST_SETTING;
+			ch2_eq_best_setting = EQ_ERROR_CABLE_BEST_SETTING;
 			minmax_err_flag = 1;
 			minmax_check_cnt++;
 		}
-
 		//sm_pause = 1;
 		//hdmirx_wr_dwc(0x2c0, 0x57);
 		//printk("0x3c0=[%x]\n", hdmirx_rd_dwc(0x2c0));
-		if((minmax_err_flag == 0) || (minmax_check_cnt >= 2)){
+		if((minmax_err_flag == 0) || (minmax_check_cnt >= 2)){ //Algorithm finish
 			rx.state = HDMIRX_HWSTATE_TIMINGCHANGE;
 			rx.pre_state = HDMIRX_HWSTATE_EQ_CALIBRATION;
-			tmds_valid_cnt = 0;
+			tmds_valid_cnt = 0; //What this means?	Are you waiting for tmdsvalid?
 			sm_pause = 0;
 			minmax_check_cnt = 0;
 			printk("eq cal->timing chage\n");
-		}else{
+		}
+		else{ //error detected and will retry
 			EQ_state = EQ_DATA_INIT;
 			break;
 		}
-
-		configure_eq_setting(rx.port, eq_setting_ch0, eq_setting_ch1, eq_setting_ch2);
-		mdelay(1);
+		configure_eq_setting(rx.port, ch0_eq_best_setting, ch1_eq_best_setting, ch2_eq_best_setting); //please check readme for this particular function
+		printk("best EQ ch0=%d, ch1=%d,ch2=%d",ch0_eq_best_setting,ch1_eq_best_setting,ch2_eq_best_setting);
+		eq_setting_ch0 = ch0_eq_best_setting;
+		eq_setting_ch1 = ch1_eq_best_setting;
+		eq_setting_ch2 = ch2_eq_best_setting;
+		if(rx.port == 0) {
+			printk("port0\n");
+			port0_eq_setting_ch0 = eq_setting_ch0;
+			port0_eq_setting_ch1 = eq_setting_ch1;
+			port0_eq_setting_ch2 = eq_setting_ch2;
+		} else if(rx.port == 1) {
+			printk("port1\n");
+			port1_eq_setting_ch0 = eq_setting_ch0;
+			port1_eq_setting_ch1 = eq_setting_ch1;
+			port1_eq_setting_ch2 = eq_setting_ch2;
+		} else {
+			printk("port2\n");
+			port2_eq_setting_ch0 = eq_setting_ch0;
+			port2_eq_setting_ch1 = eq_setting_ch1;
+			port2_eq_setting_ch2 = eq_setting_ch2;
+		}
 		printk("quit!!!\n");
 		EQ_state = EQ_DATA_INIT;
 		break;
-
 	}
 }
 
+bool need_run_EQ_workaround(void)
+{
+	if((rx.port == 0) && (true == port0_need_run_EQ))
+		return true;
+	if((rx.port == 1) && (true == port1_need_run_EQ))
+		return true;
+	if((rx.port == 2) && (true == port2_need_run_EQ))
+		return true;
+	return false;
+}
 void hdmirx_hw_monitor(void)
 {
     int pre_sample_rate;
 	if(sm_pause) //debug mode. pause state machine
 		return;
-
 	HPD_controller();//Hdmitx 5v detection
 	switch(rx.state){
 	case HDMIRX_HWSTATE_EQ_CALIBRATION:
-		//if(((hdmirx_rd_phy(REG_HDMI_PHY_MAINFSM_STATUS1)>>10)&0x1) == 0){
-			//
-			//hdmirx_phy_EQ_workaround_init();
-			mdelay(1);
-			hdmirx_phy_EQ_workaround();
-			//printk("high speed signal,start eq workarround\n");
-		//}else{
-			//rx.state = HDMIRX_HWSTATE_SIG_UNSTABLE;
-			//printk("low speed signal,dont eq workarround\n");
-		//}
+		hdmirx_phy_EQ_workaround();
 		break;
 	case HDMIRX_HWSTATE_INIT:
 		if(!multi_port_edid_enable){
@@ -2230,11 +2455,17 @@ void hdmirx_hw_monitor(void)
 	  	Signal_status_init();
 		if(!multi_port_edid_enable){
 			rx.state = HDMIRX_HWSTATE_HDMI5V_LOW;
+			port0_need_run_EQ = true;
+			port1_need_run_EQ = true;
+			port2_need_run_EQ = true;
 		}else{
-			if(need_run_EQ_workaround) {
-				rx.state = HDMIRX_HWSTATE_HPD_READY;
+			if(!rx.current_port_tx_5v_status) {
+				rx.state = HDMIRX_HWSTATE_HDMI5V_LOW;
 			} else {
-				rx.state = HDMIRX_HWSTATE_SIG_UNSTABLE;
+				if(need_run_EQ_workaround())
+					rx.state = HDMIRX_HWSTATE_HPD_READY;
+				else
+					rx.state = HDMIRX_HWSTATE_SIG_UNSTABLE;
 			}
 		}
 		rx.pre_state = HDMIRX_HWSTATE_INIT;
@@ -2242,10 +2473,8 @@ void hdmirx_hw_monitor(void)
 		break;
 	case HDMIRX_HWSTATE_HDMI5V_LOW:
 		if(rx.current_port_tx_5v_status){
-			if(!multi_port_edid_enable){
-				if(hpd_wait_cnt++ < hpd_wait_max)  //waiting hpd low 100ms at least
-					break;
-			}
+			if(hpd_wait_cnt++ < hpd_wait_max)  //waiting hpd low 100ms at least
+				break;
 			rx.state = HDMIRX_HWSTATE_HDMI5V_HIGH;
 			rx.pre_state = HDMIRX_HWSTATE_HDMI5V_LOW;
 			hpd_wait_cnt = 0;
@@ -2259,9 +2488,7 @@ void hdmirx_hw_monitor(void)
 			rx.pre_state = HDMIRX_HWSTATE_HDMI5V_HIGH;
 			hdmirx_print("\n[HDMIRX State] 5v high->HPD_LOW\n");
 		} else {
-			if(!multi_port_edid_enable){
-				hdmirx_set_hpd(rx.port, 1);    //hpd high
-			}
+			hdmirx_set_hpd(rx.port, 1);
 			rx.state = HDMIRX_HWSTATE_HPD_READY;
 			rx.pre_state = HDMIRX_HWSTATE_HDMI5V_HIGH;
 			//rx.no_signal = false;
@@ -2276,11 +2503,11 @@ void hdmirx_hw_monitor(void)
 			//hdmirx_set_hpd(rx.port, 0);
 			hdmirx_print("\n[HDMIRX State] hpd ready ->HPD_LOW\n");
 		} else {
-			if(hpd_wait_cnt++ <= hpd_wait_max)  //delay 300ms
-				break;
-			hpd_wait_cnt = 0;
-			printk("sig state-%d\n", ((hdmirx_rd_phy(REG_HDMI_PHY_MAINFSM_STATUS1)>>10)&0x1));
-			if(((hdmirx_rd_phy(REG_HDMI_PHY_MAINFSM_STATUS1)>>10)&0x1) == 0){
+				if(hpd_wait_cnt++ <= hpd_wait_max)  //delay 300ms
+					break;
+				hpd_wait_cnt = 0;
+
+			if(need_run_EQ_workaround()){
 				hdmirx_wr_phy(HDMIRX_PHY_MAIN_FSM_OVERRIDE2, 0x0);
 				hdmirx_phy_EQ_workaround_init();
 				rx.state = HDMIRX_HWSTATE_EQ_CALIBRATION;
@@ -2300,17 +2527,24 @@ void hdmirx_hw_monitor(void)
 			rx.pre_state = HDMIRX_HWSTATE_TIMINGCHANGE;
 			break;
 		}
-		hdmirx_print("[HDMIRX State] HDMIRX_HWSTATE_TIMINGCHANGE\n");
-		if(reset_phy_enable)
-			hdmirx_phy_init(rx.port, 0);
+		if(reset_sw){
+			if(reset_phy_level == 2)
+				hdmirx_phy_init(rx.port, 0);
+			else if(reset_phy_level == 1)
+				hdmirx_phy_init_reset(rx.port, 0);
+
+			//hdmirx_module_control(1);
+			hdmirx_DWC_reset();
+		}
 		pre_tmds_clk_div4 = 0;
 		rx.state = HDMIRX_HWSTATE_SIG_UNSTABLE;
 		rx.pre_state = HDMIRX_HWSTATE_TIMINGCHANGE;
+		hdmirx_print("[HDMIRX State] TIMINGCHANGE -> unstable\n");
 		break;
 	case HDMIRX_HWSTATE_SIG_UNSTABLE:
 		if(rx.current_port_tx_5v_status == 0){
 			rx.no_signal = true;
-			hdmirx_print("[HDMIRX State] unstable->init\n");
+			//hdmirx_print("[HDMIRX State] unstable->init\n");
 			rx.state = HDMIRX_HWSTATE_INIT;
 			rx.pre_state = HDMIRX_HWSTATE_SIG_UNSTABLE;
 			break;
@@ -2324,24 +2558,25 @@ void hdmirx_hw_monitor(void)
 
 				rx.state = HDMIRX_HWSTATE_DWC_RST_WAIT;
 				rx.pre_state = HDMIRX_HWSTATE_SIG_UNSTABLE;
-				if(reset_sw){
-					hdmirx_module_control(1);
-					hdmirx_DWC_reset();
-				}
+				//if(reset_sw){
+					//hdmirx_module_control(1);
+					//hdmirx_DWC_reset();
+				//}
 				sig_pll_unlock_cnt = 0;
 				sig_pll_lock_cnt = 0;
 				rx.no_signal = false;
-				hdmirx_print("[HDMIRX State] unstable->stable\n");
+				hdmirx_print("[HDMIRX State] unstable->dwc rst\n");
 			}
 		}else{
-			if(sig_pll_lock_cnt)
+			if((sig_pll_lock_cnt) && (hdmirx_log_flag & VIDEO_LOG_ENABLE))
 				hdmirx_print("[HDMIRX State] unstable: sig_pll_lock_cnt = %d\n",sig_pll_lock_cnt);
+
 			sig_pll_lock_cnt = 0;
 			sig_pll_unlock_cnt++;
 			if(sig_pll_unlock_cnt == sig_pll_unlock_max) {
 				rx.no_signal = true;
 			}
-			if(sig_pll_unlock_cnt == sig_pll_unlock_max<<4){
+			if(sig_pll_unlock_cnt == sig_pll_unlock_max<<3){
 				hdmirx_error_count_config();	//recount EQ & resist calibration
 				rx.state = HDMIRX_HWSTATE_TIMINGCHANGE;
 				rx.pre_state = HDMIRX_HWSTATE_SIG_UNSTABLE;
@@ -2373,7 +2608,8 @@ void hdmirx_hw_monitor(void)
 				get_timing_fmt(&rx.pre_video_params);
 				if((rx.pre_video_params.sw_vic == HDMI_MAX_IS_UNSUPPORT)||
 					(rx.pre_video_params.sw_vic == HDMI_Unkown)){
-					hdmirx_print("[HDMIRX State] stable->unkown vic\n");
+					if(hdmirx_log_flag & VIDEO_LOG_ENABLE)
+						hdmirx_print("[HDMIRX State] stable->unkown vic\n");
 					if(sig_stable_cnt < (sig_stable_max<<3))
 						break;
 					rx.state = HDMIRX_HWSTATE_TIMINGCHANGE;
@@ -2381,7 +2617,7 @@ void hdmirx_hw_monitor(void)
 					break;
 				}
 				if(rx.pre_video_params.sw_dvi == 1){
-					if(sig_stable_cnt < (sig_stable_max*7))
+					if(sig_stable_cnt < (sig_stable_max*9))
 						break;
 				}
 				sig_stable_cnt = 0;
@@ -2432,9 +2668,9 @@ void hdmirx_hw_monitor(void)
 			hdmirx_audio_fifo_rst();
 			#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 			hdmirx_audiopll_control(0);
-			if(reset_sw){
-				hdmirx_module_control(0);
-			}
+			//if(reset_sw){
+				//hdmirx_module_control(0);
+			//}
 			#endif
 			rx.state = HDMIRX_HWSTATE_INIT;
 			rx.pre_state = HDMIRX_HWSTATE_SIG_READY;
@@ -2446,9 +2682,9 @@ void hdmirx_hw_monitor(void)
 				rx.pre_state = HDMIRX_HWSTATE_SIG_READY;
 				audio_sample_rate = 0;
 				#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
-				if(reset_sw){
-					hdmirx_module_control(0);
-				}
+				//if(reset_sw){
+					//hdmirx_module_control(0);
+				//}
 				hdmirx_audiopll_control(0);
 				#endif
 				hdmirx_audio_enable(0);
@@ -2477,9 +2713,9 @@ void hdmirx_hw_monitor(void)
 	            sig_unready_cnt = 0;
 				audio_sample_rate = 0;
 				#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
-				if(reset_sw){
-					hdmirx_module_control(0);
-				}
+				//if(reset_sw){
+					//hdmirx_module_control(0);
+				//}
 				hdmirx_audiopll_control(0);
 				#endif
 				hdmirx_audio_enable(0);
@@ -2499,9 +2735,9 @@ void hdmirx_hw_monitor(void)
 	            sig_unready_cnt = 0;
 				audio_sample_rate = 0;
 				#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
-				if(reset_sw){
-					hdmirx_module_control(0);
-				}
+				//if(reset_sw){
+					//hdmirx_module_control(0);
+				//}
 				hdmirx_audiopll_control(0);
 				#endif
 				hdmirx_audio_enable(0);
@@ -2510,7 +2746,7 @@ void hdmirx_hw_monitor(void)
 				rx.pre_state = HDMIRX_HWSTATE_SIG_READY;
 				memcpy(&rx.pre_video_params, &rx.cur_video_params,sizeof(struct hdmi_rx_ctrl_video));
 	            memset(&rx.vendor_specific_info, 0, sizeof(struct vendor_specific_info_s));
-	            hdmirx_print("[HDMIRX State] ready->timing change:colorspace\n");
+	            hdmirx_print("[HDMIRX State] ready->unstable:colorspace\n");
 	            break;
 	        }
 	    }
@@ -2541,42 +2777,42 @@ void hdmirx_hw_monitor(void)
 			    if(hdmirx_log_flag&AUDIO_LOG_ENABLE) {
 			        hdmirx_print("[hdmirx-audio]:sample_rate_chg,pre:%d,cur:%d\n", pre_sample_rate, rx.aud_info.real_sample_rate);
 			        dump_audio_info(1);
-			    }
-			    rx.audio_sample_rate_stable_count = 0;
+				}
+				rx.audio_sample_rate_stable_count = 0;
 			} else {
-				if(rx.audio_sample_rate_stable_count < audio_sample_rate_stable_count_th){
-				    if(hdmirx_log_flag&AUDIO_LOG_ENABLE) {
-				        hdmirx_print("[hdmirx-audio]:sample_rate_stable_count:%d\n", rx.audio_sample_rate_stable_count);
-				    }
-					rx.audio_sample_rate_stable_count++;
-					if(rx.audio_sample_rate_stable_count==audio_sample_rate_stable_count_th){
+					if(rx.audio_sample_rate_stable_count < audio_sample_rate_stable_count_th){
+					    if(hdmirx_log_flag&AUDIO_LOG_ENABLE) {
+					        hdmirx_print("[hdmirx-audio]:sample_rate_stable_count:%d\n", rx.audio_sample_rate_stable_count);
+					    }
+						rx.audio_sample_rate_stable_count++;
+						if(rx.audio_sample_rate_stable_count==audio_sample_rate_stable_count_th){
 						sig_lost_lock_max = 3;
 						sig_unready_max = 6;
 						//dump_state(0x2);
-						printk("[hdmirx-audio]:----audio stable\n");
-						#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
-						hdmirx_audiopll_control(1);
-						#endif
-						//hdmirx_config_audio();
-						hdmirx_audio_enable(1);
-						hdmirx_audio_fifo_rst();
+							printk("[hdmirx-audio]:----audio stable\n");
+							#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
+							hdmirx_audiopll_control(1);
+							#endif
+							//hdmirx_config_audio();
+							hdmirx_audio_enable(1);
+							hdmirx_audio_fifo_rst();
 
-						audio_sample_rate = rx.aud_info.real_sample_rate;
-						audio_coding_type = rx.aud_info.coding_type;
-						audio_channel_count = rx.aud_info.channel_count;
-						//rx.audio_wait_time = audio_stable_time;
-						#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
-						if(hdmirx_get_audio_clock()<100000){
-							printk("update audio\n");
-							hdmirx_wr_top(HDMIRX_TOP_ACR_CNTL_STAT,hdmirx_rd_top(HDMIRX_TOP_ACR_CNTL_STAT)|(1<<11));
+							audio_sample_rate = rx.aud_info.real_sample_rate;
+							audio_coding_type = rx.aud_info.coding_type;
+							audio_channel_count = rx.aud_info.channel_count;
+							//rx.audio_wait_time = audio_stable_time;
+							#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
+							if(hdmirx_get_audio_clock()<100000){
+								printk("update audio\n");
+								hdmirx_wr_top(HDMIRX_TOP_ACR_CNTL_STAT,hdmirx_rd_top(HDMIRX_TOP_ACR_CNTL_STAT)|(1<<11));
+							}
+							#endif
 						}
-						#endif
-					}
-				}else{
+					}else{
 
+					}
 				}
-			}
-			auds_rcv_sts = rx.aud_info.audio_samples_packet_received;
+				auds_rcv_sts = rx.aud_info.audio_samples_packet_received;
 		}
 		break;
 	default:
@@ -2933,7 +3169,7 @@ int hdmi_rx_ctrl_edid_update(void)
 					phy_addr_offset = i+7-4;
 				}
 			}
-			if(i >= 128) {
+			if((i >= 128) && (i < 255)){
 				check_sum += value;
 				check_sum &= 0xff;
 			}
@@ -2952,7 +3188,7 @@ int hdmi_rx_ctrl_edid_update(void)
 				hdmirx_wr_top( HDMIRX_TOP_EDID_RAM_OVR0_DATA, value|(value-0x10)<<8|(value-0x20)<<16);
 			else if(value >= 0x10)
 				hdmirx_wr_top( HDMIRX_TOP_EDID_RAM_OVR0_DATA, value|(value-0x10)<<8|(0x100+value-0x20)<<16);
-			else if(value >= 0)
+			else
 				hdmirx_wr_top( HDMIRX_TOP_EDID_RAM_OVR0_DATA, value|(0x100+value-0x10)<<8|(0x100+value-0x20)<<16);
 		}
 	} else {
@@ -3334,8 +3570,8 @@ int hdmirx_debug(const char* buf, int size)
 		    printk(" edid update \n");
 		    hdmi_rx_ctrl_edid_update();
 		}else if(tmpbuf[5] == '2') {
-		    //hdmirx_phy_init(rx.port, 1);
-		    hdmirx_audiopll_control(1);
+			printk(" hdmirx phy init 10bit\n");
+		    hdmirx_phy_init(rx.port, 1);
 		}else if(tmpbuf[5] == '3') {
 		    printk(" hdmirx phy init 12bit\n");
 		    hdmirx_phy_init(rx.port, 2);
@@ -3625,6 +3861,7 @@ void hdmirx_hw_enable(void)
 {
 	hdmirx_set_pinmux();
 	hdmirx_hw_probe();
+	mdelay(150);
 	hdmirx_default_hpd(1);
 }
 

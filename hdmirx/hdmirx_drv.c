@@ -549,8 +549,6 @@ static int hdmirx_release(struct inode *inode, struct file *file)
 	return 0;
 }
 
-#ifdef CEC_FUNC_ENABLE
-
 static long hdmirx_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	long ret = 0;
@@ -572,6 +570,7 @@ static long hdmirx_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 
 	switch (cmd)
 	{
+	#ifdef CEC_FUNC_ENABLE
 		case HDMI_IOC_CEC_ON:
 			hdmirx_cec_fun_onoff(1);
 			break;
@@ -612,6 +611,7 @@ static long hdmirx_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 			cec_post_msg_to_buf(&msg);
 			break;
 		}
+	#endif
 		case HDMI_IOC_HDCP_GET_KSV:{
 			struct _hdcp_ksv ksv;
 			ksv.bksv0 = rx.hdcp.bksv[0];
@@ -629,8 +629,6 @@ static long hdmirx_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 	}
 	return ret;
 }
-#endif
-
 /*
  * File operations structure
  * Defined in linux/fs.h
@@ -639,9 +637,7 @@ static struct file_operations hdmirx_fops = {
 	.owner		= THIS_MODULE,
 	.open		= hdmirx_open,
 	.release	= hdmirx_release,
-#ifdef CEC_FUNC_ENABLE
 	.unlocked_ioctl	= hdmirx_ioctl,
-#endif
 };
 
 /* attr */

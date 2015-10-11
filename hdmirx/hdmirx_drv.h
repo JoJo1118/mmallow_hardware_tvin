@@ -19,10 +19,13 @@
 #include "../tvin_global.h"
 #include "../tvin_format_table.h"
 
-#define HDMIRX_VER "Ref.2015/09/21"
+#define HDMIRX_VER "Ref.2015/10/11"
 
 #define HDMI_STATE_CHECK_FREQ     (20*5)
 #define ABS(x) ((x)<0 ? -(x) : (x))
+
+#define HDMI_IOC_MAGIC 'H'
+#define HDMI_IOC_HDCP_GET_KSV          	_IOR(HDMI_IOC_MAGIC, 0x09, struct _hdcp_ksv)
 
 /*
  * enum definitions
@@ -394,6 +397,15 @@ extern bool irq_ctrl_reg_en; /* enable/disable reg rd/wr in irq  */
 extern int eq_setting_ch0;
 extern int eq_setting_ch1;
 extern int eq_setting_ch2;
+extern int port0_eq_setting_ch0 ;
+extern int port0_eq_setting_ch1;
+extern int port0_eq_setting_ch2;
+extern int port1_eq_setting_ch0;
+extern int port1_eq_setting_ch1;
+extern int port1_eq_setting_ch2;
+extern int port2_eq_setting_ch0;
+extern int port2_eq_setting_ch1;
+extern int port2_eq_setting_ch2;
 extern int eq_setting;
 
 void hdmirx_wr_top (unsigned long addr, unsigned long data);
@@ -414,6 +426,7 @@ void hdmirx_audio_enable(bool en);
 int hdmirx_audio_fifo_rst(void);
 int	hdmirx_iaudioclk_domain_reset(void);
 void hdmirx_phy_hw_reset(void);
+void hdmirx_phy_init_reset(int rx_port_sel, int dcm);
 void hdmirx_phy_init(int rx_port_sel, int dcm);
 void hdmirx_hw_config(void);
 void hdmirx_hw_reset(void);

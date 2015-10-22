@@ -19,7 +19,7 @@
 #include "../tvin_frontend.h"
 #include "../tvin_global.h"
 
-#if MESON_CPU_TYPE < MESON_CPU_TYPE_MESON8
+#if MESON_CPU_TYPE < MESON_CPU_TYPE_MESON8 || MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9BB || MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV
 #define WR(x,val)                         WRITE_CBUS_REG(x,val)
 #define WR_BITS(x,val,start,length)       WRITE_CBUS_REG_BITS(x,val,start,length)
 #define RD(x)                             READ_CBUS_REG(x)

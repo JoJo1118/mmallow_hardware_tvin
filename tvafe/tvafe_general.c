@@ -455,6 +455,183 @@ const static  int comp_top_reg_default[][2] = {
 	{0xFFFFFFFF                    , 0x00000000,}
 };
 
+
+const static unsigned int cvbs_atv_top_reg_default[][2] ={
+	{TVFE_DVSS_MUXCTRL                      ,0x07000008/*0x00000000*/,}, // TVFE_DVSS_MUXCTRL
+	{TVFE_DVSS_MUXVS_REF                    ,0x00000000,}, // TVFE_DVSS_MUXVS_REF
+	{TVFE_DVSS_MUXCOAST_V                   ,0x00000000,}, // TVFE_DVSS_MUXCOAST_V
+	{TVFE_DVSS_SEP_HVWIDTH                  ,0x00000000,}, // TVFE_DVSS_SEP_HVWIDTH
+	{TVFE_DVSS_SEP_HPARA                    ,0x00000000,}, // TVFE_DVSS_SEP_HPARA
+	{TVFE_DVSS_SEP_VINTEG                   ,0x00000000,}, // TVFE_DVSS_SEP_VINTEG
+	{TVFE_DVSS_SEP_H_THR                    ,0x00000000,}, // TVFE_DVSS_SEP_H_THR
+	{TVFE_DVSS_SEP_CTRL                     ,0x00000000,}, // TVFE_DVSS_SEP_CTRL
+	{TVFE_DVSS_GEN_WIDTH                    ,0x00000000,}, // TVFE_DVSS_GEN_WIDTH
+	{TVFE_DVSS_GEN_PRD                      ,0x00000000,}, // TVFE_DVSS_GEN_PRD
+	{TVFE_DVSS_GEN_COAST                    ,0x00000000,}, // TVFE_DVSS_GEN_COAST
+	{TVFE_DVSS_NOSIG_PARA                   ,0x00000000,}, // TVFE_DVSS_NOSIG_PARA
+	{TVFE_DVSS_NOSIG_PLS_TH                 ,0x00000000,}, // TVFE_DVSS_NOSIG_PLS_TH
+	{TVFE_DVSS_GATE_H                       ,0x00000000,}, // TVFE_DVSS_GATE_H
+	{TVFE_DVSS_GATE_V                       ,0x00000000,}, // TVFE_DVSS_GATE_V
+	{TVFE_DVSS_INDICATOR1                   ,0x00000000,}, // TVFE_DVSS_INDICATOR1
+	{TVFE_DVSS_INDICATOR2                   ,0x00000000,}, // TVFE_DVSS_INDICATOR2
+	{TVFE_DVSS_MVDET_CTRL1                  ,0x00000000,}, // TVFE_DVSS_MVDET_CTRL1
+	{TVFE_DVSS_MVDET_CTRL2                  ,0x00000000,}, // TVFE_DVSS_MVDET_CTRL2
+	{TVFE_DVSS_MVDET_CTRL3                  ,0x00000000,}, // TVFE_DVSS_MVDET_CTRL3
+	{TVFE_DVSS_MVDET_CTRL4                  ,0x00000000,}, // TVFE_DVSS_MVDET_CTRL4
+	{TVFE_DVSS_MVDET_CTRL5                  ,0x00000000,}, // TVFE_DVSS_MVDET_CTRL5
+	{TVFE_DVSS_MVDET_CTRL6                  ,0x00000000,}, // TVFE_DVSS_MVDET_CTRL6
+	{TVFE_DVSS_MVDET_CTRL7                  ,0x00000000,}, // TVFE_DVSS_MVDET_CTRL7
+	{TVFE_SYNCTOP_SPOL_MUXCTRL              ,0x00000009,}, // TVFE_SYNCTOP_SPOL_MUXCTRL
+	{TVFE_SYNCTOP_INDICATOR1_HCNT           ,0x00000000,}, // TVFE_SYNCTOP_INDICATOR1_HCNT
+	{TVFE_SYNCTOP_INDICATOR2_VCNT           ,0x00000000,}, // TVFE_SYNCTOP_INDICATOR2_VCNT
+	{TVFE_SYNCTOP_INDICATOR3                ,0x00000000,}, // TVFE_SYNCTOP_INDICATOR3
+	{TVFE_SYNCTOP_SFG_MUXCTRL1              ,0x00000000,}, // TVFE_SYNCTOP_SFG_MUXCTRL1
+	{TVFE_SYNCTOP_SFG_MUXCTRL2              ,0x00330000,}, // TVFE_SYNCTOP_SFG_MUXCTRL2
+	{TVFE_SYNCTOP_INDICATOR4                ,0x00000000,}, // TVFE_SYNCTOP_INDICATOR4
+	{TVFE_SYNCTOP_SAM_MUXCTRL               ,0x00082001,}, // TVFE_SYNCTOP_SAM_MUXCTRL
+	{TVFE_MISC_WSS1_MUXCTRL1                ,0x00000000,}, // TVFE_MISC_WSS1_MUXCTRL1
+	{TVFE_MISC_WSS1_MUXCTRL2                ,0x00000000,}, // TVFE_MISC_WSS1_MUXCTRL2
+	{TVFE_MISC_WSS2_MUXCTRL1                ,0x00000000,}, // TVFE_MISC_WSS2_MUXCTRL1
+	{TVFE_MISC_WSS2_MUXCTRL2                ,0x00000000,}, // TVFE_MISC_WSS2_MUXCTRL2
+	{TVFE_MISC_WSS1_INDICATOR1              ,0x00000000,}, // TVFE_MISC_WSS1_INDICATOR1
+	{TVFE_MISC_WSS1_INDICATOR2              ,0x00000000,}, // TVFE_MISC_WSS1_INDICATOR2
+	{TVFE_MISC_WSS1_INDICATOR3              ,0x00000000,}, // TVFE_MISC_WSS1_INDICATOR3
+	{TVFE_MISC_WSS1_INDICATOR4              ,0x00000000,}, // TVFE_MISC_WSS1_INDICATOR4
+	{TVFE_MISC_WSS1_INDICATOR5              ,0x00000000,}, // TVFE_MISC_WSS1_INDICATOR5
+	{TVFE_MISC_WSS2_INDICATOR1              ,0x00000000,}, // TVFE_MISC_WSS2_INDICATOR1
+	{TVFE_MISC_WSS2_INDICATOR2              ,0x00000000,}, // TVFE_MISC_WSS2_INDICATOR2
+	{TVFE_MISC_WSS2_INDICATOR3              ,0x00000000,}, // TVFE_MISC_WSS2_INDICATOR3
+	{TVFE_MISC_WSS2_INDICATOR4              ,0x00000000,}, // TVFE_MISC_WSS2_INDICATOR4
+	{TVFE_MISC_WSS2_INDICATOR5              ,0x00000000,}, // TVFE_MISC_WSS2_INDICATOR5
+	{TVFE_AP_MUXCTRL1                       ,0x00000000,}, // TVFE_AP_MUXCTRL1
+	{TVFE_AP_MUXCTRL2                       ,0x00000000,}, // TVFE_AP_MUXCTRL2
+	{TVFE_AP_MUXCTRL3                       ,0x00000000,}, // TVFE_AP_MUXCTRL3
+	{TVFE_AP_MUXCTRL4                       ,0x00000000,}, // TVFE_AP_MUXCTRL4
+	{TVFE_AP_MUXCTRL5                       ,0x00000000,}, // TVFE_AP_MUXCTRL5
+	{TVFE_AP_INDICATOR1                     ,0x00000000,}, // TVFE_AP_INDICATOR1
+	{TVFE_AP_INDICATOR2                     ,0x00000000,}, // TVFE_AP_INDICATOR2
+	{TVFE_AP_INDICATOR3                     ,0x00000000,}, // TVFE_AP_INDICATOR3
+	{TVFE_AP_INDICATOR4                     ,0x00000000,}, // TVFE_AP_INDICATOR4
+	{TVFE_AP_INDICATOR5                     ,0x00000000,}, // TVFE_AP_INDICATOR5
+	{TVFE_AP_INDICATOR6                     ,0x00000000,}, // TVFE_AP_INDICATOR6
+	{TVFE_AP_INDICATOR7                     ,0x00000000,}, // TVFE_AP_INDICATOR7
+	{TVFE_AP_INDICATOR8                     ,0x00000000,}, // TVFE_AP_INDICATOR8
+	{TVFE_AP_INDICATOR9                     ,0x00000000,}, // TVFE_AP_INDICATOR9
+	{TVFE_AP_INDICATOR10                    ,0x00000000,}, // TVFE_AP_INDICATOR10
+	{TVFE_AP_INDICATOR11                    ,0x00000000,}, // TVFE_AP_INDICATOR11
+	{TVFE_AP_INDICATOR12                    ,0x00000000,}, // TVFE_AP_INDICATOR12
+	{TVFE_AP_INDICATOR13                    ,0x00000000,}, // TVFE_AP_INDICATOR13
+	{TVFE_AP_INDICATOR14                    ,0x00000000,}, // TVFE_AP_INDICATOR14
+	{TVFE_AP_INDICATOR15                    ,0x00000000,}, // TVFE_AP_INDICATOR15
+	{TVFE_AP_INDICATOR16                    ,0x00000000,}, // TVFE_AP_INDICATOR16
+	{TVFE_AP_INDICATOR17                    ,0x00000000,}, // TVFE_AP_INDICATOR17
+	{TVFE_AP_INDICATOR18                    ,0x00000000,}, // TVFE_AP_INDICATOR18
+	{TVFE_AP_INDICATOR19                    ,0x00000000,}, // TVFE_AP_INDICATOR19
+	{TVFE_BD_MUXCTRL1                       ,0x00000000,}, // TVFE_BD_MUXCTRL1
+	{TVFE_BD_MUXCTRL2                       ,0x00000000,}, // TVFE_BD_MUXCTRL2
+	{TVFE_BD_MUXCTRL3                       ,0x00000000,}, // TVFE_BD_MUXCTRL3
+	{TVFE_BD_MUXCTRL4                       ,0x00000000,}, // TVFE_BD_MUXCTRL4
+	{TVFE_CLP_MUXCTRL1                      ,0x00000000,}, // TVFE_CLP_MUXCTRL1
+	{TVFE_CLP_MUXCTRL2                      ,0x00000000,}, // TVFE_CLP_MUXCTRL2
+	{TVFE_CLP_MUXCTRL3                      ,0x00000000,}, // TVFE_CLP_MUXCTRL3
+	{TVFE_CLP_MUXCTRL4                      ,0x00000000,}, // TVFE_CLP_MUXCTRL4
+	{TVFE_CLP_INDICATOR1                    ,0x00000000,}, // TVFE_CLP_INDICATOR1
+	{TVFE_BPG_BACKP_H                       ,0x00000000,}, // TVFE_BPG_BACKP_H
+	{TVFE_BPG_BACKP_V                       ,0x00000000,}, // TVFE_BPG_BACKP_V
+	{TVFE_DEG_H                             ,0x00000000,}, // TVFE_DEG_H
+	{TVFE_DEG_VODD                          ,0x00000000,}, // TVFE_DEG_VODD
+	{TVFE_DEG_VEVEN                         ,0x00000000,}, // TVFE_DEG_VEVEN
+	{TVFE_OGO_OFFSET1                       ,0x00000000,}, // TVFE_OGO_OFFSET1
+	{TVFE_OGO_GAIN1                         ,0x00000000,}, // TVFE_OGO_GAIN1
+	{TVFE_OGO_GAIN2                         ,0x00000000,}, // TVFE_OGO_GAIN2
+	{TVFE_OGO_OFFSET2                       ,0x00000000,}, // TVFE_OGO_OFFSET2
+	{TVFE_OGO_OFFSET3                       ,0x00000000,}, // TVFE_OGO_OFFSET3
+	{TVFE_VAFE_CTRL                         ,0x00000000,}, // TVFE_VAFE_CTRL
+	{TVFE_VAFE_STATUS                       ,0x00000000,}, // TVFE_VAFE_STATUS
+#ifdef CRYSTAL_25M
+	{TVFE_TOP_CTRL                          ,0x30c4e6c/*0xc4f64 0x00004B60*/,}, // TVFE_TOP_CTRL
+#else//24M
+#if 0   //(defined(CONFIG_ADC_DOUBLE_SAMPLING_FOR_CVBS) && defined(CRYSTAL_24M) && (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV))
+	{TVFE_TOP_CTRL				    ,0x010c4d6c/*0xc4f64 0x00004B60*/,}, // TVFE_TOP_CTRL
+#else
+	{TVFE_TOP_CTRL                          ,0x30c4f64/*0xc4f64 0x00004B60*/,}, // TVFE_TOP_CTRL
+#endif
+#endif
+	{TVFE_CLAMP_INTF                        ,0x00008666,}, // TVFE_CLAMP_INTF
+	{TVFE_RST_CTRL                          ,0x00000000,}, // TVFE_RST_CTRL
+	{TVFE_EXT_VIDEO_AFE_CTRL_MUX1           ,0x00000000,}, // TVFE_EXT_VIDEO_AFE_CTRL_MUX1
+	{TVFE_EDID_CONFIG                       ,TVAFE_EDID_CONFIG,}, // TVFE_EDID_CONFIG
+	{TVFE_EDID_RAM_ADDR                     ,0x00000000,}, // TVFE_EDID_RAM_ADDR
+	{TVFE_EDID_RAM_WDATA                    ,0x00000000,}, // TVFE_EDID_RAM_WDATA
+	{TVFE_EDID_RAM_RDATA                    ,0x00000000,}, // TVFE_EDID_RAM_RDATA
+	{TVFE_APB_ERR_CTRL_MUX1                 ,0x8fff8fff,}, // TVFE_APB_ERR_CTRL_MUX1
+	{TVFE_APB_ERR_CTRL_MUX2                 ,0x00008fff,}, // TVFE_APB_ERR_CTRL_MUX2
+	{TVFE_APB_INDICATOR1                    ,0x00000000,}, // TVFE_APB_INDICATOR1
+	{TVFE_APB_INDICATOR2                    ,0x00000000,}, // TVFE_APB_INDICATOR2
+	{TVFE_ADC_READBACK_CTRL                 ,0x80140003,}, // TVFE_ADC_READBACK_CTRL
+	{TVFE_ADC_READBACK_INDICATOR            ,0x00000000,}, // TVFE_ADC_READBACK_INDICATOR
+#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
+	{TVFE_VAFE_CTRL0			,0x00090b00,}, // TVFE_VAFE_CTRL0
+	{TVFE_VAFE_CTRL1			,0x00000110,}, // TVFE_VAFE_CTRL1
+	{TVFE_VAFE_CTRL2			,0x0010ef93,}, // TVFE_VAFE_CTRL2
+#endif
+	{TVFE_INT_CLR                           ,0x00000000,}, // TVFE_INT_CLR
+	{TVFE_INT_MSKN                          ,0x00000000,}, // TVFE_INT_MASKN
+	{TVFE_INT_INDICATOR1                    ,0x00000000,}, // TVFE_INT_INDICATOR1
+	{TVFE_INT_SET                           ,0x00000000,}, // TVFE_INT_SET
+	//{TVFE_CHIP_VERSION                      ,0x00000000,}, // TVFE_CHIP_VERSION
+	{TVFE_FREERUN_GEN_WIDTH   , 0x00000000,},//TVFE_FREERUN_GEN_WIDTH
+	{TVFE_FREERUN_GEN_PRD       ,  0x00000000,},//TVFE_FREERUN_GEN_PRD
+	{TVFE_FREERUN_GEN_COAST   , 0x00000000,},//TVFE_FREERUN_GEN_COAST
+	{TVFE_FREERUN_GEN_CTRL      , 0x00000000,},//TVFE_FREERUN_GEN_CTRL
+#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
+#if 0//(defined(CONFIG_ADC_DOUBLE_SAMPLING_FOR_CVBS) && defined(CRYSTAL_24M) && (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV))
+	{TVFE_AAFILTER_CTRL1		,	0x00012721,},//0x00082222 TVFE_AAFILTER_CTRL1 bypass all
+	{TVFE_AAFILTER_CTRL2		,	0x1304fcfa,},//TVFE_AAFILTER_CTRL2
+#else
+	{TVFE_AAFILTER_CTRL1		,   0x00182222,},//0x00082222 TVFE_AAFILTER_CTRL1 bypass all
+	{TVFE_AAFILTER_CTRL2		,   0x252b39c6,},//TVFE_AAFILTER_CTRL2
+#endif
+#else
+	{TVFE_AAFILTER_CTRL1            ,   0x00100000,},//TVFE_AAFILTER_CTRL1 bypass all
+	{TVFE_AAFILTER_CTRL2            ,   0x00000000,},//TVFE_AAFILTER_CTRL2
+	{TVFE_AAFILTER_CTRL3            ,   0x00000000,},//TVFE_AAFILTER_CTRL3
+	{TVFE_AAFILTER_CTRL4            ,   0x00000000,},//TVFE_AAFILTER_CTRL4
+	{TVFE_AAFILTER_CTRL5            ,   0x00000000,},//TVFE_AAFILTER_CTRL5
+#endif
+	{TVFE_SOG_MON_CTRL1            ,   0x00000000,},//TVFE_SOG_MON_CTRL1
+	{TVFE_ADC_READBACK_CTRL1,   0x00000000,},//TVFE_ADC_READBACK_CTRL1
+	{TVFE_ADC_READBACK_CTRL2,   0x00000000,},//TVFE_ADC_READBACK_CTRL2
+#ifdef CRYSTAL_25M
+	{TVFE_AFC_CTRL1 		     ,	 0x85730459,},//TVFE_AFC_CTRL1
+	{TVFE_AFC_CTRL2 		     ,	 0x342fa9ed,},//TVFE_AFC_CTRL2
+	{TVFE_AFC_CTRL3 		     ,	 0x2a02396,},//TVFE_AFC_CTRL3
+	{TVFE_AFC_CTRL4 		     ,	 0xfefbff14,},//TVFE_AFC_CTRL4
+	{TVFE_AFC_CTRL5 		     ,		0x0,},//TVFE_AFC_CTRL5
+#else//for 24M
+#if 0//(defined(CONFIG_ADC_DOUBLE_SAMPLING_FOR_CVBS) && defined(CRYSTAL_24M) && (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV))
+	{TVFE_AFC_CTRL1 			 ,	 0x893904d2,},//TVFE_AFC_CTRL1
+	{TVFE_AFC_CTRL2 			 ,	 0x0f4b9ac9,},//TVFE_AFC_CTRL2
+	{TVFE_AFC_CTRL3 			 ,	 0x01fd8c36,},//TVFE_AFC_CTRL3
+	{TVFE_AFC_CTRL4 			 ,	 0x2de6d04f,},//TVFE_AFC_CTRL4
+	{TVFE_AFC_CTRL5 			 ,	 0x00000004,},//TVFE_AFC_CTRL5
+#else
+#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
+	{TVFE_AFC_CTRL1                      ,   0x05730459,},//TVFE_AFC_CTRL1
+#else
+    {TVFE_AFC_CTRL1                      ,   0x893904d2,},//TVFE_AFC_CTRL1
+#endif
+	{TVFE_AFC_CTRL2                      ,   0xf4b9ac9,},//TVFE_AFC_CTRL2
+	{TVFE_AFC_CTRL3                      ,   0x1fd8c36,},//TVFE_AFC_CTRL3
+	{TVFE_AFC_CTRL4                      ,   0x2de6d04f,},//TVFE_AFC_CTRL4
+	{TVFE_AFC_CTRL5                      ,          0x4,},//TVFE_AFC_CTRL5
+#endif
+#endif
+	{0xFFFFFFFF                             ,0x00000000,}
+};
+
+	
+
 /* TOP */
 const static unsigned int cvbs_top_reg_default[][2] = {
 	{TVFE_DVSS_MUXCTRL                      ,0x07000008/*0x00000000*/,}, // TVFE_DVSS_MUXCTRL
@@ -3249,9 +3426,33 @@ static void tvafe_set_cvbs_default(struct tvafe_cvd2_s *cvd2, struct tvafe_cvd2_
 #endif
 	/** write top register **/
 	i = 0;
-	while (cvbs_top_reg_default[i][0] != 0xFFFFFFFF) {
-		W_APB_REG(cvbs_top_reg_default[i][0], cvbs_top_reg_default[i][1]);
-		i++;
+	
+	#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
+	if ((port != TVIN_PORT_CVBS3) && (port != TVIN_PORT_CVBS0))
+	#else
+	if (port != TVIN_PORT_CVBS0)
+	#endif
+	{
+		while (cvbs_top_reg_default[i][0] != 0xFFFFFFFF){
+			
+			W_APB_REG(cvbs_top_reg_default[i][0], cvbs_top_reg_default[i][1]);
+			i++;		
+			
+			}
+		
+		pr_info("\n CVBS IN USE \n");
+		pr_info("\n reg_TVFE_TOP_CTRL = %x \n",R_APB_REG(TVFE_TOP_CTRL));
+
+	}else{
+		
+		while (cvbs_atv_top_reg_default[i][0] != 0xFFFFFFFF){
+
+			W_APB_REG(cvbs_atv_top_reg_default[i][0], cvbs_atv_top_reg_default[i][1]);
+			i++;
+	
+			}
+		pr_info("\n  ATV IN USE \n");
+		pr_info("\n reg_TVFE_TOP_CTRL = %x \n",R_APB_REG(TVFE_TOP_CTRL));
 	}
 	/* init some variables  */
 	cvd2->vd_port = port;
@@ -3343,7 +3544,14 @@ void tvafe_init_reg(struct tvafe_cvd2_s *cvd2, struct tvafe_cvd2_mem_s *mem, enu
 #endif
 		if((port >= TVIN_PORT_CVBS0) && (port <= TVIN_PORT_CVBS7)){			
 #if (defined(CONFIG_ADC_DOUBLE_SAMPLING_FOR_CVBS) && defined(CRYSTAL_24M) && (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV))
-			if (port != TVIN_PORT_CVBS3) {
+			
+		#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
+			if ((port != TVIN_PORT_CVBS3) && (port != TVIN_PORT_CVBS0))
+		#else
+			if (port != TVIN_PORT_CVBS0)
+		#endif
+
+			{
 				WRITE_CBUS_REG(HHI_ADC_PLL_CNTL3,0xa92a2110);
 				WRITE_CBUS_REG(HHI_ADC_PLL_CNTL4,0x02973800);
 				WRITE_CBUS_REG(HHI_ADC_PLL_CNTL,0x08664220);

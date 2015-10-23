@@ -140,6 +140,9 @@ static bool use_audioresample_reset = false;
 MODULE_PARM_DESC(use_audioresample_reset, "\n use_audioresample_reset \n");
 module_param(use_audioresample_reset, bool, 0664);
 
+static int hdmi_mode_hyst = 6;
+MODULE_PARM_DESC(hdmi_mode_hyst, "\n hdmi_mode_hyst \n");
+module_param(hdmi_mode_hyst, int, 0664);
 int eq_setting_ch0 = 4;
 int eq_setting_ch1 = 4;
 int eq_setting_ch2 = 4;
@@ -499,7 +502,7 @@ void hdmirx_phy_init(int rx_port_sel, int dcm)
 	hdmirx_wr_dwc(HDMIRX_DWC_I2CM_PHYG3_MODE,    0x1);
 
 	/* write timebase override and override enable */
-	//hdmirx_wr_phy(OVL_PROT_CTRL, 0xa); //disable overload protect for Philips DVD ???
+	hdmirx_wr_phy(OVL_PROT_CTRL, 0xa); //disable overload protect for Philips DVD ???
 
 
 	data32  = 0;
@@ -850,6 +853,17 @@ static void control_init_more(void)
 	else
 		data32 |= 0				<< 0;	// disable auto de repeat
     hdmirx_wr_dwc(HDMIRX_DWC_HDMI_RESMPL_CTRL,   data32); // DEFAULT: {27'd0, 4'd0, 1'b1}
+	data32	= 0;
+	data32 |= (hdmirx_rd_dwc(HDMIRX_DWC_HDMI_MODE_RECOVER) & 0xf8000000);	// [31:27]	preamble_cnt_limit
+	data32 |= (0	<< 24); // [25:24]	mr_vs_pol_adj_mode
+	data32 |= (0	<< 18); // [18] 	spike_filter_en
+	data32 |= (8	<< 13); // [17:13]	dvi_mode_hyst
+	data32 |= (hdmi_mode_hyst	<< 8);	// [12:8]	hdmi_mode_hyst
+	data32 |= (0	<< 6);	// [7:6]	hdmi_mode: 0=automatic
+	data32 |= (0	<< 4);	// [5:4]	gb_det
+	data32 |= (0	<< 2);	// [3:2]	eess_oess
+	data32 |= (0	<< 0);	// [1:0]	sel_ctl01
+	hdmirx_wr_dwc(HDMIRX_DWC_HDMI_MODE_RECOVER, data32);
 }
 
 static int control_init(unsigned port)
@@ -1673,8 +1687,8 @@ exit:
 
 void hdmirx_config_video(struct hdmi_rx_ctrl_video *video_params)
 {
-#if ((MESON_CPU_TYPE < MESON_CPU_TYPE_MESONG9TV) || (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9BB))
 	int data32=0;
+#if ((MESON_CPU_TYPE < MESON_CPU_TYPE_MESONG9TV) || (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9BB))
 
 	if ((video_params->sw_vic >= HDMI_3840_2160p) && (video_params->sw_vic <= HDMI_4096_2160p)) {
 	    data32 |= 1 << 23; //video_params.pixel_repetition << 23;  // [23]     hscale_half: 1=Horizontally scale down by half
@@ -1697,6 +1711,20 @@ void hdmirx_config_video(struct hdmi_rx_ctrl_video *video_params)
 	} else {
 		hdmirx_wr_dwc(HDMIRX_DWC_HDMI_VM_CFG_CH2, 0x8000);
 		hdmirx_wr_dwc(HDMIRX_DWC_HDMI_VM_CFG_CH_0_1, 0x8000);
+	}
+
+	if(video_params->interlaced == 1) {
+		data32	= 0;
+		data32 |= (hdmirx_rd_dwc(HDMIRX_DWC_HDMI_MODE_RECOVER) & 0xf8000000);	// [31:27]	preamble_cnt_limit
+		data32 |= (0	<< 24); // [25:24]	mr_vs_pol_adj_mode
+		data32 |= (0	<< 18); // [18] 	spike_filter_en
+		data32 |= (8	<< 13); // [17:13]	dvi_mode_hyst
+		data32 |= (8	<< 8);	// [12:8]	hdmi_mode_hyst
+		data32 |= (0	<< 6);	// [7:6]	hdmi_mode: 0=automatic
+		data32 |= (0	<< 4);	// [5:4]	gb_det
+		data32 |= (0	<< 2);	// [3:2]	eess_oess
+		data32 |= (0	<< 0);	// [1:0]	sel_ctl01
+		hdmirx_wr_dwc(HDMIRX_DWC_HDMI_MODE_RECOVER, data32);
 	}
 }
 

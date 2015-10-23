@@ -186,11 +186,11 @@ int hdmirx_dec_open(struct tvin_frontend_s *fe, enum tvin_port_e port)
 	devp = container_of(fe, struct hdmirx_dev_s, frontend);
 	devp_hdmirx_suspend = container_of(fe, struct hdmirx_dev_s, frontend);
 	devp->param.port = port;
-	hdmirx_hw_enable();
+	//hdmirx_hw_enable();
 	hdmirx_hw_init(port);
-	if(multi_port_edid_enable) {
-		hdmirx_default_hpd(1);
-	}
+	//if(multi_port_edid_enable) {
+		//hdmirx_default_hpd(1);
+	//}
 #if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 	if((open_flage)&&(rx.phy.fast_switching)) //for fast switch
 	{
@@ -396,9 +396,9 @@ void hdmirx_get_sig_property(struct tvin_frontend_s *fe, struct tvin_sig_propert
 	switch (hdmirx_hw_get_color_fmt()) {
 	case 1:
 		prop->color_format = TVIN_YUV444;
-		if(hdmi_yuv444_enable){
-			prop->dest_cfmt = TVIN_YUV444;
-		}
+		//if(hdmi_yuv444_enable){
+			//prop->dest_cfmt = TVIN_YUV444;
+		//}
 		break;
 	case 3:
 		prop->color_format = TVIN_YUV422;
@@ -467,11 +467,13 @@ void hdmirx_get_sig_property(struct tvin_frontend_s *fe, struct tvin_sig_propert
 	else
 		prop->decimation_ratio = (hdmirx_hw_get_pixel_repeat() - 1);
 
-#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
-	if((TVIN_SIG_FMT_HDMI_1920X1080P_50HZ != sig_fmt) &&
-		(TVIN_SIG_FMT_HDMI_1920X1080P_60HZ != sig_fmt)){
+	if((TVIN_SIG_FMT_HDMI_4096_2160_00HZ == sig_fmt) ||
+		(TVIN_SIG_FMT_HDMI_3840_2160_00HZ == sig_fmt) ||
+		(rx.pre_video_params.interlaced == 1)) {
 		prop->dest_cfmt = TVIN_YUV422;
 	}
+
+#if (MESON_CPU_TYPE == MESON_CPU_TYPE_MESONG9TV)
 #else
 	if(TVIN_SIG_FMT_HDMI_4096_2160_00HZ == sig_fmt) {
 		prop->hs = 128;
@@ -981,7 +983,7 @@ static int hdmirx_probe(struct platform_device *pdev)
 	if (tvin_reg_frontend(&hdevp->frontend) < 0) {
 		pr_info("hdmirx: driver probe error!!! \n");
 	}
-
+	hdmirx_set_pinmux();
 	hdmirx_hw_enable();
     /* set all hpd status  */
 	//hdmirx_default_hpd(0);

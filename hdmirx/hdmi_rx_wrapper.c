@@ -1381,7 +1381,6 @@ static bool is_hdcp_state_error(struct hdmi_rx_ctrl_video *cur)
 
 	return false;
 }
-
 /*
  * check timing info
  */
@@ -2490,8 +2489,8 @@ void hdmirx_hw_monitor(void)
 		if(!multi_port_edid_enable){
 			hdmirx_set_hpd(rx.port, 0);
 		}
-		hdmirx_hw_config();
-		//hdmi_rx_ctrl_edid_update();
+			hdmirx_hw_config();
+			hdmi_rx_ctrl_edid_update();
 
 		audio_status_init();
 	  	Signal_status_init();
@@ -2565,16 +2564,13 @@ void hdmirx_hw_monitor(void)
 		if(reset_sw){
 			if(reset_phy_level == 2) {
 				hdmirx_phy_init(rx.port, 0);
-				hdmirx_DWC_reset();
 			} else if(reset_phy_level == 1) {
 				hdmirx_phy_init_reset(rx.port, 0);
-				hdmirx_DWC_reset();
 			} else if(reset_phy_level == 0) {
 				//hdmirx_hw_reset();
 				hdmirx_hw_config();
 			}
 		}
-
 		pre_tmds_clk_div4 = 0;
 		rx.state = HDMIRX_HWSTATE_SIG_UNSTABLE;
 		rx.pre_state = HDMIRX_HWSTATE_TIMINGCHANGE;
@@ -2597,10 +2593,10 @@ void hdmirx_hw_monitor(void)
 
 				rx.state = HDMIRX_HWSTATE_DWC_RST_WAIT;
 				rx.pre_state = HDMIRX_HWSTATE_SIG_UNSTABLE;
-				//if(reset_sw){
-					//hdmirx_module_control(1);
-					//hdmirx_DWC_reset();
-				//}
+				if(reset_sw){
+					hdmirx_module_control(1);
+					hdmirx_DWC_reset();
+				}
 				sig_pll_unlock_cnt = 0;
 				sig_pll_lock_cnt = 0;
 				rx.no_signal = false;
@@ -2657,7 +2653,7 @@ void hdmirx_hw_monitor(void)
 					break;
 				}
 				if(rx.pre_video_params.sw_dvi == 1){
-					if(sig_stable_cnt < (sig_stable_max*9))
+					if(sig_stable_cnt < (sig_stable_max*7))
 						break;
 				}
 				sig_stable_cnt = 0;
@@ -2725,9 +2721,9 @@ void hdmirx_hw_monitor(void)
 				rx.pre_state = HDMIRX_HWSTATE_SIG_READY;
 				audio_sample_rate = 0;
 				#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
-				//if(reset_sw){
-					//hdmirx_module_control(0);
-				//}
+				if(reset_sw){
+					hdmirx_module_control(0);
+				}
 				hdmirx_audiopll_control(0);
 				#endif
 				hdmirx_audio_enable(0);
@@ -2756,9 +2752,9 @@ void hdmirx_hw_monitor(void)
 	            sig_unready_cnt = 0;
 				audio_sample_rate = 0;
 				#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
-				//if(reset_sw){
-					//hdmirx_module_control(0);
-				//}
+				if(reset_sw){
+					hdmirx_module_control(0);
+				}
 				hdmirx_audiopll_control(0);
 				#endif
 				hdmirx_audio_enable(0);
@@ -2778,9 +2774,9 @@ void hdmirx_hw_monitor(void)
 	            sig_unready_cnt = 0;
 				audio_sample_rate = 0;
 				#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
-				//if(reset_sw){
-					//hdmirx_module_control(0);
-				//}
+				if(reset_sw){
+					hdmirx_module_control(0);
+				}
 				hdmirx_audiopll_control(0);
 				#endif
 				hdmirx_audio_enable(0);
@@ -2791,8 +2787,8 @@ void hdmirx_hw_monitor(void)
 	            memset(&rx.vendor_specific_info, 0, sizeof(struct vendor_specific_info_s));
 	            hdmirx_print("[HDMIRX State] hpd-->ready:colorspace\n");
 	            break;
-	        }
-	    } else if(is_hdcp_state_error(&rx.cur_video_params)) {
+		        }
+	    }  else if(is_hdcp_state_error(&rx.cur_video_params)) {
 			if (sig_unready_cnt++ > sig_unready_max*100) {
 	            sig_lost_lock_cnt = 0;
 	            sig_unready_cnt = 0;
@@ -2812,38 +2808,31 @@ void hdmirx_hw_monitor(void)
 	            break;
 	        }
 	    }
-		else {
-	        sig_unready_cnt = 0;
-			if(enable_hpd_reset)
-				sig_unstable_reset_hpd_cnt = 0;
-			//if(sw_reset_edid == 1)
-			//{
-				//sw_reset_edid = 0 ;
-				//hdmirx_wr_top (HDMIRX_TOP_SW_RESET , 0x02);
-				//hdmirx_wr_top (HDMIRX_TOP_SW_RESET , 0x00);
-				//hdmirx_print("[HDMIRX State] sw_reset_edid\n");
-			//}
-	    }
+			else {
+		        sig_unready_cnt = 0;
+				if(enable_hpd_reset)
+					sig_unstable_reset_hpd_cnt = 0;
+		    }
 
-		if ((audio_enable)&&(rx.pre_video_params.sw_dvi==0))
-		{
-		    pre_sample_rate = rx.aud_info.real_sample_rate;
-			hdmirx_read_audio_info(&rx.aud_info);
-			if (force_audio_sample_rate == 0)
-			    rx.aud_info.real_sample_rate = get_real_sample_rate();
-			else
-			    rx.aud_info.real_sample_rate = force_audio_sample_rate;
-			if((rx.aud_info.real_sample_rate<=31000)&&(rx.aud_info.real_sample_rate>=193000)
-			   && (abs((signed int)rx.aud_info.real_sample_rate-(signed int)pre_sample_rate)>sample_rate_change_th)
-               ) {
-			    if(hdmirx_log_flag&AUDIO_LOG_ENABLE) {
-			        dump_audio_info(1);
-			    }
-			}
+			if ((audio_enable)&&(rx.pre_video_params.sw_dvi==0))
+			{
+			    pre_sample_rate = rx.aud_info.real_sample_rate;
+				hdmirx_read_audio_info(&rx.aud_info);
+				if (force_audio_sample_rate == 0)
+				    rx.aud_info.real_sample_rate = get_real_sample_rate();
+				else
+				    rx.aud_info.real_sample_rate = force_audio_sample_rate;
+				if((rx.aud_info.real_sample_rate<=31000)&&(rx.aud_info.real_sample_rate>=193000)
+				   && (abs((signed int)rx.aud_info.real_sample_rate-(signed int)pre_sample_rate)>sample_rate_change_th)
+                   ) {
+				    if(hdmirx_log_flag&AUDIO_LOG_ENABLE) {
+				        dump_audio_info(1);
+				    }
+				}
 
-			if(!is_sample_rate_stable(pre_sample_rate, rx.aud_info.real_sample_rate)){
-				//set_hdmi_audio_source_gate(0);
-			    if(hdmirx_log_flag&AUDIO_LOG_ENABLE) {
+				if(!is_sample_rate_stable(pre_sample_rate, rx.aud_info.real_sample_rate)){
+					//set_hdmi_audio_source_gate(0);
+				    if(hdmirx_log_flag&AUDIO_LOG_ENABLE) {
 			        hdmirx_print("[hdmirx-audio]:sample_rate_chg,pre:%d,cur:%d\n", pre_sample_rate, rx.aud_info.real_sample_rate);
 			        //dump_audio_info(1);
 				}

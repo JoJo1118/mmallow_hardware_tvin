@@ -539,19 +539,35 @@ void hdmirx_phy_init(int rx_port_sel, int dcm)
 		hdmirx_wr_phy(HDMIRX_PHY_CH0_EQ_CTRL3, port0_eq_setting_ch0);
 		hdmirx_wr_phy(HDMIRX_PHY_CH1_EQ_CTRL3, port0_eq_setting_ch1);
 		hdmirx_wr_phy(HDMIRX_PHY_CH2_EQ_CTRL3, port0_eq_setting_ch2);
+		if((0 == port0_eq_setting_ch0) &&
+			(0 == port0_eq_setting_ch1) &&
+			(0 == port0_eq_setting_ch2))
+			hdmirx_wr_phy(HDMIRX_PHY_MAIN_FSM_OVERRIDE2, 0x0);
+		else
+			hdmirx_wr_phy(HDMIRX_PHY_MAIN_FSM_OVERRIDE2, 0x40);
 	} else if(rx_port_sel == 1) {
 		printk("port1-1\n");
 		hdmirx_wr_phy(HDMIRX_PHY_CH0_EQ_CTRL3, port1_eq_setting_ch0);
 		hdmirx_wr_phy(HDMIRX_PHY_CH1_EQ_CTRL3, port1_eq_setting_ch1);
 		hdmirx_wr_phy(HDMIRX_PHY_CH2_EQ_CTRL3, port1_eq_setting_ch2);
+		if((0 == port1_eq_setting_ch0) &&
+			(0 == port1_eq_setting_ch1) &&
+			(0 == port1_eq_setting_ch2))
+			hdmirx_wr_phy(HDMIRX_PHY_MAIN_FSM_OVERRIDE2, 0x0);
+		else
+			hdmirx_wr_phy(HDMIRX_PHY_MAIN_FSM_OVERRIDE2, 0x40);
 	} else {
 		printk("port2-2\n");
 		hdmirx_wr_phy(HDMIRX_PHY_CH0_EQ_CTRL3, port2_eq_setting_ch0);
 		hdmirx_wr_phy(HDMIRX_PHY_CH1_EQ_CTRL3, port2_eq_setting_ch1);
 		hdmirx_wr_phy(HDMIRX_PHY_CH2_EQ_CTRL3, port2_eq_setting_ch2);
+		if((0 == port2_eq_setting_ch0) &&
+			(0 == port2_eq_setting_ch1) &&
+			(0 == port2_eq_setting_ch2))
+			hdmirx_wr_phy(HDMIRX_PHY_MAIN_FSM_OVERRIDE2, 0x0);
+		else
+			hdmirx_wr_phy(HDMIRX_PHY_MAIN_FSM_OVERRIDE2, 0x40);
 	}
-	hdmirx_wr_phy(HDMIRX_PHY_MAIN_FSM_OVERRIDE2, 0x40);
-
 #if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
 	// Write PHY register 0x0e, MHL&HDMI select
     data32  = 0;
@@ -853,6 +869,7 @@ static void control_init_more(void)
 	else
 		data32 |= 0				<< 0;	// disable auto de repeat
     hdmirx_wr_dwc(HDMIRX_DWC_HDMI_RESMPL_CTRL,   data32); // DEFAULT: {27'd0, 4'd0, 1'b1}
+
 	data32	= 0;
 	data32 |= (hdmirx_rd_dwc(HDMIRX_DWC_HDMI_MODE_RECOVER) & 0xf8000000);	// [31:27]	preamble_cnt_limit
 	data32 |= (0	<< 24); // [25:24]	mr_vs_pol_adj_mode
@@ -864,6 +881,17 @@ static void control_init_more(void)
 	data32 |= (0	<< 2);	// [3:2]	eess_oess
 	data32 |= (0	<< 0);	// [1:0]	sel_ctl01
 	hdmirx_wr_dwc(HDMIRX_DWC_HDMI_MODE_RECOVER, data32);
+
+	/*
+	data32	= 0;
+	data32 |= (1	<< 16);
+	data32 |= (1	<< 13); // [13]	hdcp bcaps
+	data32 |= (0	<< 12);	// [12]	fast I2C
+	data32 |= (0	<< 9);	// [9]	one dot one
+	data32 |= (0	<< 8);	// [8]	fast reauth
+	data32 |= (0x74	<< 0);	// [9]	hdcp ddc addr
+	hdmirx_wr_dwc(HDMIRX_DWC_HDCP_SETTING, data32);
+	*/
 }
 
 static int control_init(unsigned port)
@@ -891,8 +919,7 @@ static void hdmi_rx_ctrl_hdcp_config( const struct hdmi_rx_ctrl_hdcp *hdcp)
 	int error = 0;
 	unsigned i = 0;
 	unsigned k = 0;
-	hdmirx_wr_bits_dwc( HDMIRX_DWC_HDCP_CTRL, HDCP_ENABLE, 0);
-	//hdmirx_wr_bits_dwc(ctx, HDMIRX_DWC_HDCP_CTRL, KEY_DECRYPT_ENABLE, 1);
+
 	hdmirx_wr_bits_dwc( HDMIRX_DWC_HDCP_CTRL, KEY_DECRYPT_ENABLE, 0);
 	hdmirx_wr_dwc(HDMIRX_DWC_HDCP_SEED, hdcp->seed);
 	for (i = 0; i < HDCP_KEYS_SIZE; i += 2) {
@@ -915,7 +942,11 @@ static void hdmi_rx_ctrl_hdcp_config( const struct hdmi_rx_ctrl_hdcp *hdcp)
 	hdmirx_wr_bits_dwc( HDMIRX_DWC_HDCP_RPT_CTRL, REPEATER, hdcp->repeat? 1 : 0);
 	hdmirx_wr_dwc(HDMIRX_DWC_HDCP_RPT_BSTATUS, 0);	/* nothing attached downstream */
 
-	hdmirx_wr_bits_dwc( HDMIRX_DWC_HDCP_CTRL, HDCP_ENABLE, 1);
+	hdmirx_wr_bits_dwc( HDMIRX_DWC_HDCP_CTRL, KEY_DECRYPT_ENABLE, 1);
+
+	//hdmirx_wr_bits_dwc( HDMIRX_DWC_HDCP_CTRL, HDCP_ENABLE, 0);
+	//mdelay(1);
+	//hdmirx_wr_bits_dwc( HDMIRX_DWC_HDCP_CTRL, HDCP_ENABLE, 1);
 }
 
 #if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
@@ -1130,7 +1161,6 @@ static void control_reset(unsigned char seq)
 		data32 |= 1 << 0;   // [0]      cfg_enable
 		hdmirx_wr_dwc(HDMIRX_DWC_DMI_DISABLE_IF, data32);    // DEFAULT: {31'd0, 1'b0}
 
-    	mdelay(1);
     	// Reset functional modules
     	hdmirx_wr_dwc(HDMIRX_DWC_DMI_SW_RST,     0x0000007F);
 
@@ -1540,12 +1570,44 @@ void hdmirx_hw_config(void)
 	hdmirx_print("%s  %d Done! \n", __func__, rx.port);
 }
 
+void hdmirx_hw_reset(void)
+{
+	hdmirx_wr_top(HDMIRX_TOP_INTR_MASKN, 0); //disable top interrupt gate
+	control_reset(0);
+	hdmirx_interrupts_cfg(false); //disable dwc interrupt
+
+	if(hdcp_enable){
+		hdmi_rx_ctrl_hdcp_config(&rx.hdcp);
+	} else {
+		hdmirx_wr_bits_dwc(HDMIRX_DWC_HDCP_CTRL, HDCP_ENABLE, 0);
+	}
+
+	/* control config */
+	control_init(rx.port);
+	hdmirx_audio_init();//
+	packet_init();
+#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESONG9TV)
+	hdmirx_20_init();
+#endif
+	hdmirx_audio_fifo_rst();
+	hdmirx_packet_fifo_rst();
+	/**/
+	control_reset(1);
+
+	/*enable irq */
+	hdmirx_wr_top(HDMIRX_TOP_INTR_STAT_CLR, ~0);
+	hdmirx_wr_top(HDMIRX_TOP_INTR_MASKN, 0x00001fff);
+	hdmirx_interrupts_hpd(true);
+	/**/
+}
+
+
 void hdmirx_hw_probe(void)
 {
 	hdmirx_wr_top(HDMIRX_TOP_MEM_PD,	0);//1
 	hdmirx_wr_top(HDMIRX_TOP_SW_RESET,	0);//release IP from reset
 
-    //Wr_reg_bits(HHI_GCLK_MPEG0, 1, 21, 1);  // Turn on clk_hdmirx_pclk, also = sysclk //1
+    Wr_reg_bits(HHI_GCLK_MPEG0, 1, 21, 1);  // Turn on clk_hdmirx_pclk, also = sysclk //1
     // Enable APB3 fail on error
     //*((volatile unsigned long *) P_HDMIRX_CTRL_PORT)          |= (1 << 15);   // APB3 to HDMIRX-TOP err_en
     //*((volatile unsigned long *) (P_HDMIRX_CTRL_PORT+0x10))   |= (1 << 15);   // APB3 to HDMIRX-DWC err_en
@@ -1719,7 +1781,7 @@ void hdmirx_config_video(struct hdmi_rx_ctrl_video *video_params)
 		data32 |= (0	<< 24); // [25:24]	mr_vs_pol_adj_mode
 		data32 |= (0	<< 18); // [18] 	spike_filter_en
 		data32 |= (8	<< 13); // [17:13]	dvi_mode_hyst
-		data32 |= (8	<< 8);	// [12:8]	hdmi_mode_hyst
+		data32 |= (1	<< 8);	// [12:8]	hdmi_mode_hyst
 		data32 |= (0	<< 6);	// [7:6]	hdmi_mode: 0=automatic
 		data32 |= (0	<< 4);	// [5:4]	gb_det
 		data32 |= (0	<< 2);	// [3:2]	eess_oess

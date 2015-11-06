@@ -19,7 +19,7 @@
 #include "../tvin_global.h"
 #include "../tvin_format_table.h"
 
-#define HDMIRX_VER "Ref.2015/10/26a"
+#define HDMIRX_VER "Ref.2015/11/06a"
 
 #define HDMI_STATE_CHECK_FREQ     (20*5)
 #define ABS(x) ((x)<0 ? -(x) : (x))

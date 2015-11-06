@@ -249,6 +249,8 @@
 /** Deep color mode, 48 bit */
 #define		DCM_CURRENT_MODE_48b	(7)
 
+#define HDMIRX_DWC_HDCP_SETTING			(0x0C4UL)
+
 // HDMI 2.0 feature registers
 //bit0-1  scramble ctrl
 #define HDMIRX_DWC_HDMI20_CONTROL               0x0800
@@ -696,9 +698,9 @@
 /** Register address: control */
 #define HDMIRX_DWC_HDCP_CTRL			(0x0C0UL)
 /** HDCP key decryption */
-#define		KEY_DECRYPT_ENABLE		_BIT(1)
+#define		KEY_DECRYPT_ENABLE		_BIT(0)
 /** HDCP activation */
-#define		HDCP_ENABLE				_BIT(0)
+#define		HDCP_ENABLE				_BIT(24)
 /** Register address: configuration */
 #define HDMIRX_DWC_HDCP_SETTINGS		(0x0C4UL)
 /** Register address: key description seed */

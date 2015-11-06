@@ -989,7 +989,7 @@ static int hdmirx_probe(struct platform_device *pdev)
     /* set all hpd status  */
 	//hdmirx_default_hpd(0);
 #ifdef CEC_FUNC_ENABLE
-	hdmirx_hw_init(0x4000);
+	//hdmirx_hw_init(0x4000);
 	dev_set_drvdata(hdevp->dev, hdevp);
 	init_timer(&hdevp->timer);
 	hdevp->timer.data = (ulong)hdevp;

@@ -610,11 +610,11 @@ void vdin_start_dec(struct vdin_dev_s *devp)
 	vdin_set_cutwin(devp);
 	vdin_set_hvscale(devp);
 #ifdef CONFIG_VSYNC_RDMA
-       if(vdin_rdma_flag && 
+       if(vdin_rdma_flag &&
        	  (devp->v_active > 1080 || devp->h_active > 1920)
        	  )
        	       devp->flags |= VDIN_FLAG_RDMA_ENABLE;
-       	     
+
 #endif
 #if defined(VDIN_V1)
     /*reverse / disable reverse write buffer*/
@@ -681,7 +681,7 @@ void vdin_start_dec(struct vdin_dev_s *devp)
 		devp->send2di = true;
 	else
 		devp->send2di = false;
-		
+
 	vf_notify_receiver(devp->name,VFRAME_EVENT_PROVIDER_START,NULL);
 	#if defined(VDIN_V2)
 	if(devp->parm.port != TVIN_PORT_VIU){
@@ -940,7 +940,7 @@ static int vdin_func(int no, vdin_arg_t *arg)
 			break;
 		case VDIN_CMD_MPEGIN_START:
 			devp->h_active = parm->h_active;
-			devp->v_active = parm->v_active;	
+			devp->v_active = parm->v_active;
 			#if (MESON_CPU_TYPE >= MESON_CPU_TYPE_MESON8)
 			switch_vpu_mem_pd_vmod(devp->addr_offset?VPU_VIU_VDIN1:VPU_VIU_VDIN0,VPU_MEM_POWER_ON);
 			#endif
@@ -1399,7 +1399,7 @@ irqreturn_t vdin_isr(int irq, void *dev_id)
 		curr_wr_vf->type |=  VIDTYPE_PROGRESSIVE;
 		curr_wr_vf->type |=  VIDTYPE_PRE_INTERLACE;
 	}
-
+	curr_wr_vf->type_original = curr_wr_vf->type;
 	vdin_set_vframe_prop_info(curr_wr_vf, devp);
 	vdin_backup_histgram(curr_wr_vf, devp);
 
@@ -1558,7 +1558,7 @@ irqreturn_t vdin_v4l2_isr(int irq, void *dev_id)
 	curr_wr_vf  = &curr_wr_vfe->vf;
 
 	curr_wr_vf->type = last_field_type;
-
+	curr_wr_vf->type_original = curr_wr_vf->type;
 	vdin_set_vframe_prop_info(curr_wr_vf, devp);
 	vdin_backup_histgram(curr_wr_vf, devp);
 
@@ -2108,7 +2108,7 @@ static int vdin_drv_probe(struct platform_device *pdev)
 	int offset,size,mem_size_m;
 	struct device_node *of_node = pdev->dev.of_node;
 	mem_size_m = 0;
-	
+
 	/* malloc vdev */
 	vdevp = kmalloc(sizeof(struct vdin_dev_s), GFP_KERNEL);
 	if (!vdevp) {
@@ -2212,7 +2212,7 @@ static int vdin_drv_probe(struct platform_device *pdev)
 		ret = -ENXIO;
 		goto fail_get_resource_mem;
 	}
-	
+
 	if (vdevp->cma_config_en != 1) {
 		vdevp->mem_start = res->start;
 		vdevp->mem_size  = res->end - res->start + 1;

@@ -927,8 +927,8 @@ static int hdmirx_probe(struct platform_device *pdev)
 	memset(hdevp, 0, sizeof(struct hdmirx_dev_s));
 
 	/*@to get from bsp*/
-	hdevp->index = pdev->id;
-
+	//hdevp->index = pdev->id;
+	hdevp->index = 0;
 	/* create cdev and reigser with sysfs */
 	ret = hdmirx_add_cdev(&hdevp->cdev, &hdmirx_fops, hdevp->index);
 	if (ret) {
@@ -979,6 +979,7 @@ static int hdmirx_probe(struct platform_device *pdev)
 		goto fail_create_class_attrs;
 	}
 	/* frontend */
+
 	tvin_frontend_init(&hdevp->frontend, &hdmirx_dec_ops, &hdmirx_sm_ops, hdevp->index);
 	sprintf(hdevp->frontend.name, "%s", TVHDMI_NAME);
 	if (tvin_reg_frontend(&hdevp->frontend) < 0) {
@@ -989,7 +990,6 @@ static int hdmirx_probe(struct platform_device *pdev)
     /* set all hpd status  */
 	//hdmirx_default_hpd(0);
 #ifdef CEC_FUNC_ENABLE
-	//hdmirx_hw_init(0x4000);
 	dev_set_drvdata(hdevp->dev, hdevp);
 	init_timer(&hdevp->timer);
 	hdevp->timer.data = (ulong)hdevp;
@@ -1165,7 +1165,7 @@ void hdmirx_irq_init(void);
 static int __init hdmirx_init(void)
 {
 	int ret = 0;
-	struct platform_device *pdev;
+	//struct platform_device *pdev;
 
 	if(init_flag & INIT_FLAG_NOT_LOAD)
 		return 0;
@@ -1182,7 +1182,7 @@ static int __init hdmirx_init(void)
 		ret = PTR_ERR(hdmirx_clsp);
 		goto fail_class_create;
 	}
-
+	/*
     pdev = platform_device_alloc(TVHDMI_NAME,0);
     if(IS_ERR(pdev)){
     	pr_info(KERN_ERR "[hdmirx..]%s alloc platform device error.\n", __func__);
@@ -1192,7 +1192,7 @@ static int __init hdmirx_init(void)
     	pr_info(KERN_ERR "[hdmirx..]%s failed register platform device.\n", __func__);
     	goto fail_class_create;
     }
-
+	*/
 	ret = platform_driver_register(&hdmirx_driver);
 	if (ret != 0) {
 		pr_info("failed to register hdmirx module, error %d\n", ret);
